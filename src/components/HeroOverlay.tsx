@@ -7,8 +7,8 @@ export function HeroOverlay({ entered }: HeroOverlayProps) {
     <section className={`hero-overlay ${entered ? 'is-entered' : ''}`}>
       <p className="hero-tag">AETHER STUDIO</p>
       <h1 className="hero-title">
-        <span>The</span>
-        <span>Dreamkeeper</span>
+        <span>Whispers of the</span>
+        <span>universe await</span>
       </h1>
       <p className="hero-subtitle">
         A speculative collaboration where imagination and intelligent systems
