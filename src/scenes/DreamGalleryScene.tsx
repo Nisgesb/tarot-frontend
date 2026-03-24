@@ -1,10 +1,17 @@
 import { OrbFieldCanvas } from '../components/OrbFieldCanvas'
+import type { MutableRefObject } from 'react'
+import type { PerformanceTier } from '../hooks/useViewportProfile'
+import type { MotionProfile, MotionVector } from '../motion/types'
 import type { DreamRecord } from '../types/dream'
 
 interface DreamGallerySceneProps {
   active: boolean
   dreams: DreamRecord[]
   reducedMotion: boolean
+  motionRef: MutableRefObject<MotionVector>
+  motionProfile?: MotionProfile
+  performanceTier: PerformanceTier
+  pointerCoarse: boolean
   onGoHome: () => void
   onGoMyDreams: () => void
   onSelectDream: (
@@ -23,6 +30,10 @@ export function DreamGalleryScene({
   active,
   dreams,
   reducedMotion,
+  motionRef,
+  motionProfile = { x: 1, y: 1 },
+  performanceTier,
+  pointerCoarse,
   onGoHome,
   onGoMyDreams,
   onSelectDream,
@@ -48,10 +59,14 @@ export function DreamGalleryScene({
         dreams={dreams}
         active={active}
         reducedMotion={reducedMotion}
+        motionRef={motionRef}
+        motionProfile={motionProfile}
+        performanceTier={performanceTier}
+        pointerCoarse={pointerCoarse}
         onSelect={onSelectDream}
       />
       <div className="gallery-hint">
-        <p>Click on an orb to look inside another&apos;s dream</p>
+        <p>Tap an orb to focus, tap again to enter another dream</p>
         <p>Drag and scroll to navigate</p>
       </div>
       <button type="button" className="outline-pill random-dream-button" onClick={onRandomDream}>

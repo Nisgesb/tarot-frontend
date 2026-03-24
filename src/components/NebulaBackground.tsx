@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import type { MutableRefObject } from 'react'
-import type { ParallaxPoint } from '../hooks/useParallax'
+import type { PerformanceTier } from '../hooks/useViewportProfile'
+import type { MotionProfile, MotionVector } from '../motion/types'
 
 interface NebulaBackgroundProps {
   entered: boolean
   reducedMotion: boolean
-  parallaxRef: MutableRefObject<ParallaxPoint>
+  motionRef: MutableRefObject<MotionVector>
   className?: string
   timeScale?: number
+  motionProfile?: MotionProfile
+  performanceTier?: PerformanceTier
 }
 
 const vertexShaderSource = `
@@ -155,17 +158,24 @@ function createProgram(
 export function NebulaBackground({
   entered,
   reducedMotion,
-  parallaxRef,
+  motionRef,
   className,
   timeScale = 1,
+  motionProfile = { x: 1, y: 1 },
+  performanceTier = 'high',
 }: NebulaBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const timeScaleRef = useRef(timeScale)
+  const motionProfileRef = useRef(motionProfile)
   const [useFallback, setUseFallback] = useState(false)
 
   useEffect(() => {
     timeScaleRef.current = timeScale
   }, [timeScale])
+
+  useEffect(() => {
+    motionProfileRef.current = motionProfile
+  }, [motionProfile])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -239,9 +249,17 @@ export function NebulaBackground({
     gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0)
 
     const resize = () => {
+      const maxRatioByTier =
+        performanceTier === 'low'
+          ? 1.25
+          : performanceTier === 'medium'
+            ? 1.5
+            : window.innerWidth <= 768
+              ? 1.6
+              : 2
       const cappedPixelRatio = Math.min(
         window.devicePixelRatio || 1,
-        window.innerWidth <= 768 ? 1.5 : 2,
+        maxRatioByTier,
       )
 
       width = Math.floor(window.innerWidth * cappedPixelRatio)
@@ -259,14 +277,15 @@ export function NebulaBackground({
 
     const render = (now: number) => {
       const elapsedSeconds = (now - startTime) / 1000
-      const { x, y } = parallaxRef.current
+      const { x, y } = motionRef.current
+      const profile = motionProfileRef.current
 
       gl.uniform2f(resolutionLocation, width, height)
       gl.uniform1f(
         timeLocation,
         elapsedSeconds * (reducedMotion ? 0.55 : 1) * Math.max(0.2, timeScaleRef.current),
       )
-      gl.uniform2f(parallaxLocation, x, y)
+      gl.uniform2f(parallaxLocation, x * profile.x, y * profile.y)
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
 
       frameId = window.requestAnimationFrame(render)
@@ -294,7 +313,7 @@ export function NebulaBackground({
         gl.deleteShader(fragmentShader)
       }
     }
-  }, [parallaxRef, reducedMotion])
+  }, [motionRef, performanceTier, reducedMotion])
 
   if (useFallback) {
     return (

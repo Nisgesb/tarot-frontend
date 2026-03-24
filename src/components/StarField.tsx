@@ -1,13 +1,16 @@
 import { useEffect, useRef } from 'react'
 import type { MutableRefObject } from 'react'
-import type { ParallaxPoint } from '../hooks/useParallax'
+import type { PerformanceTier } from '../hooks/useViewportProfile'
+import type { MotionProfile, MotionVector } from '../motion/types'
 
 interface StarFieldProps {
   entered: boolean
   reducedMotion: boolean
-  parallaxRef: MutableRefObject<ParallaxPoint>
+  motionRef: MutableRefObject<MotionVector>
   className?: string
   speedMultiplier?: number
+  motionProfile?: MotionProfile
+  performanceTier?: PerformanceTier
 }
 
 interface Star {
@@ -39,13 +42,19 @@ function buildStarField(count: number, width: number, height: number): Star[] {
   })
 }
 
-function getStarCount(reducedMotion: boolean) {
+function getStarCount(reducedMotion: boolean, performanceTier: PerformanceTier) {
   const area = window.innerWidth * window.innerHeight
   const isMobile = window.innerWidth <= 768
   const density = isMobile ? 0.00012 : 0.0002
 
   let count = Math.floor(area * density)
   count = Math.max(isMobile ? 150 : 220, Math.min(isMobile ? 260 : 500, count))
+
+  if (performanceTier === 'low') {
+    count = Math.floor(count * 0.62)
+  } else if (performanceTier === 'medium') {
+    count = Math.floor(count * 0.82)
+  }
 
   if (reducedMotion) {
     count = Math.floor(count * 0.6)
@@ -57,16 +66,23 @@ function getStarCount(reducedMotion: boolean) {
 export function StarField({
   entered,
   reducedMotion,
-  parallaxRef,
+  motionRef,
   className,
   speedMultiplier = 1,
+  motionProfile = { x: 1, y: 1 },
+  performanceTier = 'high',
 }: StarFieldProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const speedMultiplierRef = useRef(speedMultiplier)
+  const motionProfileRef = useRef(motionProfile)
 
   useEffect(() => {
     speedMultiplierRef.current = speedMultiplier
   }, [speedMultiplier])
+
+  useEffect(() => {
+    motionProfileRef.current = motionProfile
+  }, [motionProfile])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -90,7 +106,13 @@ export function StarField({
     const resize = () => {
       const pixelRatio = Math.min(
         window.devicePixelRatio || 1,
-        window.innerWidth <= 768 ? 1.5 : 2,
+        performanceTier === 'low'
+          ? 1.2
+          : performanceTier === 'medium'
+            ? 1.4
+            : window.innerWidth <= 768
+              ? 1.5
+              : 2,
       )
 
       width = window.innerWidth
@@ -102,7 +124,7 @@ export function StarField({
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
       context.globalCompositeOperation = 'screen'
 
-      stars = buildStarField(getStarCount(reducedMotion), width, height)
+      stars = buildStarField(getStarCount(reducedMotion, performanceTier), width, height)
     }
 
     resize()
@@ -118,8 +140,9 @@ export function StarField({
 
       context.clearRect(0, 0, width, height)
 
-      const parallaxX = parallaxRef.current.x * (width <= 768 ? 8 : 16)
-      const parallaxY = parallaxRef.current.y * (height <= 768 ? 6 : 12)
+      const profile = motionProfileRef.current
+      const parallaxX = motionRef.current.x * profile.x * (width <= 768 ? 8 : 16)
+      const parallaxY = motionRef.current.y * profile.y * (height <= 768 ? 6 : 12)
       const driftMultiplier = (reducedMotion ? 0.28 : 1) * speedMultiplierRef.current
 
       for (const star of stars) {
@@ -159,7 +182,7 @@ export function StarField({
       window.removeEventListener('resize', resize)
       window.cancelAnimationFrame(frameId)
     }
-  }, [parallaxRef, reducedMotion])
+  }, [motionRef, performanceTier, reducedMotion])
 
   return (
     <canvas

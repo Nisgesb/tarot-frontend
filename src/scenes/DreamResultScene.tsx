@@ -1,5 +1,9 @@
 import { useState } from 'react'
+import type { MutableRefObject } from 'react'
 import { DreamVisualCanvas } from '../components/DreamVisualCanvas'
+import { BottomActionCluster } from '../layout/BottomActionCluster'
+import type { PerformanceTier } from '../hooks/useViewportProfile'
+import type { MotionProfile, MotionVector } from '../motion/types'
 import type { DreamRecord } from '../types/dream'
 
 interface DreamResultSceneProps {
@@ -8,12 +12,17 @@ interface DreamResultSceneProps {
   dream: DreamRecord | null
   inspectSource: 'gallery' | 'myDreams' | null
   reducedMotion: boolean
+  motionRef: MutableRefObject<MotionVector>
+  motionProfile?: MotionProfile
+  performanceTier: PerformanceTier
+  muted: boolean
   onGoHome: () => void
   onGoGallery: () => void
   onGoMyDreams: () => void
   onBackFromInspect: () => void
   onDreamAgain: (record: DreamRecord) => void
   onDownload: (record: DreamRecord, canvas: HTMLCanvasElement | null) => void
+  onToggleAudio: () => void
 }
 
 export function DreamResultScene({
@@ -22,12 +31,17 @@ export function DreamResultScene({
   dream,
   inspectSource,
   reducedMotion,
+  motionRef,
+  motionProfile = { x: 1, y: 1 },
+  performanceTier,
+  muted,
   onGoHome,
   onGoGallery,
   onGoMyDreams,
   onBackFromInspect,
   onDreamAgain,
   onDownload,
+  onToggleAudio,
 }: DreamResultSceneProps) {
   const [canvasNode, setCanvasNode] = useState<HTMLCanvasElement | null>(null)
 
@@ -81,6 +95,9 @@ export function DreamResultScene({
           asset={dream.asset}
           active={active}
           reducedMotion={reducedMotion}
+          motionRef={motionRef}
+          motionProfile={motionProfile}
+          performanceTier={performanceTier}
           className="result-visual-canvas"
           onCanvasReady={setCanvasNode}
         />
@@ -88,25 +105,13 @@ export function DreamResultScene({
         <div className="result-visual-sheen" aria-hidden />
       </div>
 
-      <div className="result-actions">
-        <button
-          type="button"
-          className="outline-pill"
-          onClick={() => onDownload(dream, canvasNode)}
-        >
-          Download
-        </button>
-        <button
-          type="button"
-          className="outline-pill"
-          onClick={() => onDreamAgain(dream)}
-        >
-          Dream Again
-        </button>
-        <button type="button" className="outline-pill" onClick={onGoGallery}>
-          Explore Gallery
-        </button>
-      </div>
+      <BottomActionCluster
+        onDownload={() => onDownload(dream, canvasNode)}
+        onDreamAgain={() => onDreamAgain(dream)}
+        onExploreGallery={onGoGallery}
+        muted={muted}
+        onToggleAudio={onToggleAudio}
+      />
 
       <a href="#" className="privacy-link" onClick={(event) => event.preventDefault()}>
         Privacy

@@ -1,10 +1,16 @@
 import { useEffect, useRef } from 'react'
+import type { MutableRefObject } from 'react'
+import type { PerformanceTier } from '../hooks/useViewportProfile'
+import type { MotionProfile, MotionVector } from '../motion/types'
 import type { DreamAsset } from '../types/dream'
 
 interface DreamVisualCanvasProps {
   asset: DreamAsset
   active: boolean
   reducedMotion: boolean
+  motionRef: MutableRefObject<MotionVector>
+  motionProfile?: MotionProfile
+  performanceTier?: PerformanceTier
   className?: string
   onCanvasReady?: (canvas: HTMLCanvasElement | null) => void
 }
@@ -13,11 +19,18 @@ export function DreamVisualCanvas({
   asset,
   active,
   reducedMotion,
+  motionRef,
+  motionProfile = { x: 1, y: 1 },
+  performanceTier = 'high',
   className,
   onCanvasReady,
 }: DreamVisualCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const pointerRef = useRef({ x: 0, y: 0 })
+  const motionProfileRef = useRef(motionProfile)
+
+  useEffect(() => {
+    motionProfileRef.current = motionProfile
+  }, [motionProfile])
 
   useEffect(() => {
     onCanvasReady?.(canvasRef.current)
@@ -48,7 +61,13 @@ export function DreamVisualCanvas({
     const resize = () => {
       const pixelRatio = Math.min(
         window.devicePixelRatio || 1,
-        window.innerWidth <= 768 ? 1.4 : 2,
+        performanceTier === 'low'
+          ? 1.2
+          : performanceTier === 'medium'
+            ? 1.35
+            : window.innerWidth <= 768
+              ? 1.4
+              : 2,
       )
       const bounds = canvas.getBoundingClientRect()
 
@@ -64,13 +83,6 @@ export function DreamVisualCanvas({
     resize()
     window.addEventListener('resize', resize)
 
-    const onPointerMove = (event: PointerEvent) => {
-      pointerRef.current.x = event.clientX / window.innerWidth - 0.5
-      pointerRef.current.y = event.clientY / window.innerHeight - 0.5
-    }
-
-    window.addEventListener('pointermove', onPointerMove, { passive: true })
-
     const render = (time: number) => {
       if (!active) {
         frameId = window.requestAnimationFrame(render)
@@ -82,9 +94,9 @@ export function DreamVisualCanvas({
       }
 
       const elapsed = time * 0.001
-      const pointer = pointerRef.current
-      const parallaxX = reducedMotion ? 0 : pointer.x * width * 0.035
-      const parallaxY = reducedMotion ? 0 : pointer.y * height * 0.03
+      const profile = motionProfileRef.current
+      const parallaxX = reducedMotion ? 0 : motionRef.current.x * profile.x * width * 0.035
+      const parallaxY = reducedMotion ? 0 : motionRef.current.y * profile.y * height * 0.03
       lastTime = time
 
       context.clearRect(0, 0, width, height)
@@ -133,7 +145,7 @@ export function DreamVisualCanvas({
         const progress = band / 6
         const waveY =
           height * (0.1 + progress * 0.82) +
-          Math.sin(elapsed * (0.4 + band * 0.09) + band * 1.8 + pointer.x * 3) * 24
+          Math.sin(elapsed * (0.4 + band * 0.09) + band * 1.8 + motionRef.current.x * 3) * 24
         context.globalCompositeOperation = 'soft-light'
         context.globalAlpha = 0.08 + progress * 0.06
         context.strokeStyle = asset.palette[(band + 2) % asset.palette.length]
@@ -208,10 +220,9 @@ export function DreamVisualCanvas({
 
     return () => {
       window.removeEventListener('resize', resize)
-      window.removeEventListener('pointermove', onPointerMove)
       window.cancelAnimationFrame(frameId)
     }
-  }, [active, asset, reducedMotion])
+  }, [active, asset, motionRef, performanceTier, reducedMotion])
 
   return <canvas ref={canvasRef} className={className} />
 }

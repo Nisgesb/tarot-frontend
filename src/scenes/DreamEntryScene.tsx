@@ -5,6 +5,7 @@ import type { RawDreamInput } from '../types/dream'
 interface DreamEntrySceneProps {
   active: boolean
   phase: 'dreamEntry' | 'assistantRefine'
+  keyboardOpen: boolean
   initialInput: RawDreamInput
   initialRefinedText: string
   onPhaseChange: (phase: 'dreamEntry' | 'assistantRefine') => void
@@ -14,6 +15,7 @@ interface DreamEntrySceneProps {
 export function DreamEntryScene({
   active,
   phase,
+  keyboardOpen,
   initialInput,
   initialRefinedText,
   onPhaseChange,
@@ -84,6 +86,7 @@ export function DreamEntryScene({
     'dream-entry-scene',
     active ? 'is-active' : '',
     phase === 'assistantRefine' ? 'is-refining' : '',
+    keyboardOpen ? 'is-keyboard-open' : '',
   ]
     .filter(Boolean)
     .join(' ')
@@ -117,7 +120,7 @@ export function DreamEntryScene({
               <p className="entry-whisper">
                 Whisper fragments first. Precision can come later.
               </p>
-              <div className="entry-memory-actions">
+              <div className="entry-memory-actions entry-mobile-sticky">
                 <button type="button" className="ghost-chip">
                   Voice Soon
                 </button>
@@ -171,7 +174,7 @@ export function DreamEntryScene({
                       </button>
                     ))}
                   </div>
-                  <div className="assistant-actions">
+                  <div className="assistant-actions entry-mobile-sticky">
                     <button type="button" className="secondary-pill" onClick={moveBack}>
                       Back
                     </button>
@@ -194,7 +197,7 @@ export function DreamEntryScene({
                   <div className="assistant-summary">
                     <span>{autoRefined.summary}</span>
                   </div>
-                  <div className="assistant-actions">
+                  <div className="assistant-actions entry-mobile-sticky">
                     <button type="button" className="secondary-pill" onClick={moveBack}>
                       Back
                     </button>

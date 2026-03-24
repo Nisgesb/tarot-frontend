@@ -1,21 +1,28 @@
 import { useEffect, useRef } from 'react'
 import type { MutableRefObject } from 'react'
-import type { ParallaxPoint } from '../hooks/useParallax'
+import type { MotionProfile, MotionVector } from '../motion/types'
 
 interface DreamPortalProps {
   entered: boolean
   reducedMotion: boolean
-  parallaxRef: MutableRefObject<ParallaxPoint>
+  motionRef: MutableRefObject<MotionVector>
   className?: string
+  motionProfile?: MotionProfile
 }
 
 export function DreamPortal({
   entered,
   reducedMotion,
-  parallaxRef,
+  motionRef,
   className,
+  motionProfile = { x: 1, y: 1 },
 }: DreamPortalProps) {
   const floatingRef = useRef<HTMLDivElement>(null)
+  const motionProfileRef = useRef(motionProfile)
+
+  useEffect(() => {
+    motionProfileRef.current = motionProfile
+  }, [motionProfile])
 
   useEffect(() => {
     const element = floatingRef.current
@@ -33,9 +40,10 @@ export function DreamPortal({
     let frameId = 0
 
     const render = () => {
-      const { x, y } = parallaxRef.current
-      element.style.setProperty('--portal-shift-x', `${(x * 14).toFixed(2)}px`)
-      element.style.setProperty('--portal-shift-y', `${(y * 10).toFixed(2)}px`)
+      const { x, y } = motionRef.current
+      const profile = motionProfileRef.current
+      element.style.setProperty('--portal-shift-x', `${(x * profile.x * 14).toFixed(2)}px`)
+      element.style.setProperty('--portal-shift-y', `${(y * profile.y * 10).toFixed(2)}px`)
       frameId = window.requestAnimationFrame(render)
     }
 
@@ -44,7 +52,7 @@ export function DreamPortal({
     return () => {
       window.cancelAnimationFrame(frameId)
     }
-  }, [parallaxRef, reducedMotion])
+  }, [motionRef, reducedMotion])
 
   return (
     <div

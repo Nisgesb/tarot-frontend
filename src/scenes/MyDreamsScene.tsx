@@ -1,10 +1,17 @@
 import { OrbFieldCanvas } from '../components/OrbFieldCanvas'
+import type { MutableRefObject } from 'react'
+import type { PerformanceTier } from '../hooks/useViewportProfile'
+import type { MotionProfile, MotionVector } from '../motion/types'
 import type { DreamRecord } from '../types/dream'
 
 interface MyDreamsSceneProps {
   active: boolean
   dreams: DreamRecord[]
   reducedMotion: boolean
+  motionRef: MutableRefObject<MotionVector>
+  motionProfile?: MotionProfile
+  performanceTier: PerformanceTier
+  pointerCoarse: boolean
   onGoHome: () => void
   onGoGallery: () => void
   onStartNew: () => void
@@ -23,6 +30,10 @@ export function MyDreamsScene({
   active,
   dreams,
   reducedMotion,
+  motionRef,
+  motionProfile = { x: 1, y: 1 },
+  performanceTier,
+  pointerCoarse,
   onGoHome,
   onGoGallery,
   onStartNew,
@@ -59,11 +70,15 @@ export function MyDreamsScene({
             dreams={dreams}
             active={active}
             reducedMotion={reducedMotion}
+            motionRef={motionRef}
+            motionProfile={motionProfile}
+            performanceTier={performanceTier}
+            pointerCoarse={pointerCoarse}
             onSelect={onSelectDream}
           />
           <div className="gallery-hint">
             <p>{dreams.length} saved dreams</p>
-            <p>Drag to browse your personal orbit</p>
+            <p>Tap to focus, tap again to reopen</p>
           </div>
         </>
       )}

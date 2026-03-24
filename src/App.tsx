@@ -1,15 +1,23 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
 import { AudioToggle } from './components/AudioToggle'
 import { DreamPortal } from './components/DreamPortal'
 import { HeroOverlay } from './components/HeroOverlay'
+import { MotionControlDock } from './components/MotionControlDock'
+import { MotionPermissionPrompt } from './components/MotionPermissionPrompt'
 import { NebulaBackground } from './components/NebulaBackground'
 import { PortalTransition } from './components/PortalTransition'
 import type { PortalTransitionOrigin } from './components/PortalTransition'
 import { StarField } from './components/StarField'
 import { useAmbientAudio } from './hooks/useAmbientAudio'
-import { useParallax } from './hooks/useParallax'
+import { useKeyboardAwareViewport } from './hooks/useKeyboardAwareViewport'
+import { useMotionInput } from './hooks/useMotionInput'
 import { useReducedMotion } from './hooks/useReducedMotion'
 import { useSceneMachine } from './hooks/useSceneMachine'
+import { useSafeAreaInsets } from './hooks/useSafeAreaInsets'
+import { useViewportProfile } from './hooks/useViewportProfile'
+import { MobileAppShell } from './layout/MobileAppShell'
+import type { MotionProfile } from './motion/types'
 import { createDreamRecordFromRefined } from './services/dreamGenerationService'
 import { getGalleryDreams } from './services/galleryService'
 import {
@@ -98,11 +106,40 @@ function findDreamById(
     null
 }
 
+function resolveMotionProfile(scene: string, base: MotionProfile): MotionProfile {
+  switch (scene) {
+    case 'entering':
+      return { x: base.x * 1.14, y: base.y * 1.1 }
+    case 'generating':
+      return { x: base.x * 0.62, y: base.y * 0.6 }
+    case 'result':
+    case 'inspectDream':
+      return { x: base.x * 0.8, y: base.y * 0.78 }
+    case 'gallery':
+    case 'myDreams':
+      return { x: base.x * 1.2, y: base.y * 1.16 }
+    default:
+      return base
+  }
+}
+
 function App() {
   const reducedMotion = useReducedMotion()
-  const parallaxRef = useParallax(!reducedMotion)
+  const viewportProfile = useViewportProfile()
+  const safeAreaInsets = useSafeAreaInsets()
   const { muted, activate, toggleMuted } = useAmbientAudio()
   const { state: sceneState, actions } = useSceneMachine()
+
+  const keyboardAware = useKeyboardAwareViewport(
+    sceneState.scene === 'dreamEntry' || sceneState.scene === 'assistantRefine',
+  )
+
+  const motion = useMotionInput({
+    enabled: true,
+    reducedMotion,
+    pointerCoarse: viewportProfile.pointerCoarse,
+    isDesktop: viewportProfile.isDesktop,
+  })
 
   const [hasAnimatedIn, setHasAnimatedIn] = useState(false)
   const [myDreams, setMyDreams] = useState<DreamRecord[]>(() => loadDreamRecords())
@@ -175,6 +212,7 @@ function App() {
 
   const startEnterFlow = () => {
     void activate()
+    motion.nudgePermissionPrompt()
     setDraftInput(EMPTY_RAW_DREAM_INPUT)
     setDraftRefinedText('')
     setEntryRenderKey((previous) => previous + 1)
@@ -311,29 +349,66 @@ function App() {
     'app-root',
     entered ? 'is-booted' : '',
     `scene-${sceneState.scene}`,
+    `motion-${motion.snapshot.source}`,
+    viewportProfile.isPhone ? 'platform-phone' : 'platform-wide',
+    keyboardAware.keyboardOpen ? 'is-keyboard-open' : '',
   ]
     .filter(Boolean)
     .join(' ')
 
+  const shellStyle: CSSProperties = {
+    ...safeAreaInsets,
+    '--app-dvh': `${keyboardAware.viewportHeight}px`,
+  } as CSSProperties
+
+  const nebulaProfile = resolveMotionProfile(sceneState.scene, { x: 1, y: 0.86 })
+  const starProfile = resolveMotionProfile(sceneState.scene, { x: 0.95, y: 0.88 })
+  const portalProfile = resolveMotionProfile(sceneState.scene, { x: 0.64, y: 0.58 })
+  const resultProfile = resolveMotionProfile(sceneState.scene, { x: 0.72, y: 0.68 })
+  const galleryProfile = resolveMotionProfile(sceneState.scene, { x: 0.95, y: 0.9 })
+
+  const showFloatingAudio =
+    sceneState.scene !== 'result' &&
+    sceneState.scene !== 'inspectDream'
+  const showMotionDock =
+    sceneState.scene !== 'hero' &&
+    sceneState.scene !== 'entering' &&
+    (
+      motion.snapshot.permissionState !== 'granted' ||
+      sceneState.scene === 'dreamEntry' ||
+      sceneState.scene === 'assistantRefine' ||
+      sceneState.scene === 'gallery' ||
+      sceneState.scene === 'myDreams'
+    )
+
   return (
-    <main className={rootClassName}>
+    <MobileAppShell
+      className={rootClassName}
+      keyboardOffset={keyboardAware.keyboardOffset}
+      style={shellStyle}
+    >
       <NebulaBackground
         entered={entered}
         reducedMotion={reducedMotion}
-        parallaxRef={parallaxRef}
+        motionRef={motion.motionRef}
+        motionProfile={nebulaProfile}
+        performanceTier={viewportProfile.performanceTier}
         timeScale={resolveBackgroundSpeed(sceneState.scene)}
       />
       <StarField
         entered={entered}
         reducedMotion={reducedMotion}
-        parallaxRef={parallaxRef}
+        motionRef={motion.motionRef}
+        motionProfile={starProfile}
+        performanceTier={viewportProfile.performanceTier}
         speedMultiplier={resolveStarSpeed(sceneState.scene)}
       />
 
       <DreamPortal
         entered={entered}
         reducedMotion={reducedMotion}
-        parallaxRef={parallaxRef}
+        motionRef={motion.motionRef}
+        motionProfile={portalProfile}
         className={sceneState.scene === 'entering' ? 'portal-is-entering' : ''}
       />
 
@@ -349,6 +424,7 @@ function App() {
           sceneState.scene === 'dreamEntry' || sceneState.scene === 'assistantRefine'
         }
         phase={sceneState.scene === 'assistantRefine' ? 'assistantRefine' : 'dreamEntry'}
+        keyboardOpen={keyboardAware.keyboardOpen}
         initialInput={draftInput}
         initialRefinedText={draftRefinedText}
         onPhaseChange={handleDreamEntryPhaseChange}
@@ -372,18 +448,27 @@ function App() {
             : null
         }
         reducedMotion={reducedMotion}
+        motionRef={motion.motionRef}
+        motionProfile={resultProfile}
+        performanceTier={viewportProfile.performanceTier}
+        muted={muted}
         onGoHome={actions.goHome}
         onGoGallery={actions.goGallery}
         onGoMyDreams={actions.goMyDreams}
         onBackFromInspect={goBackFromInspect}
         onDreamAgain={handleDreamAgain}
         onDownload={handleResultDownload}
+        onToggleAudio={() => void toggleMuted()}
       />
 
       <DreamGalleryScene
         active={sceneState.scene === 'gallery'}
         dreams={galleryDreams}
         reducedMotion={reducedMotion}
+        motionRef={motion.motionRef}
+        motionProfile={galleryProfile}
+        performanceTier={viewportProfile.performanceTier}
+        pointerCoarse={viewportProfile.pointerCoarse}
         onGoHome={actions.goHome}
         onGoMyDreams={actions.goMyDreams}
         onSelectDream={inspectFromGallery}
@@ -394,6 +479,10 @@ function App() {
         active={sceneState.scene === 'myDreams'}
         dreams={myDreams}
         reducedMotion={reducedMotion}
+        motionRef={motion.motionRef}
+        motionProfile={galleryProfile}
+        performanceTier={viewportProfile.performanceTier}
+        pointerCoarse={viewportProfile.pointerCoarse}
         onGoHome={actions.goHome}
         onGoGallery={actions.goGallery}
         onStartNew={startFreshDreamEntry}
@@ -406,8 +495,32 @@ function App() {
       />
       <PortalTransition mode="orb" active={orbTransition.active} origin={orbTransition.origin} />
 
-      <AudioToggle muted={muted} onToggle={() => void toggleMuted()} />
-    </main>
+      <MotionPermissionPrompt
+        visible={motion.showPermissionPrompt}
+        permissionState={motion.snapshot.permissionState}
+        onEnable={() => {
+          void motion.requestTiltPermission()
+        }}
+        onSkip={motion.dismissPermissionPrompt}
+      />
+
+      {showMotionDock ? (
+        <MotionControlDock
+          permissionState={motion.snapshot.permissionState}
+          source={motion.snapshot.source}
+          onReenable={motion.reopenMotionPrompt}
+          onRecenter={motion.recenter}
+        />
+      ) : null}
+
+      {showFloatingAudio ? (
+        <AudioToggle
+          muted={muted}
+          onToggle={() => void toggleMuted()}
+          className="floating-audio-toggle"
+        />
+      ) : null}
+    </MobileAppShell>
   )
 }
 
