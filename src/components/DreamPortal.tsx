@@ -6,12 +6,14 @@ interface DreamPortalProps {
   entered: boolean
   reducedMotion: boolean
   parallaxRef: MutableRefObject<ParallaxPoint>
+  className?: string
 }
 
 export function DreamPortal({
   entered,
   reducedMotion,
   parallaxRef,
+  className,
 }: DreamPortalProps) {
   const floatingRef = useRef<HTMLDivElement>(null)
 
@@ -45,7 +47,10 @@ export function DreamPortal({
   }, [parallaxRef, reducedMotion])
 
   return (
-    <div className={`portal-scene ${entered ? 'is-entered' : ''}`} aria-hidden>
+    <div
+      className={`portal-scene ${entered ? 'is-entered' : ''} ${className ?? ''}`}
+      aria-hidden
+    >
       <div className="portal-floating" ref={floatingRef}>
         <div className="portal-halo" />
         <div className="portal-shell">

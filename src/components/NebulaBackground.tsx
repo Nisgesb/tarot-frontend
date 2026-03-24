@@ -6,6 +6,8 @@ interface NebulaBackgroundProps {
   entered: boolean
   reducedMotion: boolean
   parallaxRef: MutableRefObject<ParallaxPoint>
+  className?: string
+  timeScale?: number
 }
 
 const vertexShaderSource = `
@@ -154,9 +156,16 @@ export function NebulaBackground({
   entered,
   reducedMotion,
   parallaxRef,
+  className,
+  timeScale = 1,
 }: NebulaBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const timeScaleRef = useRef(timeScale)
   const [useFallback, setUseFallback] = useState(false)
+
+  useEffect(() => {
+    timeScaleRef.current = timeScale
+  }, [timeScale])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -253,7 +262,10 @@ export function NebulaBackground({
       const { x, y } = parallaxRef.current
 
       gl.uniform2f(resolutionLocation, width, height)
-      gl.uniform1f(timeLocation, elapsedSeconds * (reducedMotion ? 0.55 : 1))
+      gl.uniform1f(
+        timeLocation,
+        elapsedSeconds * (reducedMotion ? 0.55 : 1) * Math.max(0.2, timeScaleRef.current),
+      )
       gl.uniform2f(parallaxLocation, x, y)
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
 
@@ -285,13 +297,17 @@ export function NebulaBackground({
   }, [parallaxRef, reducedMotion])
 
   if (useFallback) {
-    return <div className={`nebula-layer nebula-fallback ${entered ? 'is-entered' : ''}`} />
+    return (
+      <div
+        className={`nebula-layer nebula-fallback ${entered ? 'is-entered' : ''} ${className ?? ''}`}
+      />
+    )
   }
 
   return (
     <canvas
       ref={canvasRef}
-      className={`nebula-layer ${entered ? 'is-entered' : ''}`}
+      className={`nebula-layer ${entered ? 'is-entered' : ''} ${className ?? ''}`}
       aria-hidden
     />
   )

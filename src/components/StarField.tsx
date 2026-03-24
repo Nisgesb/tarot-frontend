@@ -6,6 +6,8 @@ interface StarFieldProps {
   entered: boolean
   reducedMotion: boolean
   parallaxRef: MutableRefObject<ParallaxPoint>
+  className?: string
+  speedMultiplier?: number
 }
 
 interface Star {
@@ -52,8 +54,19 @@ function getStarCount(reducedMotion: boolean) {
   return count
 }
 
-export function StarField({ entered, reducedMotion, parallaxRef }: StarFieldProps) {
+export function StarField({
+  entered,
+  reducedMotion,
+  parallaxRef,
+  className,
+  speedMultiplier = 1,
+}: StarFieldProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const speedMultiplierRef = useRef(speedMultiplier)
+
+  useEffect(() => {
+    speedMultiplierRef.current = speedMultiplier
+  }, [speedMultiplier])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -107,7 +120,7 @@ export function StarField({ entered, reducedMotion, parallaxRef }: StarFieldProp
 
       const parallaxX = parallaxRef.current.x * (width <= 768 ? 8 : 16)
       const parallaxY = parallaxRef.current.y * (height <= 768 ? 6 : 12)
-      const driftMultiplier = reducedMotion ? 0.28 : 1
+      const driftMultiplier = (reducedMotion ? 0.28 : 1) * speedMultiplierRef.current
 
       for (const star of stars) {
         star.x += star.velocityX * delta * driftMultiplier
@@ -151,7 +164,7 @@ export function StarField({ entered, reducedMotion, parallaxRef }: StarFieldProp
   return (
     <canvas
       ref={canvasRef}
-      className={`starfield-layer ${entered ? 'is-entered' : ''}`}
+      className={`starfield-layer ${entered ? 'is-entered' : ''} ${className ?? ''}`}
       aria-hidden
     />
   )

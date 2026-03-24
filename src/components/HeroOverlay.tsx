@@ -1,10 +1,12 @@
 interface HeroOverlayProps {
   entered: boolean
+  hidden?: boolean
+  onEnter: () => void
 }
 
-export function HeroOverlay({ entered }: HeroOverlayProps) {
+export function HeroOverlay({ entered, hidden = false, onEnter }: HeroOverlayProps) {
   return (
-    <section className={`hero-overlay ${entered ? 'is-entered' : ''}`}>
+    <section className={`hero-overlay ${entered ? 'is-entered' : ''} ${hidden ? 'is-hidden' : ''}`}>
       <p className="hero-tag">AETHER STUDIO</p>
       <h1 className="hero-title">
         <span>Whispers of the</span>
@@ -14,7 +16,7 @@ export function HeroOverlay({ entered }: HeroOverlayProps) {
         A speculative collaboration where imagination and intelligent systems
         converge to turn impossible visions into luminous moments.
       </p>
-      <button className="hero-enter" type="button">
+      <button className="hero-enter" type="button" onClick={onEnter}>
         Enter
       </button>
     </section>
