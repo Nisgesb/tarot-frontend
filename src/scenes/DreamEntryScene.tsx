@@ -1,9 +1,12 @@
 import { useMemo, useState } from 'react'
+import type { EnterTransitionPhase } from '../hooks/useEnterTransition'
 import { ASSISTANT_QUESTIONS, createRefinedPrompt } from '../services/dreamAssistantService'
 import type { RawDreamInput } from '../types/dream'
 
 interface DreamEntrySceneProps {
   active: boolean
+  enterTransitionActive?: boolean
+  enterTransitionPhase?: EnterTransitionPhase
   phase: 'dreamEntry' | 'assistantRefine'
   keyboardOpen: boolean
   initialInput: RawDreamInput
@@ -14,6 +17,8 @@ interface DreamEntrySceneProps {
 
 export function DreamEntryScene({
   active,
+  enterTransitionActive = false,
+  enterTransitionPhase = 'idle',
   phase,
   keyboardOpen,
   initialInput,
@@ -35,6 +40,7 @@ export function DreamEntryScene({
       : isRefineEditor
         ? 'refined'
         : currentQuestion?.id ?? 'assistant'
+  const isEnterPreview = enterTransitionActive && !active
 
   const updateField = (field: keyof RawDreamInput, value: string) => {
     setInput((previous) => ({
@@ -85,6 +91,10 @@ export function DreamEntryScene({
     'scene-panel',
     'dream-entry-scene',
     active ? 'is-active' : '',
+    isEnterPreview ? 'is-enter-preview' : '',
+    isEnterPreview && enterTransitionPhase !== 'idle'
+      ? `enter-transition-phase-${enterTransitionPhase}`
+      : '',
     phase === 'assistantRefine' ? 'is-refining' : '',
     keyboardOpen ? 'is-keyboard-open' : '',
   ]

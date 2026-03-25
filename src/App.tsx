@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { AudioToggle } from './components/AudioToggle'
 import { DreamPortal } from './components/DreamPortal'
@@ -11,6 +11,7 @@ import type { PortalTransitionOrigin } from './components/PortalTransition'
 import { StarField } from './components/StarField'
 import { useAmbientAudio } from './hooks/useAmbientAudio'
 import { useKeyboardAwareViewport } from './hooks/useKeyboardAwareViewport'
+import { useEnterTransition } from './hooks/useEnterTransition'
 import { useMotionInput } from './hooks/useMotionInput'
 import { useReducedMotion } from './hooks/useReducedMotion'
 import { useSceneMachine } from './hooks/useSceneMachine'
@@ -32,7 +33,6 @@ import { MyDreamsScene } from './scenes/MyDreamsScene'
 import { EMPTY_RAW_DREAM_INPUT } from './types/dream'
 import type { DreamRecord, RawDreamInput } from './types/dream'
 
-const ENTER_TRANSITION_MS = 1200
 const ORB_ZOOM_MS = 560
 
 function downloadCanvas(canvas: HTMLCanvasElement | null, fileName: string) {
@@ -151,7 +151,6 @@ function App() {
     rawInput: RawDreamInput
     refinedText: string
   } | null>(null)
-  const enterTimerRef = useRef<number | null>(null)
   const zoomTimerRef = useRef<number | null>(null)
   const [orbTransition, setOrbTransition] = useState<{
     active: boolean
@@ -159,6 +158,18 @@ function App() {
   }>({
     active: false,
     origin: null,
+  })
+
+  const completeEnterTransition = useCallback(() => {
+    actions.goDreamEntry()
+  }, [actions])
+  const {
+    state: enterTransitionState,
+    start: startEnterTransition,
+    reset: resetEnterTransition,
+  } = useEnterTransition({
+    reducedMotion,
+    onComplete: completeEnterTransition,
   })
 
   const galleryDreams = useMemo(() => getGalleryDreams(), [])
@@ -195,14 +206,17 @@ function App() {
 
   useEffect(() => {
     return () => {
-      if (enterTimerRef.current) {
-        window.clearTimeout(enterTimerRef.current)
-      }
       if (zoomTimerRef.current) {
         window.clearTimeout(zoomTimerRef.current)
       }
     }
   }, [])
+
+  useEffect(() => {
+    if (sceneState.scene !== 'entering') {
+      resetEnterTransition()
+    }
+  }, [resetEnterTransition, sceneState.scene])
 
   useEffect(() => {
     if (sceneState.scene === 'generating' && !pendingGenerationRef.current) {
@@ -217,14 +231,7 @@ function App() {
     setDraftRefinedText('')
     setEntryRenderKey((previous) => previous + 1)
     actions.startEntering()
-
-    if (enterTimerRef.current) {
-      window.clearTimeout(enterTimerRef.current)
-    }
-
-    enterTimerRef.current = window.setTimeout(() => {
-      actions.goDreamEntry()
-    }, reducedMotion ? 160 : ENTER_TRANSITION_MS)
+    startEnterTransition()
   }
 
   const handleDreamEntryPhaseChange = (phase: 'dreamEntry' | 'assistantRefine') => {
@@ -349,6 +356,12 @@ function App() {
     'app-root',
     entered ? 'is-booted' : '',
     `scene-${sceneState.scene}`,
+    sceneState.scene === 'entering' && enterTransitionState.active
+      ? 'enter-transition-active'
+      : '',
+    sceneState.scene === 'entering' && enterTransitionState.phase !== 'idle'
+      ? `enter-phase-${enterTransitionState.phase}`
+      : '',
     `motion-${motion.snapshot.source}`,
     viewportProfile.isPhone ? 'platform-phone' : 'platform-wide',
     keyboardAware.keyboardOpen ? 'is-keyboard-open' : '',
@@ -403,6 +416,13 @@ function App() {
         performanceTier={viewportProfile.performanceTier}
         speedMultiplier={resolveStarSpeed(sceneState.scene)}
       />
+      <div className="enter-inner-world-layer" aria-hidden>
+        <div className="enter-inner-world-window">
+          <div className="enter-inner-world-stars" />
+          <div className="enter-inner-world-rim" />
+          <div className="enter-inner-world-grain" />
+        </div>
+      </div>
 
       <DreamPortal
         entered={entered}
@@ -424,6 +444,10 @@ function App() {
         active={
           sceneState.scene === 'dreamEntry' || sceneState.scene === 'assistantRefine'
         }
+        enterTransitionActive={
+          sceneState.scene === 'entering' && enterTransitionState.active
+        }
+        enterTransitionPhase={enterTransitionState.phase}
         phase={sceneState.scene === 'assistantRefine' ? 'assistantRefine' : 'dreamEntry'}
         keyboardOpen={keyboardAware.keyboardOpen}
         initialInput={draftInput}
@@ -492,7 +516,9 @@ function App() {
 
       <PortalTransition
         mode="enter"
-        active={sceneState.scene === 'entering'}
+        active={sceneState.scene === 'entering' && enterTransitionState.active}
+        phase={enterTransitionState.phase}
+        reducedMotion={reducedMotion}
       />
       <PortalTransition mode="orb" active={orbTransition.active} origin={orbTransition.origin} />
 
