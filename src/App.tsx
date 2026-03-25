@@ -415,11 +415,12 @@ function App() {
       <HeroOverlay
         entered={entered}
         hidden={sceneState.scene !== 'hero' && sceneState.scene !== 'entering'}
+        reducedMotion={reducedMotion}
         onEnter={startEnterFlow}
       />
 
       <DreamEntryScene
-        key={entryRenderKey}
+        key={`entry-${entryRenderKey}`}
         active={
           sceneState.scene === 'dreamEntry' || sceneState.scene === 'assistantRefine'
         }
@@ -432,7 +433,7 @@ function App() {
       />
 
       <DreamInsightsLoader
-        key={generationToken}
+        key={`loader-${generationToken}`}
         active={sceneState.scene === 'generating'}
         reducedMotion={reducedMotion}
         onComplete={completeGeneration}

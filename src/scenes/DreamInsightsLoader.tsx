@@ -131,7 +131,7 @@ export function DreamInsightsLoader({
         </div>
         <p className="loader-stage">{step.stage}</p>
         <p className="loader-copy">{step.copy}</p>
-        <p className="loader-insight" key={insightIndex}>
+        <p className="loader-insight">
           {INSIGHT_ROTATION[insightIndex]}
         </p>
         <div className="loader-progress-track" aria-hidden>
