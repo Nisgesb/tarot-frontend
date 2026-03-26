@@ -208,6 +208,7 @@ export function StarField({
     let width = 0
     let height = 0
     let lastTime = 0
+    let loopActive = false
 
     const resize = () => {
       const pixelRatio = Math.min(
@@ -243,6 +244,10 @@ export function StarField({
     window.addEventListener('resize', resize)
 
     const render = (time: number) => {
+      if (!loopActive) {
+        return
+      }
+
       if (lastTime === 0) {
         lastTime = time
       }
@@ -320,11 +325,44 @@ export function StarField({
       frameId = window.requestAnimationFrame(render)
     }
 
-    frameId = window.requestAnimationFrame(render)
+    const stopLoop = () => {
+      if (!loopActive) {
+        return
+      }
+
+      loopActive = false
+      if (frameId) {
+        window.cancelAnimationFrame(frameId)
+        frameId = 0
+      }
+    }
+
+    const startLoop = () => {
+      if (loopActive || document.hidden) {
+        return
+      }
+
+      lastTime = 0
+      loopActive = true
+      frameId = window.requestAnimationFrame(render)
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopLoop()
+        return
+      }
+
+      startLoop()
+    }
+
+    startLoop()
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
       window.removeEventListener('resize', resize)
-      window.cancelAnimationFrame(frameId)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      stopLoop()
     }
   }, [motionRef, performanceTier, reducedMotion])
 

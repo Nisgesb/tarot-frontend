@@ -19,6 +19,7 @@
   "dependencies": {
     "@capacitor/core": "^8.2.0",
     "@capacitor/filesystem": "^8.1.2",
+    "@capacitor/motion": "^8.0.0",
     "@capacitor/preferences": "^8.0.1",
     "@capacitor/share": "^8.0.1",
     "@fontsource/cormorant-garamond": "^5.2.11",

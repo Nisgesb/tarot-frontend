@@ -31,3 +31,11 @@ export interface MotionProfile {
   x: number
   y: number
 }
+
+export interface MotionTuning {
+  phoneTiltGain: number
+  phoneTiltLowPassBoost: number
+  nativeCalibrationRange: number
+  nativeAbsoluteBlend: number
+  tiltMaxDeltaBoost: number
+}

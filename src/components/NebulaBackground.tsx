@@ -226,6 +226,9 @@ export function NebulaBackground({
     let frameId = 0
     let width = 0
     let height = 0
+    let pausedAt = 0
+    let pauseOffset = 0
+    let loopActive = false
 
     try {
       vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexShaderSource)
@@ -299,7 +302,11 @@ export function NebulaBackground({
     const startTime = performance.now()
 
     const render = (now: number) => {
-      const elapsedSeconds = (now - startTime) / 1000
+      if (!loopActive) {
+        return
+      }
+
+      const elapsedSeconds = (now - startTime - pauseOffset) / 1000
       const { x, y } = motionRef.current
       const profile = motionProfileRef.current
 
@@ -327,11 +334,49 @@ export function NebulaBackground({
       frameId = window.requestAnimationFrame(render)
     }
 
-    frameId = window.requestAnimationFrame(render)
+    const stopLoop = () => {
+      if (!loopActive) {
+        return
+      }
+
+      loopActive = false
+      if (frameId) {
+        window.cancelAnimationFrame(frameId)
+        frameId = 0
+      }
+    }
+
+    const startLoop = () => {
+      if (loopActive || document.hidden) {
+        return
+      }
+
+      if (pausedAt > 0) {
+        pauseOffset += performance.now() - pausedAt
+        pausedAt = 0
+      }
+
+      loopActive = true
+      frameId = window.requestAnimationFrame(render)
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        pausedAt = performance.now()
+        stopLoop()
+        return
+      }
+
+      startLoop()
+    }
+
+    startLoop()
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
       window.removeEventListener('resize', resize)
-      window.cancelAnimationFrame(frameId)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      stopLoop()
 
       if (vertexBuffer) {
         gl.deleteBuffer(vertexBuffer)

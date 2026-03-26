@@ -6,6 +6,10 @@ interface DeviceOrientationWithPermission extends DeviceOrientationEvent {
   requestPermission?: () => Promise<'granted' | 'denied'>
 }
 
+interface DeviceMotionWithPermission extends DeviceMotionEvent {
+  requestPermission?: () => Promise<'granted' | 'denied'>
+}
+
 export function getRuntimePlatform(): RuntimePlatform {
   const platform = Capacitor.getPlatform()
 
@@ -28,6 +32,10 @@ export function hasDeviceOrientationSupport() {
   return canUseWindow() && typeof window.DeviceOrientationEvent !== 'undefined'
 }
 
+export function hasDeviceMotionSupport() {
+  return canUseWindow() && typeof window.DeviceMotionEvent !== 'undefined'
+}
+
 export function deviceOrientationNeedsPermission() {
   if (!hasDeviceOrientationSupport()) {
     return false
@@ -38,4 +46,16 @@ export function deviceOrientationNeedsPermission() {
     DeviceOrientationWithPermission
 
   return typeof orientationCtor.requestPermission === 'function'
+}
+
+export function deviceMotionNeedsPermission() {
+  if (!hasDeviceMotionSupport()) {
+    return false
+  }
+
+  const motionCtor = window
+    .DeviceMotionEvent as typeof DeviceMotionEvent &
+    DeviceMotionWithPermission
+
+  return typeof motionCtor.requestPermission === 'function'
 }

@@ -16,11 +16,12 @@ import type { LeonSansInstance } from '../utils/leonLoader'
 const DROP_TEXTURE_URL = '/textures/drop-alpha.png'
 const PARTICLE_TOTAL = 10000
 const REVEAL_START_DELAY_MS = 100
-const PIXEL_RATIO = 2
+const DESKTOP_RENDER_RESOLUTION = 2
+const PHONE_RENDER_RESOLUTION = 1.45
 const MIN_BASE_SIZE = 8
 const DEFAULT_BASE_SIZE = 82
 
-type DebugColor = 'white' | 'black' | 'red'
+type DebugColor = string
 
 interface DebugSettings {
   text: string
@@ -42,7 +43,7 @@ const DEFAULT_DEBUG_SETTINGS: Omit<DebugSettings, 'text'> = {
   weight: 5.43,
   blur: 1.8,
   threshold: 0.23,
-  color: 'white',
+  color: '#ffffff',
   revealDuration: 2540,
   revealDelayMs: 0.31,
 }
@@ -113,14 +114,30 @@ function getResponsiveWeight(size: number) {
   return ((3 - 6) / (400 - MIN_BASE_SIZE)) * (safeSize - MIN_BASE_SIZE) + 6
 }
 
+function normalizeHexColor(color: string) {
+  const source = color.trim().toLowerCase()
+  const normalized = source.startsWith('#') ? source.slice(1) : source
+  const valid = /^[\da-f]{6}$/i.test(normalized)
+
+  if (!valid) {
+    return '#ffffff'
+  }
+
+  return `#${normalized}`
+}
+
 function getColorUniform(color: DebugColor) {
-  if (color === 'red') {
-    return { mr: 244 / 255, mg: 46 / 255, mb: 33 / 255 }
+  const normalized = normalizeHexColor(color)
+  const value = Number.parseInt(normalized.slice(1), 16)
+  const red = (value >> 16) & 0xff
+  const green = (value >> 8) & 0xff
+  const blue = value & 0xff
+
+  return {
+    mr: red / 255,
+    mg: green / 255,
+    mb: blue / 255,
   }
-  if (color === 'black') {
-    return { mr: 0, mg: 0, mb: 0 }
-  }
-  return { mr: 1, mg: 1, mb: 1 }
 }
 
 async function ensureTexture(texture: Texture) {
@@ -202,6 +219,8 @@ export function HeroHeadlineMetaballOverlay({
     runtimeControlRef.current?.replay()
   }
 
+  const colorHex = normalizeHexColor(debugSettings.color).toUpperCase()
+
   useEffect(() => {
     const host = hostRef.current
 
@@ -212,6 +231,7 @@ export function HeroHeadlineMetaballOverlay({
     let disposed = false
     let rafId = 0
     let resizeRafId = 0
+    let loopActive = false
     let resizeObserver: ResizeObserver | null = null
     let renderer: Renderer | null = null
     let stage: Container | null = null
@@ -349,7 +369,7 @@ export function HeroHeadlineMetaballOverlay({
     }
 
     const tick = (time: number) => {
-      if (disposed || !renderer || !stage) {
+      if (disposed || !loopActive || !renderer || !stage) {
         return
       }
 
@@ -361,6 +381,36 @@ export function HeroHeadlineMetaballOverlay({
 
       renderer.render(stage)
       rafId = window.requestAnimationFrame(tick)
+    }
+
+    const stopLoop = () => {
+      if (!loopActive) {
+        return
+      }
+
+      loopActive = false
+      if (rafId) {
+        window.cancelAnimationFrame(rafId)
+        rafId = 0
+      }
+    }
+
+    const startLoop = () => {
+      if (loopActive || document.hidden || !renderer || !stage) {
+        return
+      }
+
+      loopActive = true
+      rafId = window.requestAnimationFrame(tick)
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopLoop()
+        return
+      }
+
+      startLoop()
     }
 
     runtimeControlRef.current = {
@@ -389,12 +439,16 @@ export function HeroHeadlineMetaballOverlay({
       viewHeight = Math.max(1, Math.round(rect.height))
 
       try {
+        const renderResolution = window.matchMedia('(pointer: coarse)').matches
+          ? Math.min(window.devicePixelRatio || 1, PHONE_RENDER_RESOLUTION)
+          : DESKTOP_RENDER_RESOLUTION
+
         renderer = new Renderer({
           width: viewWidth,
           height: viewHeight,
           antialias: true,
           autoDensity: true,
-          resolution: PIXEL_RATIO,
+          resolution: renderResolution,
           powerPreference: 'high-performance',
           backgroundAlpha: 0,
         })
@@ -479,16 +533,18 @@ export function HeroHeadlineMetaballOverlay({
       resizeObserver.observe(host)
 
       applyDebugSettings({ replay: true })
-      rafId = window.requestAnimationFrame(tick)
+      startLoop()
     }
 
+    document.addEventListener('visibilitychange', handleVisibilityChange)
     void init().catch(() => {
       reportUnsupported()
     })
 
     return () => {
       disposed = true
-      window.cancelAnimationFrame(rafId)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      stopLoop()
       window.cancelAnimationFrame(resizeRafId)
       resizeObserver?.disconnect()
       resizeObserver = null
@@ -522,15 +578,15 @@ export function HeroHeadlineMetaballOverlay({
           setDebugOpen((value) => !value)
         }}
       >
-        {debugOpen ? 'HIDE DEBUG' : 'DEBUG'}
+        {debugOpen ? '隐藏调试' : '文字调试'}
       </button>
 
       {debugOpen ? (
         <div className="metaball-debug-panel">
-          <div className="metaball-debug-title">METABALL DEBUG</div>
+          <div className="metaball-debug-title">文字 Metaball 调试</div>
 
           <label className="metaball-debug-row">
-            <span>Text</span>
+            <span>文本</span>
             <textarea
               value={debugSettings.text}
               onChange={(event) => {
@@ -541,7 +597,7 @@ export function HeroHeadlineMetaballOverlay({
           </label>
 
           <label className="metaball-debug-row">
-            <span>Size {Math.round(debugSettings.baseSize)}</span>
+            <span>字号 {Math.round(debugSettings.baseSize)}</span>
             <input
               type="range"
               min={MIN_BASE_SIZE}
@@ -562,7 +618,7 @@ export function HeroHeadlineMetaballOverlay({
           </label>
 
           <label className="metaball-debug-row">
-            <span>Tracking {debugSettings.tracking.toFixed(1)}</span>
+            <span>字距 {debugSettings.tracking.toFixed(1)}</span>
             <input
               type="range"
               min={-6}
@@ -576,7 +632,7 @@ export function HeroHeadlineMetaballOverlay({
           </label>
 
           <label className="metaball-debug-row">
-            <span>Leading {debugSettings.leading.toFixed(1)}</span>
+            <span>行距 {debugSettings.leading.toFixed(1)}</span>
             <input
               type="range"
               min={-8}
@@ -590,7 +646,7 @@ export function HeroHeadlineMetaballOverlay({
           </label>
 
           <label className="metaball-debug-row">
-            <span>Weight {debugSettings.weight.toFixed(2)}</span>
+            <span>笔画粗细 {debugSettings.weight.toFixed(2)}</span>
             <input
               type="range"
               min={1}
@@ -604,7 +660,7 @@ export function HeroHeadlineMetaballOverlay({
           </label>
 
           <label className="metaball-debug-row">
-            <span>Blur {debugSettings.blur.toFixed(1)}</span>
+            <span>模糊 {debugSettings.blur.toFixed(1)}</span>
             <input
               type="range"
               min={0}
@@ -618,7 +674,7 @@ export function HeroHeadlineMetaballOverlay({
           </label>
 
           <label className="metaball-debug-row">
-            <span>Threshold {debugSettings.threshold.toFixed(2)}</span>
+            <span>阈值 {debugSettings.threshold.toFixed(2)}</span>
             <input
               type="range"
               min={0.05}
@@ -632,7 +688,7 @@ export function HeroHeadlineMetaballOverlay({
           </label>
 
           <label className="metaball-debug-row">
-            <span>Delay {debugSettings.revealDelayMs.toFixed(2)}ms</span>
+            <span>延迟 {debugSettings.revealDelayMs.toFixed(2)}ms</span>
             <input
               type="range"
               min={0}
@@ -646,7 +702,7 @@ export function HeroHeadlineMetaballOverlay({
           </label>
 
           <label className="metaball-debug-row">
-            <span>Duration {Math.round(debugSettings.revealDuration)}ms</span>
+            <span>时长 {Math.round(debugSettings.revealDuration)}ms</span>
             <input
               type="range"
               min={300}
@@ -660,17 +716,19 @@ export function HeroHeadlineMetaballOverlay({
           </label>
 
           <label className="metaball-debug-row">
-            <span>Color</span>
-            <select
-              value={debugSettings.color}
-              onChange={(event) => {
-                updateDebugSettings({ color: event.target.value as DebugColor })
-              }}
-            >
-              <option value="white">white</option>
-              <option value="black">black</option>
-              <option value="red">red</option>
-            </select>
+            <span>颜色 {colorHex}</span>
+            <div className="metaball-debug-color-controls">
+              <input
+                type="color"
+                className="metaball-debug-color-input"
+                value={normalizeHexColor(debugSettings.color)}
+                onChange={(event) => {
+                  updateDebugSettings({ color: event.target.value })
+                }}
+                aria-label="文字颜色"
+              />
+              <span className="metaball-debug-color-hex">{colorHex}</span>
+            </div>
           </label>
 
           <button
@@ -680,7 +738,7 @@ export function HeroHeadlineMetaballOverlay({
               replayReveal()
             }}
           >
-            Replay
+            重新播放
           </button>
         </div>
       ) : null}

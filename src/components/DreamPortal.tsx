@@ -38,8 +38,13 @@ export function DreamPortal({
     }
 
     let frameId = 0
+    let loopActive = false
 
     const render = () => {
+      if (!loopActive) {
+        return
+      }
+
       const { x, y } = motionRef.current
       const profile = motionProfileRef.current
       element.style.setProperty('--portal-shift-x', `${(x * profile.x * 14).toFixed(2)}px`)
@@ -47,10 +52,42 @@ export function DreamPortal({
       frameId = window.requestAnimationFrame(render)
     }
 
-    frameId = window.requestAnimationFrame(render)
+    const stopLoop = () => {
+      if (!loopActive) {
+        return
+      }
+
+      loopActive = false
+      if (frameId) {
+        window.cancelAnimationFrame(frameId)
+        frameId = 0
+      }
+    }
+
+    const startLoop = () => {
+      if (loopActive || document.hidden) {
+        return
+      }
+
+      loopActive = true
+      frameId = window.requestAnimationFrame(render)
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopLoop()
+        return
+      }
+
+      startLoop()
+    }
+
+    startLoop()
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
-      window.cancelAnimationFrame(frameId)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      stopLoop()
     }
   }, [motionRef, reducedMotion])
 

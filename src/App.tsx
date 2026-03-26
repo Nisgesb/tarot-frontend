@@ -4,6 +4,7 @@ import { AudioToggle } from './components/AudioToggle'
 import { DreamPortal } from './components/DreamPortal'
 import { HeroOverlay } from './components/HeroOverlay'
 import { MotionControlDock } from './components/MotionControlDock'
+import { MotionDebugPanel } from './components/MotionDebugPanel'
 import { MotionPermissionPrompt } from './components/MotionPermissionPrompt'
 import { NebulaBackground } from './components/NebulaBackground'
 import type { NebulaCompositionFrame } from './components/NebulaBackground'
@@ -13,13 +14,13 @@ import { StarField } from './components/StarField'
 import { useAmbientAudio } from './hooks/useAmbientAudio'
 import { useKeyboardAwareViewport } from './hooks/useKeyboardAwareViewport'
 import { useEnterTransition } from './hooks/useEnterTransition'
-import { useMotionInput } from './hooks/useMotionInput'
+import { DEFAULT_MOTION_TUNING, useMotionInput } from './hooks/useMotionInput'
 import { useReducedMotion } from './hooks/useReducedMotion'
 import { useSceneMachine } from './hooks/useSceneMachine'
 import { useSafeAreaInsets } from './hooks/useSafeAreaInsets'
 import { useViewportProfile } from './hooks/useViewportProfile'
 import { MobileAppShell } from './layout/MobileAppShell'
-import type { MotionProfile } from './motion/types'
+import type { MotionProfile, MotionTuning } from './motion/types'
 import { exportCanvasResult } from './platform/exportShareAdapter'
 import { createDreamRecordFromRefined } from './services/dreamGenerationService'
 import { getGalleryDreams } from './services/galleryService'
@@ -37,6 +38,41 @@ import { EMPTY_RAW_DREAM_INPUT } from './types/dream'
 import type { DreamRecord, RawDreamInput } from './types/dream'
 
 const ORB_ZOOM_MS = 560
+const MOTION_TUNING_KEY = 'motion-debug-tuning-v1'
+
+function loadMotionTuning(): MotionTuning {
+  if (typeof window === 'undefined') {
+    return DEFAULT_MOTION_TUNING
+  }
+
+  try {
+    const raw = window.localStorage.getItem(MOTION_TUNING_KEY)
+
+    if (!raw) {
+      return DEFAULT_MOTION_TUNING
+    }
+
+    const parsed = JSON.parse(raw) as Partial<MotionTuning>
+
+    return {
+      phoneTiltGain: Number(parsed.phoneTiltGain ?? DEFAULT_MOTION_TUNING.phoneTiltGain),
+      phoneTiltLowPassBoost: Number(
+        parsed.phoneTiltLowPassBoost ?? DEFAULT_MOTION_TUNING.phoneTiltLowPassBoost,
+      ),
+      nativeCalibrationRange: Number(
+        parsed.nativeCalibrationRange ?? DEFAULT_MOTION_TUNING.nativeCalibrationRange,
+      ),
+      nativeAbsoluteBlend: Number(
+        parsed.nativeAbsoluteBlend ?? DEFAULT_MOTION_TUNING.nativeAbsoluteBlend,
+      ),
+      tiltMaxDeltaBoost: Number(
+        parsed.tiltMaxDeltaBoost ?? DEFAULT_MOTION_TUNING.tiltMaxDeltaBoost,
+      ),
+    }
+  } catch {
+    return DEFAULT_MOTION_TUNING
+  }
+}
 
 function resolveBackgroundSpeed(scene: string) {
   switch (scene) {
@@ -133,12 +169,15 @@ function App() {
     sceneState.scene === 'dreamEntry' || sceneState.scene === 'assistantRefine',
   )
 
+  const [motionTuning, setMotionTuning] = useState<MotionTuning>(() => loadMotionTuning())
+
   const motion = useMotionInput({
     enabled: true,
     reducedMotion,
     pointerCoarse: viewportProfile.pointerCoarse,
     isDesktop: viewportProfile.isDesktop,
     isPhone: viewportProfile.isPhone,
+    tuning: motionTuning,
   })
 
   const [hasAnimatedIn, setHasAnimatedIn] = useState(false)
@@ -177,6 +216,14 @@ function App() {
     () => findDreamById(sceneState.dreamId, myDreams, galleryDreams),
     [sceneState.dreamId, myDreams, galleryDreams],
   )
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(MOTION_TUNING_KEY, JSON.stringify(motionTuning))
+    } catch {
+      // no-op
+    }
+  }, [motionTuning])
 
   useEffect(() => {
     let cancelled = false
@@ -422,8 +469,9 @@ function App() {
     sceneState.scene !== 'result' &&
     sceneState.scene !== 'inspectDream'
   const showMotionDock =
-    sceneState.scene !== 'hero' &&
-    sceneState.scene !== 'entering' &&
+    viewportProfile.pointerCoarse &&
+    sceneState.scene !== 'result' &&
+    sceneState.scene !== 'inspectDream' &&
     (
       motion.snapshot.permissionState !== 'granted' ||
       sceneState.scene === 'dreamEntry' ||
@@ -431,6 +479,10 @@ function App() {
       sceneState.scene === 'gallery' ||
       sceneState.scene === 'myDreams'
     )
+  const showMotionDebug =
+    viewportProfile.pointerCoarse &&
+    sceneState.scene !== 'result' &&
+    sceneState.scene !== 'inspectDream'
 
   return (
     <MobileAppShell
@@ -575,6 +627,23 @@ function App() {
           source={motion.snapshot.source}
           onReenable={motion.reopenMotionPrompt}
           onRecenter={motion.recenter}
+        />
+      ) : null}
+
+      {showMotionDebug ? (
+        <MotionDebugPanel
+          tuning={motionTuning}
+          permissionState={motion.snapshot.permissionState}
+          source={motion.snapshot.source}
+          onChange={(patch) => {
+            setMotionTuning((previous) => ({
+              ...previous,
+              ...patch,
+            }))
+          }}
+          onReset={() => {
+            setMotionTuning(DEFAULT_MOTION_TUNING)
+          }}
         />
       ) : null}
 

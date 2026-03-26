@@ -1,3 +1,5 @@
+import { Motion } from '@capacitor/motion'
+import type { AccelListenerEvent } from '@capacitor/motion'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { MutableRefObject } from 'react'
 import type {
@@ -5,10 +7,13 @@ import type {
   MotionPermissionState,
   MotionSnapshot,
   MotionSource,
+  MotionTuning,
   MotionVector,
 } from '../motion/types'
 import {
+  deviceMotionNeedsPermission,
   deviceOrientationNeedsPermission,
+  hasDeviceMotionSupport,
   hasDeviceOrientationSupport,
 } from '../platform/runtime'
 
@@ -20,12 +25,22 @@ const DEAD_ZONE = 0.035
 const LOW_PASS = 0.11
 const CLAMP_RANGE = 0.78
 const MAX_DELTA_PER_FRAME = 0.025
-const PHONE_TILT_GAIN = 1.3
-const PHONE_TILT_LOW_PASS_BOOST = 1.18
+const NATIVE_GRAVITY = 9.81
+
+type CalibrationMode = 'orientation' | 'acceleration'
+
+export const DEFAULT_MOTION_TUNING: MotionTuning = {
+  phoneTiltGain: 1.58,
+  phoneTiltLowPassBoost: 1.18,
+  nativeCalibrationRange: 0.52,
+  nativeAbsoluteBlend: 0.38,
+  tiltMaxDeltaBoost: 1.85,
+}
 
 interface OrientationCalibration {
   beta: number
   gamma: number
+  mode: CalibrationMode
 }
 
 interface UseMotionInputOptions {
@@ -34,6 +49,7 @@ interface UseMotionInputOptions {
   pointerCoarse: boolean
   isDesktop: boolean
   isPhone: boolean
+  tuning?: MotionTuning
 }
 
 interface UseMotionInputResult {
@@ -48,6 +64,10 @@ interface UseMotionInputResult {
 }
 
 interface DeviceOrientationWithPermission extends DeviceOrientationEvent {
+  requestPermission?: () => Promise<'granted' | 'denied'>
+}
+
+interface DeviceMotionWithPermission extends DeviceMotionEvent {
   requestPermission?: () => Promise<'granted' | 'denied'>
 }
 
@@ -79,10 +99,18 @@ function readCalibration(): OrientationCalibration | null {
   }
 
   try {
-    const parsed = JSON.parse(raw) as OrientationCalibration
+    const parsed = JSON.parse(raw) as Partial<OrientationCalibration>
 
-    if (typeof parsed.beta === 'number' && typeof parsed.gamma === 'number') {
-      return parsed
+    if (
+      typeof parsed.beta === 'number' &&
+      typeof parsed.gamma === 'number' &&
+      (parsed.mode === 'orientation' || parsed.mode === 'acceleration')
+    ) {
+      return {
+        beta: parsed.beta,
+        gamma: parsed.gamma,
+        mode: parsed.mode,
+      }
     }
 
     return null
@@ -91,12 +119,16 @@ function readCalibration(): OrientationCalibration | null {
   }
 }
 
+function writeCalibration(calibration: OrientationCalibration) {
+  writeStorage(MOTION_CALIBRATION_KEY, JSON.stringify(calibration))
+}
+
 function getTiltSupport() {
-  return hasDeviceOrientationSupport()
+  return hasDeviceOrientationSupport() || hasDeviceMotionSupport()
 }
 
 function getNeedsPermission() {
-  return deviceOrientationNeedsPermission()
+  return deviceOrientationNeedsPermission() || deviceMotionNeedsPermission()
 }
 
 function derivePermissionState(): MotionPermissionState {
@@ -141,6 +173,7 @@ export function useMotionInput({
   pointerCoarse,
   isDesktop,
   isPhone,
+  tuning = DEFAULT_MOTION_TUNING,
 }: UseMotionInputOptions): UseMotionInputResult {
   const [permissionState, setPermissionState] =
     useState<MotionPermissionState>(derivePermissionState)
@@ -156,14 +189,21 @@ export function useMotionInput({
   const smoothRef = useRef({ x: 0, y: 0 })
   const touchActiveRef = useRef(false)
   const calibrationRef = useRef<OrientationCalibration | null>(readCalibration())
+  const tuningRef = useRef<MotionTuning>(tuning)
   const sourceRef = useRef<MotionSource>('idle')
+  const tiltModeRef = useRef<CalibrationMode>('orientation')
   const lastTiltAtRef = useRef(0)
+  const lastNativeTiltAtRef = useRef(0)
   const lastTouchAtRef = useRef(0)
   const lastMouseAtRef = useRef(0)
 
   useEffect(() => {
     permissionStateRef.current = permissionState
   }, [permissionState])
+
+  useEffect(() => {
+    tuningRef.current = tuning
+  }, [tuning])
 
   const capabilityState = useMemo(
     () => deriveCapabilityState(permissionState),
@@ -191,11 +231,32 @@ export function useMotionInput({
     }
 
     try {
-      const orientationCtor = window
-        .DeviceOrientationEvent as typeof DeviceOrientationEvent &
-        DeviceOrientationWithPermission
-      const result = await orientationCtor.requestPermission?.()
-      const granted = result === 'granted'
+      const permissionRequests: Array<Promise<'granted' | 'denied' | undefined>> = []
+
+      if (typeof window.DeviceMotionEvent !== 'undefined') {
+        const motionCtor = window
+          .DeviceMotionEvent as typeof DeviceMotionEvent &
+          DeviceMotionWithPermission
+
+        if (typeof motionCtor.requestPermission === 'function') {
+          permissionRequests.push(motionCtor.requestPermission())
+        }
+      }
+
+      if (typeof window.DeviceOrientationEvent !== 'undefined') {
+        const orientationCtor = window
+          .DeviceOrientationEvent as typeof DeviceOrientationEvent &
+          DeviceOrientationWithPermission
+
+        if (typeof orientationCtor.requestPermission === 'function') {
+          permissionRequests.push(orientationCtor.requestPermission())
+        }
+      }
+
+      const results = await Promise.allSettled(permissionRequests)
+      const granted = results.length === 0 || results.every(
+        (result) => result.status === 'fulfilled' && result.value === 'granted',
+      )
 
       setPermissionState(granted ? 'granted' : 'denied')
       writeStorage(MOTION_PERMISSION_KEY, granted ? 'granted' : 'denied')
@@ -246,10 +307,11 @@ export function useMotionInput({
     const calibration = {
       beta: targetTiltRef.current.beta,
       gamma: targetTiltRef.current.gamma,
+      mode: tiltModeRef.current,
     }
 
     calibrationRef.current = calibration
-    writeStorage(MOTION_CALIBRATION_KEY, JSON.stringify(calibration))
+    writeCalibration(calibration)
   }, [])
 
   useEffect(() => {
@@ -259,8 +321,18 @@ export function useMotionInput({
       return undefined
     }
 
+    const orientationSupport = hasDeviceOrientationSupport()
+    const motionSupport = hasDeviceMotionSupport()
+
     const onOrientation = (event: DeviceOrientationEvent) => {
       if (permissionStateRef.current !== 'granted') {
+        return
+      }
+
+      const now = performance.now()
+
+      // Prefer native acceleration samples on iOS/Android when available.
+      if (now - lastNativeTiltAtRef.current < 360) {
         return
       }
 
@@ -270,26 +342,96 @@ export function useMotionInput({
 
       targetTiltRef.current.beta = event.beta
       targetTiltRef.current.gamma = event.gamma
+      tiltModeRef.current = 'orientation'
 
       const calibration = calibrationRef.current
-      if (!calibration) {
+      if (!calibration || calibration.mode !== 'orientation') {
         const nextCalibration = {
           beta: event.beta,
           gamma: event.gamma,
+          mode: 'orientation' as const,
         }
 
         calibrationRef.current = nextCalibration
-        writeStorage(MOTION_CALIBRATION_KEY, JSON.stringify(nextCalibration))
+        writeCalibration(nextCalibration)
       }
 
-      const base = calibrationRef.current ?? { beta: event.beta, gamma: event.gamma }
-      const tiltGain = isPhone && pointerCoarse ? PHONE_TILT_GAIN : 1
+      const base = calibrationRef.current ?? {
+        beta: event.beta,
+        gamma: event.gamma,
+        mode: 'orientation' as const,
+      }
+      const tiltGain = isPhone && pointerCoarse ? tuningRef.current.phoneTiltGain : 1
       const normalizedX = clamp((event.gamma - base.gamma) / 22, -1, 1)
       const normalizedY = clamp((event.beta - base.beta) / 26, -1, 1)
 
       targetTiltRef.current.x = clamp(normalizedX * tiltGain, -1, 1)
       targetTiltRef.current.y = clamp(normalizedY * tiltGain, -1, 1)
+      lastTiltAtRef.current = now
+    }
+
+    const applyNativeAcceleration = (
+      acceleration: { x: number | null; y: number | null } | null | undefined,
+    ) => {
+      if (permissionStateRef.current !== 'granted') {
+        return
+      }
+
+      if (!acceleration || acceleration.x == null || acceleration.y == null) {
+        return
+      }
+
+      const normalizedGamma = clamp(acceleration.x / NATIVE_GRAVITY, -1, 1)
+      const normalizedBeta = clamp((-acceleration.y) / NATIVE_GRAVITY, -1, 1)
+
+      targetTiltRef.current.beta = normalizedBeta
+      targetTiltRef.current.gamma = normalizedGamma
+      tiltModeRef.current = 'acceleration'
+      lastNativeTiltAtRef.current = performance.now()
+
+      const calibration = calibrationRef.current
+      if (!calibration || calibration.mode !== 'acceleration') {
+        const nextCalibration = {
+          beta: normalizedBeta,
+          gamma: normalizedGamma,
+          mode: 'acceleration' as const,
+        }
+
+        calibrationRef.current = nextCalibration
+        writeCalibration(nextCalibration)
+      }
+
+      const base = calibrationRef.current ?? {
+        beta: normalizedBeta,
+        gamma: normalizedGamma,
+        mode: 'acceleration' as const,
+      }
+      const tiltGain = isPhone && pointerCoarse ? tuningRef.current.phoneTiltGain : 1
+      const normalizedX = clamp(
+        (normalizedGamma - base.gamma) / tuningRef.current.nativeCalibrationRange,
+        -1,
+        1,
+      )
+      const normalizedY = clamp(
+        (normalizedBeta - base.beta) / tuningRef.current.nativeCalibrationRange,
+        -1,
+        1,
+      )
+
+      const blendedX = normalizedX + normalizedGamma * tuningRef.current.nativeAbsoluteBlend
+      const blendedY = normalizedY + normalizedBeta * tuningRef.current.nativeAbsoluteBlend
+
+      targetTiltRef.current.x = clamp(blendedX * tiltGain, -1, 1)
+      targetTiltRef.current.y = clamp(blendedY * tiltGain, -1, 1)
       lastTiltAtRef.current = performance.now()
+    }
+
+    const onNativeAccel = (event: AccelListenerEvent) => {
+      applyNativeAcceleration(event.accelerationIncludingGravity ?? event.acceleration)
+    }
+
+    const onDeviceMotion = (event: DeviceMotionEvent) => {
+      applyNativeAcceleration(event.accelerationIncludingGravity ?? event.acceleration)
     }
 
     const onPointerMove = (event: PointerEvent) => {
@@ -329,15 +471,16 @@ export function useMotionInput({
       }
     }
 
-    window.addEventListener('deviceorientation', onOrientation)
-    window.addEventListener('pointermove', onPointerMove, { passive: true })
-    window.addEventListener('pointerdown', onPointerDown, { passive: true })
-    window.addEventListener('pointerup', onPointerUp, { passive: true })
-    window.addEventListener('pointercancel', onPointerUp, { passive: true })
-
+    let cancelled = false
     let frameId = 0
+    let loopActive = false
+    let accelHandle: { remove: () => Promise<void> } | null = null
 
     const tick = (time: number) => {
+      if (!loopActive) {
+        return
+      }
+
       const now = time
       const idleX = Math.sin(now * 0.00033) * 0.2
       const idleY = Math.cos(now * 0.00027 + 1.4) * 0.15
@@ -376,14 +519,18 @@ export function useMotionInput({
       const clampedY = clamp(filteredTargetY, -CLAMP_RANGE, CLAMP_RANGE)
       const smoothing =
         source === 'tilt' && isPhone && pointerCoarse
-          ? LOW_PASS * PHONE_TILT_LOW_PASS_BOOST
+          ? LOW_PASS * tuningRef.current.phoneTiltLowPassBoost
           : LOW_PASS
 
       const nextX = smoothRef.current.x + (clampedX - smoothRef.current.x) * smoothing
       const nextY = smoothRef.current.y + (clampedY - smoothRef.current.y) * smoothing
 
-      const dx = clamp(nextX - smoothRef.current.x, -MAX_DELTA_PER_FRAME, MAX_DELTA_PER_FRAME)
-      const dy = clamp(nextY - smoothRef.current.y, -MAX_DELTA_PER_FRAME, MAX_DELTA_PER_FRAME)
+      const maxDelta =
+        source === 'tilt' && isPhone && pointerCoarse
+          ? MAX_DELTA_PER_FRAME * tuningRef.current.tiltMaxDeltaBoost
+          : MAX_DELTA_PER_FRAME
+      const dx = clamp(nextX - smoothRef.current.x, -maxDelta, maxDelta)
+      const dy = clamp(nextY - smoothRef.current.y, -maxDelta, maxDelta)
 
       smoothRef.current.x += dx
       smoothRef.current.y += dy
@@ -397,46 +544,100 @@ export function useMotionInput({
       if (source !== sourceRef.current) {
         sourceRef.current = source
         setActiveSource(source)
+        setVectorState({
+          x: smoothRef.current.x,
+          y: smoothRef.current.y,
+        })
       }
 
       frameId = window.requestAnimationFrame(tick)
     }
 
-    frameId = window.requestAnimationFrame(tick)
+    const stopLoop = () => {
+      if (!loopActive) {
+        return
+      }
+
+      loopActive = false
+      if (frameId) {
+        window.cancelAnimationFrame(frameId)
+        frameId = 0
+      }
+    }
+
+    const startLoop = () => {
+      if (loopActive || document.hidden) {
+        return
+      }
+
+      loopActive = true
+      frameId = window.requestAnimationFrame(tick)
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopLoop()
+        return
+      }
+
+      startLoop()
+    }
+
+    if (orientationSupport) {
+      window.addEventListener('deviceorientation', onOrientation)
+    }
+
+    if (motionSupport) {
+      window.addEventListener('devicemotion', onDeviceMotion)
+
+      void Motion.addListener('accel', onNativeAccel)
+        .then((handle) => {
+          if (cancelled) {
+            void handle.remove()
+            return
+          }
+
+          accelHandle = handle
+        })
+        .catch(() => {
+          if (!orientationSupport) {
+            setPermissionState('unsupported')
+          }
+        })
+    }
+
+    window.addEventListener('pointermove', onPointerMove, { passive: true })
+    window.addEventListener('pointerdown', onPointerDown, { passive: true })
+    window.addEventListener('pointerup', onPointerUp, { passive: true })
+    window.addEventListener('pointercancel', onPointerUp, { passive: true })
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    startLoop()
 
     return () => {
-      window.removeEventListener('deviceorientation', onOrientation)
+      cancelled = true
+      stopLoop()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+
+      if (orientationSupport) {
+        window.removeEventListener('deviceorientation', onOrientation)
+      }
+
+      if (motionSupport) {
+        window.removeEventListener('devicemotion', onDeviceMotion)
+      }
+
+      if (accelHandle) {
+        void accelHandle.remove()
+        accelHandle = null
+      }
+
       window.removeEventListener('pointermove', onPointerMove)
       window.removeEventListener('pointerdown', onPointerDown)
       window.removeEventListener('pointerup', onPointerUp)
       window.removeEventListener('pointercancel', onPointerUp)
-      window.cancelAnimationFrame(frameId)
     }
   }, [enabled, isDesktop, isPhone, pointerCoarse, reducedMotion])
-
-  useEffect(() => {
-    const interval = window.setInterval(() => {
-      const current = motionRef.current
-
-      setVectorState((previous) => {
-        if (
-          Math.abs(previous.x - current.x) < 0.003 &&
-          Math.abs(previous.y - current.y) < 0.003
-        ) {
-          return previous
-        }
-
-        return {
-          x: current.x,
-          y: current.y,
-        }
-      })
-    }, 180)
-
-    return () => {
-      window.clearInterval(interval)
-    }
-  }, [])
 
   const snapshot = useMemo<MotionSnapshot>(() => {
     return {
