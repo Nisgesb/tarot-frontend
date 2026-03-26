@@ -384,6 +384,7 @@ function App() {
       : '',
     `motion-${motion.snapshot.source}`,
     viewportProfile.isPhone ? 'platform-phone' : 'platform-wide',
+    viewportProfile.isSmallPhone ? 'platform-small-phone' : '',
     keyboardAware.keyboardOpen ? 'is-keyboard-open' : '',
   ]
     .filter(Boolean)

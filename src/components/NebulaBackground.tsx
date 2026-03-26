@@ -30,6 +30,7 @@ varying vec2 v_uv;
 uniform vec2 u_resolution;
 uniform float u_time;
 uniform vec2 u_parallax;
+uniform vec3 u_composition;
 
 float random(vec2 st) {
   return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
@@ -65,7 +66,8 @@ float fbm(vec2 st) {
 
 void main() {
   vec2 uv = v_uv;
-  vec2 position = (uv - 0.5) * vec2(u_resolution.x / u_resolution.y, 1.0);
+  vec2 framedUv = (uv - 0.5 + u_composition.xy) * u_composition.z + 0.5;
+  vec2 position = (framedUv - 0.5) * vec2(u_resolution.x / u_resolution.y, 1.0);
   position += u_parallax * vec2(0.03, 0.02);
 
   float t = u_time * 0.18;
@@ -226,12 +228,14 @@ export function NebulaBackground({
     const resolutionLocation = gl.getUniformLocation(program, 'u_resolution')
     const timeLocation = gl.getUniformLocation(program, 'u_time')
     const parallaxLocation = gl.getUniformLocation(program, 'u_parallax')
+    const compositionLocation = gl.getUniformLocation(program, 'u_composition')
 
     if (
       positionLocation === -1 ||
       !resolutionLocation ||
       !timeLocation ||
-      !parallaxLocation
+      !parallaxLocation ||
+      !compositionLocation
     ) {
       setUseFallback(true)
       return undefined
@@ -286,6 +290,18 @@ export function NebulaBackground({
         elapsedSeconds * (reducedMotion ? 0.55 : 1) * Math.max(0.2, timeScaleRef.current),
       )
       gl.uniform2f(parallaxLocation, x * profile.x, y * profile.y)
+      const minSide = Math.min(window.innerWidth, window.innerHeight)
+      const maxSide = Math.max(window.innerWidth, window.innerHeight)
+      const isPhoneViewport = minSide <= 500 && maxSide <= 1040
+      const compositionOffsetX = isPhoneViewport ? 0.072 : 0
+      const compositionOffsetY = isPhoneViewport ? 0.046 : 0
+      const compositionScale = isPhoneViewport ? 0.84 : 1
+      gl.uniform3f(
+        compositionLocation,
+        compositionOffsetX,
+        compositionOffsetY,
+        compositionScale,
+      )
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
 
       frameId = window.requestAnimationFrame(render)
