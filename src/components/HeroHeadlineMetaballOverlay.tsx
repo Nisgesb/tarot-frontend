@@ -18,7 +18,7 @@ const PARTICLE_TOTAL = 10000
 const REVEAL_START_DELAY_MS = 100
 const PIXEL_RATIO = 2
 const MIN_BASE_SIZE = 8
-const DEFAULT_BASE_SIZE = 93
+const DEFAULT_BASE_SIZE = 82
 
 type DebugColor = 'white' | 'black' | 'red'
 
@@ -38,12 +38,12 @@ interface DebugSettings {
 const DEFAULT_DEBUG_SETTINGS: Omit<DebugSettings, 'text'> = {
   baseSize: DEFAULT_BASE_SIZE,
   tracking: 0,
-  leading: 0.8,
-  weight: 5.65,
+  leading: 0,
+  weight: 5.43,
   blur: 1.8,
   threshold: 0.23,
   color: 'white',
-  revealDuration: 2930,
+  revealDuration: 2540,
   revealDelayMs: 0.31,
 }
 

@@ -39,8 +39,10 @@ const ORB_ZOOM_MS = 560
 
 function resolveBackgroundSpeed(scene: string) {
   switch (scene) {
+    case 'hero':
+      return 1.58
     case 'entering':
-      return 2.2
+      return 3.12
     case 'dreamEntry':
       return 0.88
     case 'assistantRefine':
@@ -60,8 +62,10 @@ function resolveBackgroundSpeed(scene: string) {
 
 function resolveStarSpeed(scene: string) {
   switch (scene) {
+    case 'hero':
+      return 1.48
     case 'entering':
-      return 1.8
+      return 2.64
     case 'dreamEntry':
     case 'assistantRefine':
       return 0.92
@@ -415,6 +419,11 @@ function App() {
       sceneState.scene === 'myDreams'
     )
 
+  const portalClassName =
+    sceneState.scene === 'hero' || sceneState.scene === 'entering'
+      ? 'portal-title-gap-active'
+      : ''
+
   return (
     <MobileAppShell
       className={rootClassName}
@@ -450,7 +459,7 @@ function App() {
         reducedMotion={reducedMotion}
         motionRef={motion.motionRef}
         motionProfile={portalProfile}
-        className={sceneState.scene === 'entering' ? 'portal-is-entering' : ''}
+        className={portalClassName}
       />
 
       <HeroOverlay

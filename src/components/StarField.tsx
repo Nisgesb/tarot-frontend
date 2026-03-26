@@ -43,6 +43,78 @@ function wrapPosition(value: number, limit: number) {
   return value
 }
 
+function randomBetween(min: number, max: number) {
+  return min + Math.random() * (max - min)
+}
+
+function seedPhoneVelocity(
+  star: Star,
+  focusX: number,
+  focusY: number,
+  driftRangeX: number,
+  driftRangeY: number,
+) {
+  const dx = star.x - focusX
+  const dy = star.y - focusY
+  const distance = Math.max(1, Math.hypot(dx, dy))
+  const tangentialDirection = Math.random() < 0.5 ? -1 : 1
+  const tangential = randomBetween(0.26, 1.12) * tangentialDirection
+  const inwardPull = randomBetween(0.24, 0.62)
+
+  star.velocityX =
+    (Math.random() - 0.5) * driftRangeX +
+    (-dy / distance) * tangential * (1 + star.depth * 0.86) +
+    (-dx / distance) * inwardPull * (0.74 + star.depth * 0.34)
+  star.velocityY =
+    (Math.random() - 0.5) * driftRangeY +
+    (dx / distance) * tangential * (1 + star.depth * 0.8) +
+    (-dy / distance) * inwardPull * (0.74 + star.depth * 0.3)
+}
+
+function respawnStar(
+  star: Star,
+  width: number,
+  height: number,
+  phoneViewport: boolean,
+  options?: { focusX?: number; focusY?: number; outerRing?: boolean },
+) {
+  const focusX = options?.focusX ?? width * 0.44
+  const focusY = options?.focusY ?? height * 0.42
+  const spawnOuterRing = phoneViewport && Boolean(options?.outerRing)
+
+  if (spawnOuterRing) {
+    const angle = randomBetween(0, Math.PI * 2)
+    const radius = randomBetween(
+      Math.max(width, height) * 0.56,
+      Math.max(width, height) * 0.94,
+    )
+    star.x = wrapPosition(focusX + Math.cos(angle) * radius, width)
+    star.y = wrapPosition(focusY + Math.sin(angle) * radius * 0.82, height)
+  } else if (phoneViewport && Math.random() < 0.52) {
+    const angle = randomBetween(0, Math.PI * 2)
+    const radius = Math.pow(Math.random(), 0.62) * Math.max(width, height) * 0.66
+    star.x = wrapPosition(focusX + Math.cos(angle) * radius, width)
+    star.y = wrapPosition(focusY + Math.sin(angle) * radius * 0.8, height)
+  } else {
+    star.x = Math.random() * width
+    star.y = Math.random() * height
+  }
+
+  star.radius = Math.random() * 1.7 + 0.35
+  star.depth = Math.random() * 0.9 + 0.1
+  star.alpha = Math.random() * 0.48 + 0.2
+  star.twinkleSpeed = Math.random() * 1.2 + 0.35
+  star.twinklePhase = Math.random() * Math.PI * 2
+
+  if (phoneViewport) {
+    seedPhoneVelocity(star, focusX, focusY, 4.4, 3.6)
+    return
+  }
+
+  star.velocityX = (Math.random() - 0.5) * 5
+  star.velocityY = (Math.random() - 0.5) * 4
+}
+
 function buildStarField(
   count: number,
   width: number,
@@ -50,46 +122,20 @@ function buildStarField(
   phoneViewport: boolean,
 ): Star[] {
   return Array.from({ length: count }, () => {
-    let x = Math.random() * width
-    let y = Math.random() * height
-
-    if (phoneViewport && Math.random() < 0.52) {
-      const angle = Math.random() * Math.PI * 2
-      const radius =
-        Math.pow(Math.random(), 0.62) * Math.max(width, height) * 0.66
-      x = width * 0.44 + Math.cos(angle) * radius
-      y = height * 0.42 + Math.sin(angle) * radius * 0.8
-      x = wrapPosition(x, width)
-      y = wrapPosition(y, height)
+    const star: Star = {
+      x: 0,
+      y: 0,
+      radius: 0,
+      alpha: 0,
+      twinkleSpeed: 0,
+      twinklePhase: 0,
+      velocityX: 0,
+      velocityY: 0,
+      depth: 0,
     }
 
-    const radius = Math.random() * 1.7 + 0.35
-    const depth = Math.random() * 0.9 + 0.1
-    const driftRangeX = phoneViewport ? 4.4 : 5
-    const driftRangeY = phoneViewport ? 3.6 : 4
-    let velocityX = (Math.random() - 0.5) * driftRangeX
-    let velocityY = (Math.random() - 0.5) * driftRangeY
-
-    if (phoneViewport) {
-      const dx = x - width * 0.44
-      const dy = y - height * 0.42
-      const distance = Math.max(1, Math.hypot(dx, dy))
-      const tangential = (Math.random() * 0.9 + 0.24) * (Math.random() < 0.5 ? -1 : 1)
-      velocityX += (-dy / distance) * tangential * (1 + depth * 0.8)
-      velocityY += (dx / distance) * tangential * (1 + depth * 0.7)
-    }
-
-    return {
-      x,
-      y,
-      radius,
-      alpha: Math.random() * 0.48 + 0.2,
-      twinkleSpeed: Math.random() * 1.2 + 0.35,
-      twinklePhase: Math.random() * Math.PI * 2,
-      velocityX,
-      velocityY,
-      depth,
-    }
+    respawnStar(star, width, height, phoneViewport)
+    return star
   })
 }
 
@@ -209,6 +255,8 @@ export function StarField({
       const phoneViewport = isPhoneViewport(width, height)
       const focusX = phoneViewport ? width * 0.44 : width * 0.5
       const focusY = phoneViewport ? height * 0.42 : height * 0.5
+      const absorbRadius = phoneViewport ? Math.max(26, Math.min(width, height) * 0.07) : 0
+      const absorbRadiusSquared = absorbRadius * absorbRadius
       const profile = motionProfileRef.current
       const parallaxX = motionRef.current.x * profile.x * (phoneViewport ? 13 : width <= 768 ? 8 : 16)
       const parallaxY = motionRef.current.y * profile.y * (phoneViewport ? 10 : height <= 768 ? 6 : 12)
@@ -231,6 +279,18 @@ export function StarField({
           star.y += (dx / distance) * orbitStrength * delta * 32 * driftMultiplier
           star.x += dx * pullStrength * delta * 0.7 * driftMultiplier
           star.y += dy * pullStrength * delta * 0.7 * driftMultiplier
+
+          const dxFromFocus = star.x - focusX
+          const dyFromFocus = star.y - focusY
+
+          if (dxFromFocus * dxFromFocus + dyFromFocus * dyFromFocus <= absorbRadiusSquared) {
+            respawnStar(star, width, height, true, {
+              focusX,
+              focusY,
+              outerRing: true,
+            })
+            continue
+          }
         }
 
         if (star.x < -8) star.x = width + 8

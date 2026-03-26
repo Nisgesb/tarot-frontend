@@ -109,6 +109,8 @@ export function DreamPortal({
               filter="url(#portalGlow)"
             />
           </svg>
+          <div className="portal-title-gap-mask portal-title-gap-mask-left" />
+          <div className="portal-title-gap-mask portal-title-gap-mask-right" />
         </div>
       </div>
     </div>
