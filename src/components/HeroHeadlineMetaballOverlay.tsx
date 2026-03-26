@@ -40,11 +40,11 @@ const DEFAULT_DEBUG_SETTINGS: Omit<DebugSettings, 'text'> = {
   baseSize: DEFAULT_BASE_SIZE,
   tracking: 0,
   leading: 0,
-  weight: 5.43,
-  blur: 1.8,
-  threshold: 0.23,
+  weight: 5.86,
+  blur: 1.7,
+  threshold: 0.2,
   color: '#ffffff',
-  revealDuration: 2540,
+  revealDuration: 1930,
   revealDelayMs: 0.31,
 }
 
