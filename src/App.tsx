@@ -6,6 +6,7 @@ import { HeroOverlay } from './components/HeroOverlay'
 import { MotionControlDock } from './components/MotionControlDock'
 import { MotionPermissionPrompt } from './components/MotionPermissionPrompt'
 import { NebulaBackground } from './components/NebulaBackground'
+import type { NebulaCompositionFrame } from './components/NebulaBackground'
 import { PortalTransition } from './components/PortalTransition'
 import type { PortalTransitionOrigin } from './components/PortalTransition'
 import { StarField } from './components/StarField'
@@ -79,6 +80,17 @@ function resolveStarSpeed(scene: string) {
   }
 }
 
+function resolveNebulaComposition(scene: string): NebulaCompositionFrame {
+  switch (scene) {
+    case 'hero':
+      return { offsetX: 0.108, offsetY: 0.014, scale: 0.76 }
+    case 'entering':
+      return { offsetX: 0.098, offsetY: 0.008, scale: 0.74 }
+    default:
+      return { offsetX: 0.072, offsetY: 0.046, scale: 0.84 }
+  }
+}
+
 function findDreamById(
   dreamId: string | null,
   myDreams: DreamRecord[],
@@ -126,6 +138,7 @@ function App() {
     reducedMotion,
     pointerCoarse: viewportProfile.pointerCoarse,
     isDesktop: viewportProfile.isDesktop,
+    isPhone: viewportProfile.isPhone,
   })
 
   const [hasAnimatedIn, setHasAnimatedIn] = useState(false)
@@ -419,11 +432,6 @@ function App() {
       sceneState.scene === 'myDreams'
     )
 
-  const portalClassName =
-    sceneState.scene === 'hero' || sceneState.scene === 'entering'
-      ? 'portal-title-gap-active'
-      : ''
-
   return (
     <MobileAppShell
       className={rootClassName}
@@ -437,6 +445,7 @@ function App() {
         motionProfile={nebulaProfile}
         performanceTier={viewportProfile.performanceTier}
         timeScale={resolveBackgroundSpeed(sceneState.scene)}
+        composition={resolveNebulaComposition(sceneState.scene)}
       />
       <StarField
         entered={entered}
@@ -459,7 +468,6 @@ function App() {
         reducedMotion={reducedMotion}
         motionRef={motion.motionRef}
         motionProfile={portalProfile}
-        className={portalClassName}
       />
 
       <HeroOverlay

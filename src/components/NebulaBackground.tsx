@@ -3,6 +3,12 @@ import type { MutableRefObject } from 'react'
 import type { PerformanceTier } from '../hooks/useViewportProfile'
 import type { MotionProfile, MotionVector } from '../motion/types'
 
+export interface NebulaCompositionFrame {
+  offsetX: number
+  offsetY: number
+  scale: number
+}
+
 interface NebulaBackgroundProps {
   entered: boolean
   reducedMotion: boolean
@@ -11,6 +17,13 @@ interface NebulaBackgroundProps {
   timeScale?: number
   motionProfile?: MotionProfile
   performanceTier?: PerformanceTier
+  composition?: NebulaCompositionFrame
+}
+
+const DEFAULT_PHONE_COMPOSITION: NebulaCompositionFrame = {
+  offsetX: 0.072,
+  offsetY: 0.046,
+  scale: 0.84,
 }
 
 const vertexShaderSource = `
@@ -165,10 +178,12 @@ export function NebulaBackground({
   timeScale = 1,
   motionProfile = { x: 1, y: 1 },
   performanceTier = 'high',
+  composition = DEFAULT_PHONE_COMPOSITION,
 }: NebulaBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const timeScaleRef = useRef(timeScale)
   const motionProfileRef = useRef(motionProfile)
+  const compositionRef = useRef(composition)
   const [useFallback, setUseFallback] = useState(false)
 
   useEffect(() => {
@@ -178,6 +193,10 @@ export function NebulaBackground({
   useEffect(() => {
     motionProfileRef.current = motionProfile
   }, [motionProfile])
+
+  useEffect(() => {
+    compositionRef.current = composition
+  }, [composition])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -293,9 +312,10 @@ export function NebulaBackground({
       const minSide = Math.min(window.innerWidth, window.innerHeight)
       const maxSide = Math.max(window.innerWidth, window.innerHeight)
       const isPhoneViewport = minSide <= 500 && maxSide <= 1040
-      const compositionOffsetX = isPhoneViewport ? 0.072 : 0
-      const compositionOffsetY = isPhoneViewport ? 0.046 : 0
-      const compositionScale = isPhoneViewport ? 0.84 : 1
+      const compositionFrame = compositionRef.current
+      const compositionOffsetX = isPhoneViewport ? compositionFrame.offsetX : 0
+      const compositionOffsetY = isPhoneViewport ? compositionFrame.offsetY : 0
+      const compositionScale = isPhoneViewport ? compositionFrame.scale : 1
       gl.uniform3f(
         compositionLocation,
         compositionOffsetX,

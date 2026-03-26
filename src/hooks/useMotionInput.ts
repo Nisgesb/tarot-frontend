@@ -20,6 +20,8 @@ const DEAD_ZONE = 0.035
 const LOW_PASS = 0.11
 const CLAMP_RANGE = 0.78
 const MAX_DELTA_PER_FRAME = 0.025
+const PHONE_TILT_GAIN = 1.3
+const PHONE_TILT_LOW_PASS_BOOST = 1.18
 
 interface OrientationCalibration {
   beta: number
@@ -31,6 +33,7 @@ interface UseMotionInputOptions {
   reducedMotion: boolean
   pointerCoarse: boolean
   isDesktop: boolean
+  isPhone: boolean
 }
 
 interface UseMotionInputResult {
@@ -137,6 +140,7 @@ export function useMotionInput({
   reducedMotion,
   pointerCoarse,
   isDesktop,
+  isPhone,
 }: UseMotionInputOptions): UseMotionInputResult {
   const [permissionState, setPermissionState] =
     useState<MotionPermissionState>(derivePermissionState)
@@ -279,11 +283,12 @@ export function useMotionInput({
       }
 
       const base = calibrationRef.current ?? { beta: event.beta, gamma: event.gamma }
+      const tiltGain = isPhone && pointerCoarse ? PHONE_TILT_GAIN : 1
       const normalizedX = clamp((event.gamma - base.gamma) / 22, -1, 1)
       const normalizedY = clamp((event.beta - base.beta) / 26, -1, 1)
 
-      targetTiltRef.current.x = normalizedX
-      targetTiltRef.current.y = normalizedY
+      targetTiltRef.current.x = clamp(normalizedX * tiltGain, -1, 1)
+      targetTiltRef.current.y = clamp(normalizedY * tiltGain, -1, 1)
       lastTiltAtRef.current = performance.now()
     }
 
@@ -369,9 +374,13 @@ export function useMotionInput({
 
       const clampedX = clamp(filteredTargetX, -CLAMP_RANGE, CLAMP_RANGE)
       const clampedY = clamp(filteredTargetY, -CLAMP_RANGE, CLAMP_RANGE)
+      const smoothing =
+        source === 'tilt' && isPhone && pointerCoarse
+          ? LOW_PASS * PHONE_TILT_LOW_PASS_BOOST
+          : LOW_PASS
 
-      const nextX = smoothRef.current.x + (clampedX - smoothRef.current.x) * LOW_PASS
-      const nextY = smoothRef.current.y + (clampedY - smoothRef.current.y) * LOW_PASS
+      const nextX = smoothRef.current.x + (clampedX - smoothRef.current.x) * smoothing
+      const nextY = smoothRef.current.y + (clampedY - smoothRef.current.y) * smoothing
 
       const dx = clamp(nextX - smoothRef.current.x, -MAX_DELTA_PER_FRAME, MAX_DELTA_PER_FRAME)
       const dy = clamp(nextY - smoothRef.current.y, -MAX_DELTA_PER_FRAME, MAX_DELTA_PER_FRAME)
@@ -403,7 +412,7 @@ export function useMotionInput({
       window.removeEventListener('pointercancel', onPointerUp)
       window.cancelAnimationFrame(frameId)
     }
-  }, [enabled, isDesktop, pointerCoarse, reducedMotion])
+  }, [enabled, isDesktop, isPhone, pointerCoarse, reducedMotion])
 
   useEffect(() => {
     const interval = window.setInterval(() => {

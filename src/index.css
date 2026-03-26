@@ -2,9 +2,6 @@
   --portal-w: clamp(230px, 58vw, 322px);
   --portal-h: clamp(304px, 52dvh, 414px);
   --portal-top: 49%;
-  --portal-title-gap-top: 24%;
-  --portal-title-gap-height: 12%;
-  --portal-title-gap-strip: clamp(30px, 18%, 56px);
   --hero-overlay-top: 50%;
   --text-main: rgba(250, 248, 242, 0.96);
   --text-subtle: rgba(230, 240, 255, 0.8);
@@ -373,10 +370,6 @@ body {
   inset: 0;
   width: 100%;
   height: 100%;
-}
-
-.portal-title-gap-mask {
-  display: none;
 }
 
 .hero-overlay {
@@ -2228,55 +2221,14 @@ body {
 
 .platform-phone.scene-hero,
 .platform-phone.scene-entering {
-  --portal-top: 52.3%;
-  --portal-title-gap-top: 23%;
-  --portal-title-gap-height: 12%;
-  --portal-title-gap-strip: clamp(26px, 18%, 50px);
+  --portal-top: 49.8%;
   --hero-overlay-top: 53.2%;
 }
 
 .platform-small-phone.scene-hero,
 .platform-small-phone.scene-entering {
-  --portal-top: 52.9%;
-  --portal-title-gap-top: 22.2%;
-  --portal-title-gap-height: 12.4%;
-  --portal-title-gap-strip: clamp(24px, 17%, 46px);
+  --portal-top: 50.4%;
   --hero-overlay-top: 53.7%;
-}
-
-.platform-phone .portal-scene.portal-title-gap-active .portal-title-gap-mask {
-  display: block;
-  position: absolute;
-  top: var(--portal-title-gap-top);
-  height: var(--portal-title-gap-height);
-  width: var(--portal-title-gap-strip);
-  z-index: 9;
-  pointer-events: none;
-  background:
-    radial-gradient(
-      circle at 50% 50%,
-      rgba(206, 224, 255, 0.38),
-      rgba(165, 194, 255, 0.24) 62%,
-      rgba(165, 194, 255, 0) 100%
-    ),
-    linear-gradient(
-      180deg,
-      rgba(240, 206, 255, 0.56),
-      rgba(191, 180, 255, 0.46) 48%,
-      rgba(122, 162, 255, 0.36) 100%
-    );
-  box-shadow: 0 0 16px rgba(97, 139, 236, 0.35);
-  backdrop-filter: blur(1px);
-}
-
-.platform-phone .portal-scene.portal-title-gap-active .portal-title-gap-mask-left {
-  left: -8px;
-  border-radius: 0 14px 14px 0;
-}
-
-.platform-phone .portal-scene.portal-title-gap-active .portal-title-gap-mask-right {
-  right: -8px;
-  border-radius: 14px 0 0 14px;
 }
 
 .app-root.platform-phone::before {
