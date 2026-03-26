@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   BlurFilter,
   Container,
@@ -16,6 +17,8 @@ const DROP_TEXTURE_URL = '/textures/drop-alpha.png'
 const PARTICLE_TOTAL = 10000
 const REVEAL_START_DELAY_MS = 100
 const PIXEL_RATIO = 2
+const MIN_BASE_SIZE = 8
+const DEFAULT_BASE_SIZE = 93
 
 type DebugColor = 'white' | 'black' | 'red'
 
@@ -33,15 +36,15 @@ interface DebugSettings {
 }
 
 const DEFAULT_DEBUG_SETTINGS: Omit<DebugSettings, 'text'> = {
-  baseSize: 200,
-  tracking: 0.1,
-  leading: 1.9,
-  weight: 5.9,
-  blur: 6.1,
-  threshold: 0.25,
+  baseSize: DEFAULT_BASE_SIZE,
+  tracking: 0,
+  leading: 0.8,
+  weight: 5.65,
+  blur: 1.8,
+  threshold: 0.23,
   color: 'white',
-  revealDuration: 6000,
-  revealDelayMs: 0.27,
+  revealDuration: 2930,
+  revealDelayMs: 0.31,
 }
 
 const THRESHOLD_FRAGMENT = [
@@ -101,11 +104,13 @@ function getResponsiveSize(baseSize: number, width: number, height: number) {
 }
 
 function getResponsiveWeight(size: number) {
-  if (size > 400) {
-    return ((1.5 - 3) / (1000 - 400)) * (size - 400) + 3
+  const safeSize = clamp(size, MIN_BASE_SIZE, 1000)
+
+  if (safeSize > 400) {
+    return ((1.5 - 3) / (1000 - 400)) * (safeSize - 400) + 3
   }
 
-  return ((3 - 6) / (400 - 200)) * (size - 200) + 6
+  return ((3 - 6) / (400 - MIN_BASE_SIZE)) * (safeSize - MIN_BASE_SIZE) + 6
 }
 
 function getColorUniform(color: DebugColor) {
@@ -508,8 +513,8 @@ export function HeroHeadlineMetaballOverlay({
     }
   }, [text])
 
-  return (
-    <div className="hero-headline-metaball" ref={hostRef} aria-hidden="true">
+  const debugControls = (
+    <>
       <button
         type="button"
         className="metaball-debug-toggle"
@@ -539,7 +544,7 @@ export function HeroHeadlineMetaballOverlay({
             <span>Size {Math.round(debugSettings.baseSize)}</span>
             <input
               type="range"
-              min={200}
+              min={MIN_BASE_SIZE}
               max={1000}
               step={1}
               value={debugSettings.baseSize}
@@ -679,6 +684,15 @@ export function HeroHeadlineMetaballOverlay({
           </button>
         </div>
       ) : null}
-    </div>
+    </>
+  )
+
+  return (
+    <>
+      <div className="hero-headline-metaball" ref={hostRef} aria-hidden="true" />
+      {typeof document !== 'undefined'
+        ? createPortal(debugControls, document.body)
+        : debugControls}
+    </>
   )
 }

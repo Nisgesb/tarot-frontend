@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Outfit:wght@300;400;500;600&display=swap');
-
 :root {
   --portal-w: clamp(230px, 58vw, 322px);
   --portal-h: clamp(304px, 52dvh, 414px);
@@ -481,7 +479,7 @@ body {
 
 .metaball-debug-panel {
   position: fixed;
-  bottom: 56px;
+  bottom: calc(var(--safe-bottom) + 78px);
   left: 14px;
   z-index: 1000;
   width: min(280px, calc(100vw - 28px));
@@ -500,7 +498,7 @@ body {
 .metaball-debug-toggle {
   position: fixed;
   left: 14px;
-  bottom: 14px;
+  bottom: calc(var(--safe-bottom) + 10px);
   z-index: 1001;
   width: 130px;
   padding: 8px 10px;

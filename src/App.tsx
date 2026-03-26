@@ -19,10 +19,12 @@ import { useSafeAreaInsets } from './hooks/useSafeAreaInsets'
 import { useViewportProfile } from './hooks/useViewportProfile'
 import { MobileAppShell } from './layout/MobileAppShell'
 import type { MotionProfile } from './motion/types'
+import { exportCanvasResult } from './platform/exportShareAdapter'
 import { createDreamRecordFromRefined } from './services/dreamGenerationService'
 import { getGalleryDreams } from './services/galleryService'
 import {
   loadDreamRecords,
+  saveDreamRecords,
   upsertDreamRecord,
 } from './services/dreamStorageService'
 import { DreamEntryScene } from './scenes/DreamEntryScene'
@@ -34,25 +36,6 @@ import { EMPTY_RAW_DREAM_INPUT } from './types/dream'
 import type { DreamRecord, RawDreamInput } from './types/dream'
 
 const ORB_ZOOM_MS = 560
-
-function downloadCanvas(canvas: HTMLCanvasElement | null, fileName: string) {
-  if (!canvas) {
-    return
-  }
-
-  canvas.toBlob((blob) => {
-    if (!blob) {
-      return
-    }
-
-    const url = URL.createObjectURL(blob)
-    const anchor = document.createElement('a')
-    anchor.href = url
-    anchor.download = fileName
-    anchor.click()
-    URL.revokeObjectURL(url)
-  }, 'image/png')
-}
 
 function resolveBackgroundSpeed(scene: string) {
   switch (scene) {
@@ -142,7 +125,7 @@ function App() {
   })
 
   const [hasAnimatedIn, setHasAnimatedIn] = useState(false)
-  const [myDreams, setMyDreams] = useState<DreamRecord[]>(() => loadDreamRecords())
+  const [myDreams, setMyDreams] = useState<DreamRecord[]>([])
   const [draftInput, setDraftInput] = useState<RawDreamInput>(EMPTY_RAW_DREAM_INPUT)
   const [draftRefinedText, setDraftRefinedText] = useState('')
   const [entryRenderKey, setEntryRenderKey] = useState(0)
@@ -177,6 +160,39 @@ function App() {
     () => findDreamById(sceneState.dreamId, myDreams, galleryDreams),
     [sceneState.dreamId, myDreams, galleryDreams],
   )
+
+  useEffect(() => {
+    let cancelled = false
+
+    const hydrateDreams = async () => {
+      const saved = await loadDreamRecords()
+
+      if (!cancelled) {
+        setMyDreams((current) => {
+          if (current.length === 0) {
+            return saved
+          }
+
+          const knownIds = new Set(current.map((dream) => dream.id))
+          const merged = [...current]
+
+          for (const dream of saved) {
+            if (!knownIds.has(dream.id)) {
+              merged.push(dream)
+            }
+          }
+
+          return merged
+        })
+      }
+    }
+
+    void hydrateDreams()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     if (reducedMotion) return undefined
@@ -265,7 +281,11 @@ function App() {
       'user',
     )
 
-    setMyDreams((previous) => upsertDreamRecord(previous, record))
+    setMyDreams((previous) => {
+      const updated = upsertDreamRecord(previous, record)
+      void saveDreamRecords(updated)
+      return updated
+    })
     pendingGenerationRef.current = null
     actions.openResult(record.id)
   }
@@ -340,7 +360,7 @@ function App() {
       .replace(/^-+|-+$/g, '')
       .slice(0, 40)
     const name = title ? `${title}.png` : 'dreamkeeper-poster.png'
-    downloadCanvas(canvas, name)
+    void exportCanvasResult(canvas, name, `Dreamkeeper: ${record.title}`)
   }
 
   const goBackFromInspect = () => {

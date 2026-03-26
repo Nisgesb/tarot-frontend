@@ -7,6 +7,10 @@ import type {
   MotionSource,
   MotionVector,
 } from '../motion/types'
+import {
+  deviceOrientationNeedsPermission,
+  hasDeviceOrientationSupport,
+} from '../platform/runtime'
 
 const MOTION_PERMISSION_KEY = 'motion-permission'
 const MOTION_OPT_IN_KEY = 'motion-opt-in'
@@ -85,19 +89,11 @@ function readCalibration(): OrientationCalibration | null {
 }
 
 function getTiltSupport() {
-  return typeof window !== 'undefined' && typeof window.DeviceOrientationEvent !== 'undefined'
+  return hasDeviceOrientationSupport()
 }
 
 function getNeedsPermission() {
-  if (!getTiltSupport()) {
-    return false
-  }
-
-  const orientationCtor = window
-    .DeviceOrientationEvent as typeof DeviceOrientationEvent &
-    DeviceOrientationWithPermission
-
-  return typeof orientationCtor.requestPermission === 'function'
+  return deviceOrientationNeedsPermission()
 }
 
 function derivePermissionState(): MotionPermissionState {

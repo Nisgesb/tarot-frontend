@@ -1,19 +1,10 @@
 import type { DreamRecord } from '../types/dream'
+import { storageGetItem, storageSetItem } from '../platform/storageAdapter'
 
 const DREAM_STORAGE_KEY = 'dreamkeeper.my-dreams.v1'
 
-function hasLocalStorage() {
-  return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
-}
-
-export function loadDreamRecords(): DreamRecord[] {
-  if (!hasLocalStorage()) {
-    return []
-  }
-
+function parseDreamRecords(rawValue: string | null): DreamRecord[] {
   try {
-    const rawValue = window.localStorage.getItem(DREAM_STORAGE_KEY)
-
     if (!rawValue) {
       return []
     }
@@ -25,17 +16,16 @@ export function loadDreamRecords(): DreamRecord[] {
   }
 }
 
-export function saveDreamRecords(records: DreamRecord[]) {
-  if (!hasLocalStorage()) {
-    return
-  }
+export async function loadDreamRecords(): Promise<DreamRecord[]> {
+  const rawValue = await storageGetItem(DREAM_STORAGE_KEY)
+  return parseDreamRecords(rawValue)
+}
 
-  window.localStorage.setItem(DREAM_STORAGE_KEY, JSON.stringify(records))
+export async function saveDreamRecords(records: DreamRecord[]) {
+  await storageSetItem(DREAM_STORAGE_KEY, JSON.stringify(records))
 }
 
 export function upsertDreamRecord(records: DreamRecord[], nextRecord: DreamRecord) {
   const withoutSameId = records.filter((record) => record.id !== nextRecord.id)
-  const updated = [nextRecord, ...withoutSameId]
-  saveDreamRecords(updated)
-  return updated
+  return [nextRecord, ...withoutSameId]
 }

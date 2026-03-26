@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { storageGetItem, storageSetItem } from '../platform/storageAdapter'
 
 const AUDIO_STORAGE_KEY = 'dreamkeeper.audio-muted.v1'
 
@@ -9,18 +10,15 @@ interface AmbientAudioState {
   toggleMuted: () => Promise<void>
 }
 
-function readInitialMuted() {
-  if (typeof window === 'undefined') {
-    return true
-  }
-
-  const rawValue = window.localStorage.getItem(AUDIO_STORAGE_KEY)
+function parseMutedValue(rawValue: string | null) {
   return rawValue ? rawValue === 'true' : true
 }
 
 export function useAmbientAudio(): AmbientAudioState {
-  const [muted, setMuted] = useState(readInitialMuted)
+  const [muted, setMuted] = useState(true)
+  const [storageHydrated, setStorageHydrated] = useState(false)
   const [ready, setReady] = useState(false)
+  const hasUserChangedMutedRef = useRef(false)
   const contextRef = useRef<AudioContext | null>(null)
   const outputRef = useRef<GainNode | null>(null)
   const lfoRef = useRef<OscillatorNode | null>(null)
@@ -29,10 +27,41 @@ export function useAmbientAudio(): AmbientAudioState {
   const toneBRef = useRef<OscillatorNode | null>(null)
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(AUDIO_STORAGE_KEY, String(muted))
+    let cancelled = false
+
+    const hydrate = async () => {
+      try {
+        const rawValue = await storageGetItem(AUDIO_STORAGE_KEY)
+
+        if (cancelled) {
+          return
+        }
+
+        if (!hasUserChangedMutedRef.current) {
+          setMuted(parseMutedValue(rawValue))
+        }
+      } finally {
+        if (!cancelled) {
+          setStorageHydrated(true)
+        }
+      }
+
     }
-  }, [muted])
+
+    void hydrate()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!storageHydrated) {
+      return
+    }
+
+    void storageSetItem(AUDIO_STORAGE_KEY, String(muted))
+  }, [muted, storageHydrated])
 
   const ensureAudioGraph = useCallback(async () => {
     if (contextRef.current && outputRef.current) {
@@ -135,6 +164,7 @@ export function useAmbientAudio(): AmbientAudioState {
 
   const toggleMuted = useCallback(async () => {
     await ensureAudioGraph()
+    hasUserChangedMutedRef.current = true
     setMuted((previous) => !previous)
   }, [ensureAudioGraph])
 
