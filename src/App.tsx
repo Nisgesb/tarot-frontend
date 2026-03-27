@@ -221,7 +221,7 @@ function App() {
     try {
       window.localStorage.setItem(MOTION_TUNING_KEY, JSON.stringify(motionTuning))
     } catch {
-      // no-op
+      // 忽略本地存储异常
     }
   }, [motionTuning])
 
@@ -468,12 +468,14 @@ function App() {
   const showFloatingAudio =
     sceneState.scene !== 'result' &&
     sceneState.scene !== 'inspectDream'
+  const hasTiltSample = motion.snapshot.diagnostics.hasTiltSample
   const showMotionDock =
     viewportProfile.pointerCoarse &&
     sceneState.scene !== 'result' &&
     sceneState.scene !== 'inspectDream' &&
     (
       motion.snapshot.permissionState !== 'granted' ||
+      !hasTiltSample ||
       sceneState.scene === 'dreamEntry' ||
       sceneState.scene === 'assistantRefine' ||
       sceneState.scene === 'gallery' ||
@@ -625,6 +627,7 @@ function App() {
         <MotionControlDock
           permissionState={motion.snapshot.permissionState}
           source={motion.snapshot.source}
+          hasTiltSample={hasTiltSample}
           onReenable={motion.reopenMotionPrompt}
           onRecenter={motion.recenter}
         />
@@ -635,6 +638,7 @@ function App() {
           tuning={motionTuning}
           permissionState={motion.snapshot.permissionState}
           source={motion.snapshot.source}
+          diagnostics={motion.snapshot.diagnostics}
           onChange={(patch) => {
             setMotionTuning((previous) => ({
               ...previous,

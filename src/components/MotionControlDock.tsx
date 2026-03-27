@@ -3,6 +3,7 @@ import type { MotionPermissionState, MotionSource } from '../motion/types'
 interface MotionControlDockProps {
   permissionState: MotionPermissionState
   source: MotionSource
+  hasTiltSample: boolean
   onReenable: () => void
   onRecenter: () => void
 }
@@ -10,6 +11,7 @@ interface MotionControlDockProps {
 export function MotionControlDock({
   permissionState,
   source,
+  hasTiltSample,
   onReenable,
   onRecenter,
 }: MotionControlDockProps) {
@@ -23,7 +25,11 @@ export function MotionControlDock({
   return (
     <div className="motion-control-dock" aria-label="动态交互控制">
       <button type="button" className="secondary-pill" onClick={onReenable}>
-        {permissionState === 'granted' ? '动态已开启' : '启用陀螺仪'}
+        {permissionState === 'granted' && hasTiltSample
+          ? '动态已开启'
+          : permissionState === 'denied'
+            ? '重新请求权限'
+            : '启用陀螺仪'}
       </button>
       <button type="button" className="ghost-chip" onClick={onRecenter}>
         重新校准 · {sourceLabelMap[source]}

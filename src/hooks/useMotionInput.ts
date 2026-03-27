@@ -3,18 +3,22 @@ import type { AccelListenerEvent } from '@capacitor/motion'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { MutableRefObject } from 'react'
 import type {
+  MotionDiagnostics,
   MotionCapabilityState,
   MotionPermissionState,
+  MotionRuntimePlatform,
   MotionSnapshot,
   MotionSource,
   MotionTuning,
   MotionVector,
 } from '../motion/types'
 import {
+  getRuntimePlatform,
   deviceMotionNeedsPermission,
   deviceOrientationNeedsPermission,
   hasDeviceMotionSupport,
   hasDeviceOrientationSupport,
+  isNativeApp,
 } from '../platform/runtime'
 
 const MOTION_PERMISSION_KEY = 'motion-permission'
@@ -26,6 +30,7 @@ const LOW_PASS = 0.11
 const CLAMP_RANGE = 0.78
 const MAX_DELTA_PER_FRAME = 0.025
 const NATIVE_GRAVITY = 9.81
+const DIAGNOSTIC_SAMPLE_THROTTLE_MS = 800
 
 type CalibrationMode = 'orientation' | 'acceleration'
 
@@ -87,7 +92,7 @@ function writeStorage(key: string, value: string) {
   try {
     window.localStorage.setItem(key, value)
   } catch {
-    // no-op
+    // 忽略本地存储异常
   }
 }
 
@@ -123,16 +128,31 @@ function writeCalibration(calibration: OrientationCalibration) {
   writeStorage(MOTION_CALIBRATION_KEY, JSON.stringify(calibration))
 }
 
-function getTiltSupport() {
-  return hasDeviceOrientationSupport() || hasDeviceMotionSupport()
+function createDiagnostics(runtimePlatform: MotionRuntimePlatform): MotionDiagnostics {
+  return {
+    runtimePlatform,
+    hasBrowserOrientationSupport: hasDeviceOrientationSupport(),
+    hasBrowserMotionSupport: hasDeviceMotionSupport(),
+    nativeListenerState: 'idle',
+    hasTiltSample: false,
+    lastTiltSampleAt: null,
+  }
+}
+
+function getTiltSupport(runtimePlatform: MotionRuntimePlatform) {
+  return (
+    hasDeviceOrientationSupport() ||
+    hasDeviceMotionSupport() ||
+    (runtimePlatform === 'ios' && isNativeApp())
+  )
 }
 
 function getNeedsPermission() {
   return deviceOrientationNeedsPermission() || deviceMotionNeedsPermission()
 }
 
-function derivePermissionState(): MotionPermissionState {
-  const hasTiltSupport = getTiltSupport()
+function derivePermissionState(runtimePlatform: MotionRuntimePlatform): MotionPermissionState {
+  const hasTiltSupport = getTiltSupport(runtimePlatform)
 
   if (!hasTiltSupport) {
     return 'unsupported'
@@ -149,6 +169,10 @@ function derivePermissionState(): MotionPermissionState {
   }
 
   if (!getNeedsPermission()) {
+    if (runtimePlatform === 'ios' && isNativeApp()) {
+      return 'promptable'
+    }
+
     return 'granted'
   }
 
@@ -175,11 +199,17 @@ export function useMotionInput({
   isPhone,
   tuning = DEFAULT_MOTION_TUNING,
 }: UseMotionInputOptions): UseMotionInputResult {
-  const [permissionState, setPermissionState] =
-    useState<MotionPermissionState>(derivePermissionState)
+  const runtimePlatform = getRuntimePlatform()
+  const nativeApp = isNativeApp()
+  const [permissionState, setPermissionState] = useState<MotionPermissionState>(() =>
+    derivePermissionState(runtimePlatform),
+  )
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false)
   const [activeSource, setActiveSource] = useState<MotionSource>('idle')
   const [vectorState, setVectorState] = useState({ x: 0, y: 0 })
+  const [diagnostics, setDiagnostics] = useState<MotionDiagnostics>(() =>
+    createDiagnostics(runtimePlatform),
+  )
 
   const permissionStateRef = useRef(permissionState)
   const motionRef = useRef<MotionVector>({ x: 0, y: 0, source: 'idle' })
@@ -196,6 +226,67 @@ export function useMotionInput({
   const lastNativeTiltAtRef = useRef(0)
   const lastTouchAtRef = useRef(0)
   const lastMouseAtRef = useRef(0)
+
+  const updateDiagnostics = useCallback((patch: Partial<MotionDiagnostics>) => {
+    setDiagnostics((current) => {
+      const next = {
+        ...current,
+        ...patch,
+      }
+
+      if (
+        current.runtimePlatform === next.runtimePlatform &&
+        current.hasBrowserOrientationSupport === next.hasBrowserOrientationSupport &&
+        current.hasBrowserMotionSupport === next.hasBrowserMotionSupport &&
+        current.nativeListenerState === next.nativeListenerState &&
+        current.hasTiltSample === next.hasTiltSample &&
+        current.lastTiltSampleAt === next.lastTiltSampleAt
+      ) {
+        return current
+      }
+
+      return next
+    })
+  }, [])
+
+  const markTiltSample = useCallback(() => {
+    const sampleAt = Date.now()
+
+    setDiagnostics((current) => {
+      const shouldRefreshTimestamp =
+        !current.hasTiltSample ||
+        current.lastTiltSampleAt == null ||
+        sampleAt - current.lastTiltSampleAt >= DIAGNOSTIC_SAMPLE_THROTTLE_MS
+
+      if (!shouldRefreshTimestamp && current.hasTiltSample) {
+        return current
+      }
+
+      return {
+        ...current,
+        hasTiltSample: true,
+        lastTiltSampleAt: sampleAt,
+      }
+    })
+
+    const canImplicitlyGrant =
+      !getNeedsPermission() &&
+      (
+        runtimePlatform !== 'ios' ||
+        !nativeApp ||
+        readStorage(MOTION_OPT_IN_KEY) === 'true'
+      )
+
+    if (
+      canImplicitlyGrant &&
+      permissionStateRef.current !== 'granted' &&
+      permissionStateRef.current !== 'denied'
+    ) {
+      writeStorage(MOTION_PERMISSION_KEY, 'granted')
+      writeStorage(MOTION_OPT_IN_KEY, 'true')
+      setPermissionState('granted')
+    }
+  }, [nativeApp, runtimePlatform])
 
   useEffect(() => {
     permissionStateRef.current = permissionState
@@ -216,7 +307,7 @@ export function useMotionInput({
       return false
     }
 
-    if (!getTiltSupport()) {
+    if (!getTiltSupport(runtimePlatform)) {
       setPermissionState('unsupported')
       setShowPermissionPrompt(false)
       return false
@@ -270,7 +361,7 @@ export function useMotionInput({
       setShowPermissionPrompt(false)
       return false
     }
-  }, [enabled, reducedMotion])
+  }, [enabled, reducedMotion, runtimePlatform])
 
   const dismissPermissionPrompt = useCallback(() => {
     writeStorage(MOTION_OPT_IN_KEY, 'false')
@@ -323,20 +414,43 @@ export function useMotionInput({
 
     const orientationSupport = hasDeviceOrientationSupport()
     const motionSupport = hasDeviceMotionSupport()
+    const shouldListenOrientation = orientationSupport || (runtimePlatform === 'ios' && nativeApp)
+    const shouldListenMotion = motionSupport || (runtimePlatform === 'ios' && nativeApp)
+
+    const canUseTiltInput = () => {
+      if (permissionStateRef.current === 'denied') {
+        return false
+      }
+
+      if (permissionStateRef.current === 'granted') {
+        return true
+      }
+
+      if (getNeedsPermission()) {
+        return false
+      }
+
+      if (runtimePlatform === 'ios' && nativeApp) {
+        return readStorage(MOTION_OPT_IN_KEY) === 'true'
+      }
+
+      return true
+    }
 
     const onOrientation = (event: DeviceOrientationEvent) => {
-      if (permissionStateRef.current !== 'granted') {
+      if (typeof event.beta !== 'number' || typeof event.gamma !== 'number') {
         return
       }
 
       const now = performance.now()
+      markTiltSample()
 
-      // Prefer native acceleration samples on iOS/Android when available.
-      if (now - lastNativeTiltAtRef.current < 360) {
+      if (!canUseTiltInput()) {
         return
       }
 
-      if (typeof event.beta !== 'number' || typeof event.gamma !== 'number') {
+      // 原生加速度样本更稳定时，优先使用它们驱动倾斜效果。
+      if (now - lastNativeTiltAtRef.current < 360) {
         return
       }
 
@@ -373,11 +487,13 @@ export function useMotionInput({
     const applyNativeAcceleration = (
       acceleration: { x: number | null; y: number | null } | null | undefined,
     ) => {
-      if (permissionStateRef.current !== 'granted') {
+      if (!acceleration || acceleration.x == null || acceleration.y == null) {
         return
       }
 
-      if (!acceleration || acceleration.x == null || acceleration.y == null) {
+      markTiltSample()
+
+      if (!canUseTiltInput()) {
         return
       }
 
@@ -583,13 +699,15 @@ export function useMotionInput({
       startLoop()
     }
 
-    if (orientationSupport) {
+    if (shouldListenOrientation) {
       window.addEventListener('deviceorientation', onOrientation)
     }
 
-    if (motionSupport) {
+    if (shouldListenMotion) {
       window.addEventListener('devicemotion', onDeviceMotion)
+    }
 
+    if (nativeApp && runtimePlatform === 'ios') {
       void Motion.addListener('accel', onNativeAccel)
         .then((handle) => {
           if (cancelled) {
@@ -598,9 +716,12 @@ export function useMotionInput({
           }
 
           accelHandle = handle
+          updateDiagnostics({ nativeListenerState: 'attached' })
         })
         .catch(() => {
-          if (!orientationSupport) {
+          updateDiagnostics({ nativeListenerState: 'failed' })
+
+          if (!shouldListenOrientation && !shouldListenMotion) {
             setPermissionState('unsupported')
           }
         })
@@ -619,11 +740,11 @@ export function useMotionInput({
       stopLoop()
       document.removeEventListener('visibilitychange', handleVisibilityChange)
 
-      if (orientationSupport) {
+      if (shouldListenOrientation) {
         window.removeEventListener('deviceorientation', onOrientation)
       }
 
-      if (motionSupport) {
+      if (shouldListenMotion) {
         window.removeEventListener('devicemotion', onDeviceMotion)
       }
 
@@ -637,7 +758,17 @@ export function useMotionInput({
       window.removeEventListener('pointerup', onPointerUp)
       window.removeEventListener('pointercancel', onPointerUp)
     }
-  }, [enabled, isDesktop, isPhone, pointerCoarse, reducedMotion])
+  }, [
+    enabled,
+    isDesktop,
+    isPhone,
+    markTiltSample,
+    nativeApp,
+    pointerCoarse,
+    reducedMotion,
+    runtimePlatform,
+    updateDiagnostics,
+  ])
 
   const snapshot = useMemo<MotionSnapshot>(() => {
     return {
@@ -647,8 +778,17 @@ export function useMotionInput({
       permissionState,
       capabilityState,
       isReducedMotion: reducedMotion,
+      diagnostics,
     }
-  }, [activeSource, capabilityState, permissionState, reducedMotion, vectorState.x, vectorState.y])
+  }, [
+    activeSource,
+    capabilityState,
+    diagnostics,
+    permissionState,
+    reducedMotion,
+    vectorState.x,
+    vectorState.y,
+  ])
 
   return {
     motionRef,

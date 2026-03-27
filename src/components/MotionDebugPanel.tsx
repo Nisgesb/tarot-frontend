@@ -1,10 +1,16 @@
 import { useState } from 'react'
-import type { MotionPermissionState, MotionSource, MotionTuning } from '../motion/types'
+import type {
+  MotionDiagnostics,
+  MotionPermissionState,
+  MotionSource,
+  MotionTuning,
+} from '../motion/types'
 
 interface MotionDebugPanelProps {
   tuning: MotionTuning
   permissionState: MotionPermissionState
   source: MotionSource
+  diagnostics: MotionDiagnostics
   onChange: (patch: Partial<MotionTuning>) => void
   onReset: () => void
 }
@@ -13,6 +19,7 @@ export function MotionDebugPanel({
   tuning,
   permissionState,
   source,
+  diagnostics,
   onChange,
   onReset,
 }: MotionDebugPanelProps) {
@@ -33,6 +40,24 @@ export function MotionDebugPanel({
     idle: '自动',
   }
 
+  const runtimeLabelMap: Record<MotionDiagnostics['runtimePlatform'], string> = {
+    web: 'Web',
+    ios: 'iOS',
+    android: 'Android',
+  }
+
+  const nativeListenerLabelMap: Record<MotionDiagnostics['nativeListenerState'], string> = {
+    idle: '未接入',
+    attached: '已接入',
+    failed: '接入失败',
+  }
+
+  const lastTiltSampleLabel = diagnostics.lastTiltSampleAt
+    ? new Date(diagnostics.lastTiltSampleAt).toLocaleTimeString('zh-CN', {
+        hour12: false,
+      })
+    : '未收到'
+
   return (
     <>
       <button
@@ -51,6 +76,22 @@ export function MotionDebugPanel({
 
           <p className="motion-debug-meta">
             权限：{permissionLabelMap[permissionState]} · 来源：{sourceLabelMap[source]}
+          </p>
+
+          <p className="motion-debug-meta">
+            平台：{runtimeLabelMap[diagnostics.runtimePlatform]} · 原生监听：
+            {nativeListenerLabelMap[diagnostics.nativeListenerState]}
+          </p>
+
+          <p className="motion-debug-meta">
+            `DeviceOrientationEvent`：
+            {diagnostics.hasBrowserOrientationSupport ? '存在' : '缺失'} · `DeviceMotionEvent`：
+            {diagnostics.hasBrowserMotionSupport ? '存在' : '缺失'}
+          </p>
+
+          <p className="motion-debug-meta">
+            最近倾斜样本：
+            {diagnostics.hasTiltSample ? `已收到（${lastTiltSampleLabel}）` : '未收到'}
           </p>
 
           <label className="metaball-debug-row">
