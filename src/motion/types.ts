@@ -1,6 +1,12 @@
 export type MotionSource = 'tilt' | 'touch' | 'mouse' | 'idle'
 export type MotionRuntimePlatform = 'web' | 'ios' | 'android'
 export type NativeMotionListenerState = 'idle' | 'attached' | 'failed'
+export type MotionTransport = 'web' | 'native'
+export type NativeMotionStatus =
+  | 'notDetermined'
+  | 'granted'
+  | 'denied'
+  | 'unsupported'
 
 export type MotionPermissionState =
   | 'unknown'
@@ -22,11 +28,14 @@ export interface MotionVector {
 
 export interface MotionDiagnostics {
   runtimePlatform: MotionRuntimePlatform
+  transport: MotionTransport
   hasBrowserOrientationSupport: boolean
   hasBrowserMotionSupport: boolean
   nativeListenerState: NativeMotionListenerState
+  nativePermissionState: NativeMotionStatus
   hasTiltSample: boolean
   lastTiltSampleAt: number | null
+  lastNativeSampleAt: number | null
 }
 
 export interface MotionSnapshot {
@@ -50,4 +59,13 @@ export interface MotionTuning {
   nativeCalibrationRange: number
   nativeAbsoluteBlend: number
   tiltMaxDeltaBoost: number
+}
+
+export interface MotionSceneTuning {
+  nebulaTimeScale: number
+  nebulaMotionX: number
+  nebulaMotionY: number
+  starSpeed: number
+  portalMotionX: number
+  portalMotionY: number
 }

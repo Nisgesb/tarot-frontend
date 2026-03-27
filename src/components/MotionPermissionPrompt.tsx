@@ -1,39 +1,53 @@
-import type { MotionPermissionState } from '../motion/types'
-
 interface MotionPermissionPromptProps {
   visible: boolean
-  permissionState: MotionPermissionState
+  mode: 'onboarding' | 'skipped' | 'denied'
   onEnable: () => void
   onSkip: () => void
+  onOpenSettings: () => void
 }
 
 export function MotionPermissionPrompt({
   visible,
-  permissionState,
+  mode,
   onEnable,
   onSkip,
+  onOpenSettings,
 }: MotionPermissionPromptProps) {
   if (!visible) {
     return null
   }
 
-  const blocked = permissionState === 'denied'
+  const onboarding = mode === 'onboarding'
+  const denied = mode === 'denied'
 
   return (
-    <aside className="motion-permission-prompt" role="dialog" aria-live="polite">
-      <p className="motion-permission-title">动态交互权限</p>
-      <p className="motion-permission-copy">
-        {blocked
-          ? '当前动态权限被拒绝。你可以立即重试授权，或继续使用触控交互。'
-          : '开启陀螺仪后，背景会随手机倾斜产生更强的空间纵深。'}
-      </p>
-      <div className="motion-permission-actions">
-        <button type="button" className="primary-pill" onClick={onEnable}>
-          {blocked ? '重新请求权限' : '开启陀螺仪'}
-        </button>
-        <button type="button" className="secondary-pill" onClick={onSkip}>
-          {blocked ? '继续使用触控' : '暂不启用'}
-        </button>
+    <aside
+      className={`motion-permission-prompt ${onboarding ? 'is-onboarding' : 'is-recovery'}`}
+      role="dialog"
+      aria-live="polite"
+      aria-modal={onboarding}
+    >
+      <div className="motion-permission-card">
+        <p className="motion-permission-title">
+          {denied ? '动态感应已关闭' : '开启动态感应'}
+        </p>
+        <p className="motion-permission-copy">
+          {denied
+            ? '你已关闭动态感应，可在系统设置重新开启；未开启时仍可继续以普通模式浏览。'
+            : '开启后首页会随手机倾斜产生空间纵深效果；授权完成后，后续启动会默认自动开启。'}
+        </p>
+        <div className="motion-permission-actions">
+          <button
+            type="button"
+            className="primary-pill"
+            onClick={denied ? onOpenSettings : onEnable}
+          >
+            {denied ? '去设置开启' : '开启动态感应'}
+          </button>
+          <button type="button" className="secondary-pill" onClick={onSkip}>
+            {onboarding ? '先体验普通模式' : '继续普通模式'}
+          </button>
+        </div>
       </div>
     </aside>
   )

@@ -3,7 +3,6 @@ import type { CSSProperties } from 'react'
 import { AudioToggle } from './components/AudioToggle'
 import { DreamPortal } from './components/DreamPortal'
 import { HeroOverlay } from './components/HeroOverlay'
-import { MotionControlDock } from './components/MotionControlDock'
 import { MotionDebugPanel } from './components/MotionDebugPanel'
 import { MotionPermissionPrompt } from './components/MotionPermissionPrompt'
 import { NebulaBackground } from './components/NebulaBackground'
@@ -20,7 +19,7 @@ import { useSceneMachine } from './hooks/useSceneMachine'
 import { useSafeAreaInsets } from './hooks/useSafeAreaInsets'
 import { useViewportProfile } from './hooks/useViewportProfile'
 import { MobileAppShell } from './layout/MobileAppShell'
-import type { MotionProfile, MotionTuning } from './motion/types'
+import type { MotionProfile, MotionSceneTuning, MotionTuning } from './motion/types'
 import { exportCanvasResult } from './platform/exportShareAdapter'
 import { createDreamRecordFromRefined } from './services/dreamGenerationService'
 import { getGalleryDreams } from './services/galleryService'
@@ -39,6 +38,20 @@ import type { DreamRecord, RawDreamInput } from './types/dream'
 
 const ORB_ZOOM_MS = 560
 const MOTION_TUNING_KEY = 'motion-debug-tuning-v1'
+const SCENE_TUNING_KEY = 'motion-debug-scene-v1'
+const MOTION_ONBOARDING_KEY = 'motion-onboarding-complete'
+const MOTION_LAST_PERMISSION_KEY = 'motion-last-permission'
+
+const DEFAULT_SCENE_TUNING: MotionSceneTuning = {
+  nebulaTimeScale: 2.06,
+  nebulaMotionX: 1,
+  nebulaMotionY: 1,
+  starSpeed: 1,
+  portalMotionX: 3.64,
+  portalMotionY: 3.36,
+}
+
+type MotionLastPermissionChoice = 'unknown' | 'granted' | 'denied' | 'skipped' | 'unsupported'
 
 function loadMotionTuning(): MotionTuning {
   if (typeof window === 'undefined') {
@@ -72,6 +85,68 @@ function loadMotionTuning(): MotionTuning {
   } catch {
     return DEFAULT_MOTION_TUNING
   }
+}
+
+function loadSceneTuning(): MotionSceneTuning {
+  if (typeof window === 'undefined') {
+    return DEFAULT_SCENE_TUNING
+  }
+
+  try {
+    const raw = window.localStorage.getItem(SCENE_TUNING_KEY)
+
+    if (!raw) {
+      return DEFAULT_SCENE_TUNING
+    }
+
+    const parsed = JSON.parse(raw) as Partial<MotionSceneTuning>
+
+    return {
+      nebulaTimeScale: Number(parsed.nebulaTimeScale ?? DEFAULT_SCENE_TUNING.nebulaTimeScale),
+      nebulaMotionX: Number(parsed.nebulaMotionX ?? DEFAULT_SCENE_TUNING.nebulaMotionX),
+      nebulaMotionY: Number(parsed.nebulaMotionY ?? DEFAULT_SCENE_TUNING.nebulaMotionY),
+      starSpeed: Number(parsed.starSpeed ?? DEFAULT_SCENE_TUNING.starSpeed),
+      portalMotionX: Number(parsed.portalMotionX ?? DEFAULT_SCENE_TUNING.portalMotionX),
+      portalMotionY: Number(parsed.portalMotionY ?? DEFAULT_SCENE_TUNING.portalMotionY),
+    }
+  } catch {
+    return DEFAULT_SCENE_TUNING
+  }
+}
+
+function loadMotionOnboardingComplete() {
+  if (typeof window === 'undefined') {
+    return false
+  }
+
+  try {
+    return window.localStorage.getItem(MOTION_ONBOARDING_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+function loadMotionLastPermission(): MotionLastPermissionChoice {
+  if (typeof window === 'undefined') {
+    return 'unknown'
+  }
+
+  try {
+    const value = window.localStorage.getItem(MOTION_LAST_PERMISSION_KEY)
+
+    if (
+      value === 'granted' ||
+      value === 'denied' ||
+      value === 'skipped' ||
+      value === 'unsupported'
+    ) {
+      return value
+    }
+  } catch {
+    return 'unknown'
+  }
+
+  return 'unknown'
 }
 
 function resolveBackgroundSpeed(scene: string) {
@@ -158,6 +233,17 @@ function resolveMotionProfile(scene: string, base: MotionProfile): MotionProfile
   }
 }
 
+function scaleMotionProfile(
+  base: MotionProfile,
+  scaleX: number,
+  scaleY: number,
+): MotionProfile {
+  return {
+    x: base.x * scaleX,
+    y: base.y * scaleY,
+  }
+}
+
 function App() {
   const reducedMotion = useReducedMotion()
   const viewportProfile = useViewportProfile()
@@ -170,6 +256,7 @@ function App() {
   )
 
   const [motionTuning, setMotionTuning] = useState<MotionTuning>(() => loadMotionTuning())
+  const [sceneTuning, setSceneTuning] = useState<MotionSceneTuning>(() => loadSceneTuning())
 
   const motion = useMotionInput({
     enabled: true,
@@ -179,8 +266,18 @@ function App() {
     isPhone: viewportProfile.isPhone,
     tuning: motionTuning,
   })
+  const motionDiagnostics = motion.snapshot.diagnostics
+  const requestTiltPermission = motion.requestTiltPermission
+  const openTiltSettings = motion.openTiltSettings
 
   const [hasAnimatedIn, setHasAnimatedIn] = useState(false)
+  const [motionOnboardingComplete, setMotionOnboardingComplete] = useState(() =>
+    loadMotionOnboardingComplete(),
+  )
+  const [motionLastPermission, setMotionLastPermission] = useState<MotionLastPermissionChoice>(() =>
+    loadMotionLastPermission(),
+  )
+  const [motionRecoveryDismissed, setMotionRecoveryDismissed] = useState(false)
   const [myDreams, setMyDreams] = useState<DreamRecord[]>([])
   const [draftInput, setDraftInput] = useState<RawDreamInput>(EMPTY_RAW_DREAM_INPUT)
   const [draftRefinedText, setDraftRefinedText] = useState('')
@@ -224,6 +321,33 @@ function App() {
       // 忽略本地存储异常
     }
   }, [motionTuning])
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(SCENE_TUNING_KEY, JSON.stringify(sceneTuning))
+    } catch {
+      // 忽略本地存储异常
+    }
+  }, [sceneTuning])
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        MOTION_ONBOARDING_KEY,
+        motionOnboardingComplete ? 'true' : 'false',
+      )
+    } catch {
+      // 忽略本地存储异常
+    }
+  }, [motionOnboardingComplete])
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(MOTION_LAST_PERMISSION_KEY, motionLastPermission)
+    } catch {
+      // 忽略本地存储异常
+    }
+  }, [motionLastPermission])
 
   useEffect(() => {
     let cancelled = false
@@ -273,14 +397,14 @@ function App() {
   const entered = reducedMotion || hasAnimatedIn
 
   useEffect(() => {
-    const initializeAudio = () => {
+    const initializeExperience = () => {
       void activate()
     }
 
-    window.addEventListener('pointerdown', initializeAudio, { once: true })
+    window.addEventListener('pointerdown', initializeExperience, { once: true })
 
     return () => {
-      window.removeEventListener('pointerdown', initializeAudio)
+      window.removeEventListener('pointerdown', initializeExperience)
     }
   }, [activate])
 
@@ -304,9 +428,82 @@ function App() {
     }
   }, [actions, sceneState.scene])
 
+  useEffect(() => {
+    if (motionDiagnostics.transport !== 'native') {
+      return undefined
+    }
+
+    const timer = window.setTimeout(() => {
+      if (motionDiagnostics.nativePermissionState === 'granted') {
+        setMotionOnboardingComplete(true)
+        setMotionLastPermission('granted')
+        setMotionRecoveryDismissed(false)
+        return
+      }
+
+      if (motionDiagnostics.nativePermissionState === 'denied') {
+        setMotionOnboardingComplete(true)
+        setMotionLastPermission('denied')
+        setMotionRecoveryDismissed(false)
+        return
+      }
+
+      if (motionDiagnostics.nativePermissionState === 'unsupported') {
+        setMotionLastPermission('unsupported')
+      }
+    }, 0)
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [motionDiagnostics.nativePermissionState, motionDiagnostics.transport])
+
+  const handleEnableMotion = useCallback(async () => {
+    const granted = await requestTiltPermission()
+
+    if (granted) {
+      setMotionOnboardingComplete(true)
+      setMotionLastPermission('granted')
+      setMotionRecoveryDismissed(false)
+      return
+    }
+
+    if (motionDiagnostics.transport === 'native') {
+      if (motionDiagnostics.nativePermissionState === 'denied') {
+        setMotionOnboardingComplete(true)
+        setMotionLastPermission('denied')
+        setMotionRecoveryDismissed(false)
+        return
+      }
+
+      if (motionDiagnostics.nativePermissionState === 'notDetermined') {
+        setMotionOnboardingComplete(false)
+      }
+    }
+  }, [
+    motionDiagnostics.nativePermissionState,
+    motionDiagnostics.transport,
+    requestTiltPermission,
+  ])
+
+  const handleSkipMotionOnboarding = useCallback(() => {
+    setMotionOnboardingComplete(true)
+    setMotionLastPermission('skipped')
+    setMotionRecoveryDismissed(true)
+  }, [])
+
+  const handleDismissMotionRecovery = useCallback(() => {
+    setMotionRecoveryDismissed(true)
+  }, [])
+
+  const handleOpenMotionSettings = useCallback(() => {
+    setMotionOnboardingComplete(true)
+    setMotionRecoveryDismissed(true)
+    void openTiltSettings()
+  }, [openTiltSettings])
+
   const startEnterFlow = () => {
     void activate()
-    motion.nudgePermissionPrompt()
     setDraftInput(EMPTY_RAW_DREAM_INPUT)
     setDraftRefinedText('')
     setEntryRenderKey((previous) => previous + 1)
@@ -459,28 +656,56 @@ function App() {
     '--app-dvh': `${keyboardAware.viewportHeight}px`,
   } as CSSProperties
 
-  const nebulaProfile = resolveMotionProfile(sceneState.scene, { x: 1, y: 0.86 })
-  const starProfile = resolveMotionProfile(sceneState.scene, { x: 0.95, y: 0.88 })
-  const portalProfile = resolveMotionProfile(sceneState.scene, { x: 0.64, y: 0.58 })
+  const heroLikeScene =
+    sceneState.scene === 'hero' || sceneState.scene === 'entering'
+  const showMotionOnboarding =
+    sceneState.scene === 'hero' &&
+    motionDiagnostics.transport === 'native' &&
+    !motionOnboardingComplete &&
+    motionDiagnostics.nativePermissionState === 'notDetermined'
+  const showMotionRecovery =
+    sceneState.scene === 'hero' &&
+    motionDiagnostics.transport === 'native' &&
+    !showMotionOnboarding &&
+    !motionRecoveryDismissed &&
+    (
+      motionDiagnostics.nativePermissionState === 'denied' ||
+      motionLastPermission === 'skipped'
+    )
+  const motionPromptMode =
+    motionDiagnostics.nativePermissionState === 'denied'
+      ? 'denied'
+      : 'skipped'
+  const baseNebulaProfile = resolveMotionProfile(sceneState.scene, { x: 1, y: 0.86 })
+  const baseStarProfile = resolveMotionProfile(sceneState.scene, { x: 0.95, y: 0.88 })
+  const basePortalProfile = resolveMotionProfile(sceneState.scene, { x: 0.64, y: 0.58 })
+  const nebulaProfile = heroLikeScene
+    ? scaleMotionProfile(
+        baseNebulaProfile,
+        sceneTuning.nebulaMotionX,
+        sceneTuning.nebulaMotionY,
+      )
+    : baseNebulaProfile
+  const starProfile = baseStarProfile
+  const portalProfile = heroLikeScene
+    ? scaleMotionProfile(
+        basePortalProfile,
+        sceneTuning.portalMotionX,
+        sceneTuning.portalMotionY,
+      )
+    : basePortalProfile
   const resultProfile = resolveMotionProfile(sceneState.scene, { x: 0.72, y: 0.68 })
   const galleryProfile = resolveMotionProfile(sceneState.scene, { x: 0.95, y: 0.9 })
+  const nebulaTimeScale = resolveBackgroundSpeed(sceneState.scene) * (
+    heroLikeScene ? sceneTuning.nebulaTimeScale : 1
+  )
+  const starSpeed = resolveStarSpeed(sceneState.scene) * (
+    heroLikeScene ? sceneTuning.starSpeed : 1
+  )
 
   const showFloatingAudio =
     sceneState.scene !== 'result' &&
     sceneState.scene !== 'inspectDream'
-  const hasTiltSample = motion.snapshot.diagnostics.hasTiltSample
-  const showMotionDock =
-    viewportProfile.pointerCoarse &&
-    sceneState.scene !== 'result' &&
-    sceneState.scene !== 'inspectDream' &&
-    (
-      motion.snapshot.permissionState !== 'granted' ||
-      !hasTiltSample ||
-      sceneState.scene === 'dreamEntry' ||
-      sceneState.scene === 'assistantRefine' ||
-      sceneState.scene === 'gallery' ||
-      sceneState.scene === 'myDreams'
-    )
   const showMotionDebug =
     viewportProfile.pointerCoarse &&
     sceneState.scene !== 'result' &&
@@ -498,7 +723,7 @@ function App() {
         motionRef={motion.motionRef}
         motionProfile={nebulaProfile}
         performanceTier={viewportProfile.performanceTier}
-        timeScale={resolveBackgroundSpeed(sceneState.scene)}
+        timeScale={nebulaTimeScale}
         composition={resolveNebulaComposition(sceneState.scene)}
       />
       <StarField
@@ -507,7 +732,7 @@ function App() {
         motionRef={motion.motionRef}
         motionProfile={starProfile}
         performanceTier={viewportProfile.performanceTier}
-        speedMultiplier={resolveStarSpeed(sceneState.scene)}
+        speedMultiplier={starSpeed}
       />
       <div className="enter-inner-world-layer" aria-hidden>
         <div className="enter-inner-world-window">
@@ -529,6 +754,14 @@ function App() {
         hidden={sceneState.scene !== 'hero' && sceneState.scene !== 'entering'}
         reducedMotion={reducedMotion}
         onEnter={startEnterFlow}
+      />
+
+      <MotionPermissionPrompt
+        visible={showMotionOnboarding || showMotionRecovery}
+        mode={showMotionOnboarding ? 'onboarding' : motionPromptMode}
+        onEnable={handleEnableMotion}
+        onSkip={showMotionOnboarding ? handleSkipMotionOnboarding : handleDismissMotionRecovery}
+        onOpenSettings={handleOpenMotionSettings}
       />
 
       <DreamEntryScene
@@ -614,28 +847,10 @@ function App() {
       />
       <PortalTransition mode="orb" active={orbTransition.active} origin={orbTransition.origin} />
 
-      <MotionPermissionPrompt
-        visible={motion.showPermissionPrompt}
-        permissionState={motion.snapshot.permissionState}
-        onEnable={() => {
-          void motion.requestTiltPermission()
-        }}
-        onSkip={motion.dismissPermissionPrompt}
-      />
-
-      {showMotionDock ? (
-        <MotionControlDock
-          permissionState={motion.snapshot.permissionState}
-          source={motion.snapshot.source}
-          hasTiltSample={hasTiltSample}
-          onReenable={motion.reopenMotionPrompt}
-          onRecenter={motion.recenter}
-        />
-      ) : null}
-
       {showMotionDebug ? (
         <MotionDebugPanel
           tuning={motionTuning}
+          sceneTuning={sceneTuning}
           permissionState={motion.snapshot.permissionState}
           source={motion.snapshot.source}
           diagnostics={motion.snapshot.diagnostics}
@@ -645,8 +860,17 @@ function App() {
               ...patch,
             }))
           }}
+          onChangeScene={(patch) => {
+            setSceneTuning((previous) => ({
+              ...previous,
+              ...patch,
+            }))
+          }}
           onReset={() => {
             setMotionTuning(DEFAULT_MOTION_TUNING)
+          }}
+          onResetScene={() => {
+            setSceneTuning(DEFAULT_SCENE_TUNING)
           }}
         />
       ) : null}

@@ -1,28 +1,34 @@
-import { Motion } from '@capacitor/motion'
-import type { AccelListenerEvent } from '@capacitor/motion'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { MutableRefObject } from 'react'
 import type {
-  MotionDiagnostics,
   MotionCapabilityState,
+  MotionDiagnostics,
   MotionPermissionState,
   MotionRuntimePlatform,
   MotionSnapshot,
   MotionSource,
   MotionTuning,
   MotionVector,
+  NativeMotionStatus,
 } from '../motion/types'
 import {
-  getRuntimePlatform,
+  addNativeMotionListener,
+  getNativeMotionStatus,
+  openNativeMotionSettings,
+  recenterNativeMotion,
+  startNativeMotion,
+  stopNativeMotion,
+} from '../platform/nativeMotionBridge'
+import {
   deviceMotionNeedsPermission,
   deviceOrientationNeedsPermission,
+  getRuntimePlatform,
   hasDeviceMotionSupport,
   hasDeviceOrientationSupport,
   isNativeApp,
 } from '../platform/runtime'
 
-const MOTION_PERMISSION_KEY = 'motion-permission'
-const MOTION_OPT_IN_KEY = 'motion-opt-in'
+const MOTION_LAST_PERMISSION_KEY = 'motion-last-permission'
 const MOTION_CALIBRATION_KEY = 'motion-calibration'
 
 const DEAD_ZONE = 0.035
@@ -35,11 +41,11 @@ const DIAGNOSTIC_SAMPLE_THROTTLE_MS = 800
 type CalibrationMode = 'orientation' | 'acceleration'
 
 export const DEFAULT_MOTION_TUNING: MotionTuning = {
-  phoneTiltGain: 1.58,
-  phoneTiltLowPassBoost: 1.18,
-  nativeCalibrationRange: 0.52,
-  nativeAbsoluteBlend: 0.38,
-  tiltMaxDeltaBoost: 1.85,
+  phoneTiltGain: 2.8,
+  phoneTiltLowPassBoost: 1.8,
+  nativeCalibrationRange: 2.49,
+  nativeAbsoluteBlend: 1.95,
+  tiltMaxDeltaBoost: 8,
 }
 
 interface OrientationCalibration {
@@ -60,12 +66,9 @@ interface UseMotionInputOptions {
 interface UseMotionInputResult {
   motionRef: MutableRefObject<MotionVector>
   snapshot: MotionSnapshot
-  showPermissionPrompt: boolean
   requestTiltPermission: () => Promise<boolean>
-  nudgePermissionPrompt: () => void
-  dismissPermissionPrompt: () => void
-  recenter: () => void
-  reopenMotionPrompt: () => void
+  openTiltSettings: () => Promise<void>
+  recenter: () => Promise<void>
 }
 
 interface DeviceOrientationWithPermission extends DeviceOrientationEvent {
@@ -128,18 +131,25 @@ function writeCalibration(calibration: OrientationCalibration) {
   writeStorage(MOTION_CALIBRATION_KEY, JSON.stringify(calibration))
 }
 
+function getMotionTransport(runtimePlatform: MotionRuntimePlatform) {
+  return runtimePlatform === 'ios' && isNativeApp() ? 'native' : 'web'
+}
+
 function createDiagnostics(runtimePlatform: MotionRuntimePlatform): MotionDiagnostics {
   return {
     runtimePlatform,
+    transport: getMotionTransport(runtimePlatform),
     hasBrowserOrientationSupport: hasDeviceOrientationSupport(),
     hasBrowserMotionSupport: hasDeviceMotionSupport(),
     nativeListenerState: 'idle',
+    nativePermissionState: runtimePlatform === 'ios' && isNativeApp() ? 'notDetermined' : 'unsupported',
     hasTiltSample: false,
     lastTiltSampleAt: null,
+    lastNativeSampleAt: null,
   }
 }
 
-function getTiltSupport(runtimePlatform: MotionRuntimePlatform) {
+function getWebTiltSupport(runtimePlatform: MotionRuntimePlatform) {
   return (
     hasDeviceOrientationSupport() ||
     hasDeviceMotionSupport() ||
@@ -147,18 +157,34 @@ function getTiltSupport(runtimePlatform: MotionRuntimePlatform) {
   )
 }
 
-function getNeedsPermission() {
+function getNeedsWebPermission() {
   return deviceOrientationNeedsPermission() || deviceMotionNeedsPermission()
 }
 
-function derivePermissionState(runtimePlatform: MotionRuntimePlatform): MotionPermissionState {
-  const hasTiltSupport = getTiltSupport(runtimePlatform)
+function mapNativeStatusToPermission(status: NativeMotionStatus): MotionPermissionState {
+  if (status === 'granted') {
+    return 'granted'
+  }
+
+  if (status === 'denied') {
+    return 'denied'
+  }
+
+  if (status === 'unsupported') {
+    return 'unsupported'
+  }
+
+  return 'promptable'
+}
+
+function deriveWebPermissionState(runtimePlatform: MotionRuntimePlatform): MotionPermissionState {
+  const hasTiltSupport = getWebTiltSupport(runtimePlatform)
 
   if (!hasTiltSupport) {
     return 'unsupported'
   }
 
-  const storedPermission = readStorage(MOTION_PERMISSION_KEY)
+  const storedPermission = readStorage(MOTION_LAST_PERMISSION_KEY)
 
   if (storedPermission === 'granted') {
     return 'granted'
@@ -168,11 +194,7 @@ function derivePermissionState(runtimePlatform: MotionRuntimePlatform): MotionPe
     return 'denied'
   }
 
-  if (!getNeedsPermission()) {
-    if (runtimePlatform === 'ios' && isNativeApp()) {
-      return 'promptable'
-    }
-
+  if (!getNeedsWebPermission()) {
     return 'granted'
   }
 
@@ -201,10 +223,14 @@ export function useMotionInput({
 }: UseMotionInputOptions): UseMotionInputResult {
   const runtimePlatform = getRuntimePlatform()
   const nativeApp = isNativeApp()
-  const [permissionState, setPermissionState] = useState<MotionPermissionState>(() =>
-    derivePermissionState(runtimePlatform),
-  )
-  const [showPermissionPrompt, setShowPermissionPrompt] = useState(false)
+  const nativeTransport = runtimePlatform === 'ios' && nativeApp
+  const [permissionState, setPermissionState] = useState<MotionPermissionState>(() => {
+    if (nativeTransport) {
+      return 'unknown'
+    }
+
+    return deriveWebPermissionState(runtimePlatform)
+  })
   const [activeSource, setActiveSource] = useState<MotionSource>('idle')
   const [vectorState, setVectorState] = useState({ x: 0, y: 0 })
   const [diagnostics, setDiagnostics] = useState<MotionDiagnostics>(() =>
@@ -236,11 +262,14 @@ export function useMotionInput({
 
       if (
         current.runtimePlatform === next.runtimePlatform &&
+        current.transport === next.transport &&
         current.hasBrowserOrientationSupport === next.hasBrowserOrientationSupport &&
         current.hasBrowserMotionSupport === next.hasBrowserMotionSupport &&
         current.nativeListenerState === next.nativeListenerState &&
+        current.nativePermissionState === next.nativePermissionState &&
         current.hasTiltSample === next.hasTiltSample &&
-        current.lastTiltSampleAt === next.lastTiltSampleAt
+        current.lastTiltSampleAt === next.lastTiltSampleAt &&
+        current.lastNativeSampleAt === next.lastNativeSampleAt
       ) {
         return current
       }
@@ -249,44 +278,55 @@ export function useMotionInput({
     })
   }, [])
 
-  const markTiltSample = useCallback(() => {
-    const sampleAt = Date.now()
+  const markTiltSample = useCallback(
+    (sampleSource: 'web' | 'native') => {
+      const sampleAt = Date.now()
 
-    setDiagnostics((current) => {
-      const shouldRefreshTimestamp =
-        !current.hasTiltSample ||
-        current.lastTiltSampleAt == null ||
-        sampleAt - current.lastTiltSampleAt >= DIAGNOSTIC_SAMPLE_THROTTLE_MS
+      setDiagnostics((current) => {
+        const shouldRefreshTiltTimestamp =
+          !current.hasTiltSample ||
+          current.lastTiltSampleAt == null ||
+          sampleAt - current.lastTiltSampleAt >= DIAGNOSTIC_SAMPLE_THROTTLE_MS
+        const shouldRefreshNativeTimestamp =
+          sampleSource === 'native' &&
+          (current.lastNativeSampleAt == null ||
+            sampleAt - current.lastNativeSampleAt >= DIAGNOSTIC_SAMPLE_THROTTLE_MS)
 
-      if (!shouldRefreshTimestamp && current.hasTiltSample) {
-        return current
+        if (!shouldRefreshTiltTimestamp && !shouldRefreshNativeTimestamp && current.hasTiltSample) {
+          return current
+        }
+
+        return {
+          ...current,
+          hasTiltSample: true,
+          lastTiltSampleAt: shouldRefreshTiltTimestamp ? sampleAt : current.lastTiltSampleAt,
+          lastNativeSampleAt:
+            sampleSource === 'native'
+              ? shouldRefreshNativeTimestamp
+                ? sampleAt
+                : current.lastNativeSampleAt
+              : current.lastNativeSampleAt,
+        }
+      })
+
+      if (nativeTransport) {
+        if (permissionStateRef.current !== 'granted') {
+          permissionStateRef.current = 'granted'
+          setPermissionState('granted')
+        }
+
+        writeStorage(MOTION_LAST_PERMISSION_KEY, 'granted')
+        updateDiagnostics({ nativePermissionState: 'granted' })
+        return
       }
 
-      return {
-        ...current,
-        hasTiltSample: true,
-        lastTiltSampleAt: sampleAt,
+      if (!getNeedsWebPermission() && permissionStateRef.current !== 'granted') {
+        writeStorage(MOTION_LAST_PERMISSION_KEY, 'granted')
+        setPermissionState('granted')
       }
-    })
-
-    const canImplicitlyGrant =
-      !getNeedsPermission() &&
-      (
-        runtimePlatform !== 'ios' ||
-        !nativeApp ||
-        readStorage(MOTION_OPT_IN_KEY) === 'true'
-      )
-
-    if (
-      canImplicitlyGrant &&
-      permissionStateRef.current !== 'granted' &&
-      permissionStateRef.current !== 'denied'
-    ) {
-      writeStorage(MOTION_PERMISSION_KEY, 'granted')
-      writeStorage(MOTION_OPT_IN_KEY, 'true')
-      setPermissionState('granted')
-    }
-  }, [nativeApp, runtimePlatform])
+    },
+    [nativeTransport, updateDiagnostics],
+  )
 
   useEffect(() => {
     permissionStateRef.current = permissionState
@@ -301,23 +341,65 @@ export function useMotionInput({
     [permissionState],
   )
 
+  const syncNativeStatus = useCallback(async () => {
+    if (!nativeTransport) {
+      return 'unsupported' as NativeMotionStatus
+    }
+
+    try {
+      const status = await getNativeMotionStatus()
+      updateDiagnostics({
+        transport: 'native',
+        nativePermissionState: status,
+      })
+      setPermissionState(mapNativeStatusToPermission(status))
+      if (status !== 'notDetermined') {
+        writeStorage(MOTION_LAST_PERMISSION_KEY, status)
+      }
+      return status
+    } catch {
+      updateDiagnostics({
+        transport: 'native',
+        nativePermissionState: 'unsupported',
+        nativeListenerState: 'failed',
+      })
+      setPermissionState('unsupported')
+      writeStorage(MOTION_LAST_PERMISSION_KEY, 'unsupported')
+      return 'unsupported' as NativeMotionStatus
+    }
+  }, [nativeTransport, updateDiagnostics])
+
   const requestTiltPermission = useCallback(async () => {
     if (reducedMotion || !enabled) {
-      setShowPermissionPrompt(false)
       return false
     }
 
-    if (!getTiltSupport(runtimePlatform)) {
+    if (nativeTransport) {
+      try {
+        const result = await startNativeMotion()
+        updateDiagnostics({ nativePermissionState: result.status, transport: 'native' })
+        const nextPermission = mapNativeStatusToPermission(result.status)
+        setPermissionState(nextPermission)
+        if (result.status !== 'notDetermined') {
+          writeStorage(MOTION_LAST_PERMISSION_KEY, result.status)
+        }
+        return result.status === 'granted'
+      } catch {
+        setPermissionState('denied')
+        updateDiagnostics({ nativePermissionState: 'denied', transport: 'native' })
+        writeStorage(MOTION_LAST_PERMISSION_KEY, 'denied')
+        return false
+      }
+    }
+
+    if (!getWebTiltSupport(runtimePlatform)) {
       setPermissionState('unsupported')
-      setShowPermissionPrompt(false)
       return false
     }
 
-    if (!getNeedsPermission()) {
-      writeStorage(MOTION_PERMISSION_KEY, 'granted')
-      writeStorage(MOTION_OPT_IN_KEY, 'true')
+    if (!getNeedsWebPermission()) {
+      writeStorage(MOTION_LAST_PERMISSION_KEY, 'granted')
       setPermissionState('granted')
-      setShowPermissionPrompt(false)
       return true
     }
 
@@ -350,51 +432,28 @@ export function useMotionInput({
       )
 
       setPermissionState(granted ? 'granted' : 'denied')
-      writeStorage(MOTION_PERMISSION_KEY, granted ? 'granted' : 'denied')
-      writeStorage(MOTION_OPT_IN_KEY, granted ? 'true' : 'false')
-      setShowPermissionPrompt(false)
+      writeStorage(MOTION_LAST_PERMISSION_KEY, granted ? 'granted' : 'denied')
       return granted
     } catch {
       setPermissionState('denied')
-      writeStorage(MOTION_PERMISSION_KEY, 'denied')
-      writeStorage(MOTION_OPT_IN_KEY, 'false')
-      setShowPermissionPrompt(false)
+      writeStorage(MOTION_LAST_PERMISSION_KEY, 'denied')
       return false
     }
-  }, [enabled, reducedMotion, runtimePlatform])
+  }, [enabled, nativeTransport, reducedMotion, runtimePlatform, updateDiagnostics])
 
-  const dismissPermissionPrompt = useCallback(() => {
-    writeStorage(MOTION_OPT_IN_KEY, 'false')
-    setShowPermissionPrompt(false)
-  }, [])
-
-  const nudgePermissionPrompt = useCallback(() => {
-    if (reducedMotion || !enabled) {
+  const openTiltSettings = useCallback(async () => {
+    if (!nativeTransport) {
       return
     }
 
-    if (permissionStateRef.current === 'granted' || permissionStateRef.current === 'unsupported') {
-      return
+    try {
+      await openNativeMotionSettings()
+    } catch {
+      // 忽略打开设置失败
     }
+  }, [nativeTransport])
 
-    const skipped = readStorage(MOTION_OPT_IN_KEY) === 'false'
-    if (skipped) {
-      return
-    }
-
-    setShowPermissionPrompt(true)
-  }, [enabled, reducedMotion])
-
-  const reopenMotionPrompt = useCallback(() => {
-    if (permissionStateRef.current === 'unsupported') {
-      return
-    }
-
-    writeStorage(MOTION_OPT_IN_KEY, 'true')
-    setShowPermissionPrompt(true)
-  }, [])
-
-  const recenter = useCallback(() => {
+  const recenter = useCallback(async () => {
     const calibration = {
       beta: targetTiltRef.current.beta,
       gamma: targetTiltRef.current.gamma,
@@ -403,19 +462,86 @@ export function useMotionInput({
 
     calibrationRef.current = calibration
     writeCalibration(calibration)
-  }, [])
+
+    if (!nativeTransport) {
+      return
+    }
+
+    try {
+      await recenterNativeMotion()
+    } catch {
+      // 忽略原生校准失败
+    }
+  }, [nativeTransport])
+
+  useEffect(() => {
+    if (!nativeTransport) {
+      return undefined
+    }
+
+    let cancelled = false
+
+    const refreshStatus = async () => {
+      const status = await syncNativeStatus()
+      const previouslyGranted = readStorage(MOTION_LAST_PERMISSION_KEY) === 'granted'
+
+      if (cancelled) {
+        return
+      }
+
+      if ((status === 'granted' || (status === 'notDetermined' && previouslyGranted)) && enabled && !reducedMotion) {
+        try {
+          const result = await startNativeMotion()
+
+          if (cancelled) {
+            return
+          }
+
+          updateDiagnostics({ nativePermissionState: result.status, transport: 'native' })
+          setPermissionState(mapNativeStatusToPermission(result.status))
+        } catch {
+          if (!cancelled) {
+            setPermissionState('denied')
+            updateDiagnostics({ nativePermissionState: 'denied', nativeListenerState: 'failed' })
+          }
+        }
+      }
+    }
+
+    void refreshStatus()
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        void refreshStatus()
+      }
+    }
+
+    window.addEventListener('focus', handleVisibilityChange)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      cancelled = true
+      window.removeEventListener('focus', handleVisibilityChange)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [enabled, nativeTransport, reducedMotion, syncNativeStatus, updateDiagnostics])
 
   useEffect(() => {
     if (!enabled || reducedMotion) {
       motionRef.current = { x: 0, y: 0, source: 'idle' }
       smoothRef.current = { x: 0, y: 0 }
+
+      if (nativeTransport) {
+        void stopNativeMotion().catch(() => undefined)
+      }
+
       return undefined
     }
 
     const orientationSupport = hasDeviceOrientationSupport()
     const motionSupport = hasDeviceMotionSupport()
-    const shouldListenOrientation = orientationSupport || (runtimePlatform === 'ios' && nativeApp)
-    const shouldListenMotion = motionSupport || (runtimePlatform === 'ios' && nativeApp)
+    const shouldListenOrientation = !nativeTransport && orientationSupport
+    const shouldListenMotion = !nativeTransport && motionSupport
 
     const canUseTiltInput = () => {
       if (permissionStateRef.current === 'denied') {
@@ -426,15 +552,11 @@ export function useMotionInput({
         return true
       }
 
-      if (getNeedsPermission()) {
+      if (!nativeTransport && getNeedsWebPermission()) {
         return false
       }
 
-      if (runtimePlatform === 'ios' && nativeApp) {
-        return readStorage(MOTION_OPT_IN_KEY) === 'true'
-      }
-
-      return true
+      return !nativeTransport
     }
 
     const onOrientation = (event: DeviceOrientationEvent) => {
@@ -443,13 +565,12 @@ export function useMotionInput({
       }
 
       const now = performance.now()
-      markTiltSample()
+      markTiltSample('web')
 
       if (!canUseTiltInput()) {
         return
       }
 
-      // 原生加速度样本更稳定时，优先使用它们驱动倾斜效果。
       if (now - lastNativeTiltAtRef.current < 360) {
         return
       }
@@ -486,12 +607,13 @@ export function useMotionInput({
 
     const applyNativeAcceleration = (
       acceleration: { x: number | null; y: number | null } | null | undefined,
+      sampleSource: 'web' | 'native',
     ) => {
       if (!acceleration || acceleration.x == null || acceleration.y == null) {
         return
       }
 
-      markTiltSample()
+      markTiltSample(sampleSource)
 
       if (!canUseTiltInput()) {
         return
@@ -542,12 +664,14 @@ export function useMotionInput({
       lastTiltAtRef.current = performance.now()
     }
 
-    const onNativeAccel = (event: AccelListenerEvent) => {
-      applyNativeAcceleration(event.accelerationIncludingGravity ?? event.acceleration)
+    const onNativeSample = (event: {
+      accelerationIncludingGravity?: { x: number | null; y: number | null }
+    }) => {
+      applyNativeAcceleration(event.accelerationIncludingGravity, 'native')
     }
 
     const onDeviceMotion = (event: DeviceMotionEvent) => {
-      applyNativeAcceleration(event.accelerationIncludingGravity ?? event.acceleration)
+      applyNativeAcceleration(event.accelerationIncludingGravity ?? event.acceleration, 'web')
     }
 
     const onPointerMove = (event: PointerEvent) => {
@@ -590,7 +714,7 @@ export function useMotionInput({
     let cancelled = false
     let frameId = 0
     let loopActive = false
-    let accelHandle: { remove: () => Promise<void> } | null = null
+    let nativeHandle: { remove: () => Promise<void> } | null = null
 
     const tick = (time: number) => {
       if (!loopActive) {
@@ -660,11 +784,12 @@ export function useMotionInput({
       if (source !== sourceRef.current) {
         sourceRef.current = source
         setActiveSource(source)
-        setVectorState({
-          x: smoothRef.current.x,
-          y: smoothRef.current.y,
-        })
       }
+
+      setVectorState({
+        x: smoothRef.current.x,
+        y: smoothRef.current.y,
+      })
 
       frameId = window.requestAnimationFrame(tick)
     }
@@ -707,23 +832,24 @@ export function useMotionInput({
       window.addEventListener('devicemotion', onDeviceMotion)
     }
 
-    if (nativeApp && runtimePlatform === 'ios') {
-      void Motion.addListener('accel', onNativeAccel)
+    if (nativeTransport) {
+      void addNativeMotionListener(onNativeSample)
         .then((handle) => {
           if (cancelled) {
             void handle.remove()
             return
           }
 
-          accelHandle = handle
-          updateDiagnostics({ nativeListenerState: 'attached' })
+          nativeHandle = handle
+          updateDiagnostics({ nativeListenerState: 'attached', transport: 'native' })
         })
         .catch(() => {
-          updateDiagnostics({ nativeListenerState: 'failed' })
-
-          if (!shouldListenOrientation && !shouldListenMotion) {
-            setPermissionState('unsupported')
-          }
+          updateDiagnostics({
+            nativeListenerState: 'failed',
+            nativePermissionState: 'unsupported',
+            transport: 'native',
+          })
+          setPermissionState('unsupported')
         })
     }
 
@@ -748,9 +874,13 @@ export function useMotionInput({
         window.removeEventListener('devicemotion', onDeviceMotion)
       }
 
-      if (accelHandle) {
-        void accelHandle.remove()
-        accelHandle = null
+      if (nativeHandle) {
+        void nativeHandle.remove()
+        nativeHandle = null
+      }
+
+      if (nativeTransport) {
+        void stopNativeMotion().catch(() => undefined)
       }
 
       window.removeEventListener('pointermove', onPointerMove)
@@ -763,10 +893,9 @@ export function useMotionInput({
     isDesktop,
     isPhone,
     markTiltSample,
-    nativeApp,
+    nativeTransport,
     pointerCoarse,
     reducedMotion,
-    runtimePlatform,
     updateDiagnostics,
   ])
 
@@ -793,11 +922,8 @@ export function useMotionInput({
   return {
     motionRef,
     snapshot,
-    showPermissionPrompt,
     requestTiltPermission,
-    nudgePermissionPrompt,
-    dismissPermissionPrompt,
+    openTiltSettings,
     recenter,
-    reopenMotionPrompt,
   }
 }
