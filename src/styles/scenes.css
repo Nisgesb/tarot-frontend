@@ -181,32 +181,49 @@
   transform: none;
 }
 .app-root .dream-entry-scene.is-home {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
   overflow: hidden;
 }
 
 .app-root .home-scene-shell {
   width: 100%;
-  min-height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
   transition: opacity 480ms ease, transform 520ms ease, filter 520ms ease;
 }
 
 .app-root .home-scene-content {
-  width: min(100%, var(--scene-shell-width));
+  width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 14px;
+  gap: 16px;
+  padding-bottom: calc(var(--safe-bottom) + 24px);
 }
 
 .app-root .home-scene-copy {
-  width: min(100%, 440px);
+  width: min(100%, 520px);
+  margin-inline: auto;
+  padding:
+    calc(var(--safe-top) + 12px)
+    max(var(--layout-gutter), var(--safe-left))
+    0
+    max(var(--layout-gutter), var(--safe-right));
   text-align: center;
+}
+
+.app-root .home-scene-stacked-cards {
+  width: 100%;
+  border-top: 1px solid rgba(228, 240, 255, 0.2);
+}
+
+.app-root .home-scene-cta {
+  min-width: clamp(180px, 52vw, 250px);
+  margin-inline: auto;
+  position: sticky;
+  bottom: calc(var(--safe-bottom) + 12px);
+  z-index: 8;
 }
 
 .app-root .home-scene-eyebrow {
@@ -234,14 +251,6 @@
   line-height: 1.45;
 }
 
-.app-root .home-scene-slider {
-  width: min(100%, 460px);
-}
-
-.app-root .home-scene-cta {
-  min-width: clamp(180px, 52vw, 250px);
-}
-
 .app-root .dream-entry-scene.home-intro-active .home-scene-shell {
   opacity: 0;
   transform: translate3d(0, 12px, 0) scale(0.985);
@@ -256,12 +265,13 @@
 
 .app-root.device-phone-sm .home-scene-content,
 .app-root.device-phone .home-scene-content {
-  gap: 10px;
+  gap: 12px;
 }
 
 .app-root.device-phone-sm .home-scene-copy,
 .app-root.device-phone .home-scene-copy {
-  width: min(100%, 360px);
+  width: min(100%, 390px);
+  padding-top: calc(var(--safe-top) + 10px);
 }
 
 .app-root.device-phone-sm .home-scene-title,

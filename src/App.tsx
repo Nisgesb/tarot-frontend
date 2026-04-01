@@ -267,7 +267,7 @@ function scaleMotionProfile(
   }
 }
 
-function App() {
+function DreamHeroApp() {
   const reducedMotion = useReducedMotion()
   const viewportProfile = useViewportProfile()
   const safeAreaInsets = useSafeAreaInsets()
@@ -945,6 +945,10 @@ function App() {
       ) : null}
     </MobileAppShell>
   )
+}
+
+function App() {
+  return <DreamHeroApp />
 }
 
 export default App

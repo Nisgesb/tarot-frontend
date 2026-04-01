@@ -1,0 +1,47 @@
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: 24;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 76% 12%, rgba(56, 190, 255, 0.28), transparent 38%),
+    radial-gradient(circle at 18% 72%, rgba(216, 182, 255, 0.2), transparent 42%),
+    linear-gradient(120deg, #003dce 0%, #0048df 36%, #0b4fea 58%, #0038bc 100%);
+}
+
+.scrollContainer {
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 22px);
+}
+
+.header {
+  max-width: 760px;
+  margin: 0 auto;
+  padding:
+    calc(env(safe-area-inset-top, 0px) + 12px)
+    clamp(12px, 3.8vw, 28px)
+    14px;
+}
+
+.eyebrow {
+  margin: 0;
+  color: rgba(232, 244, 255, 0.82);
+  font: 500 0.66rem/1 'Outfit', 'Segoe UI', sans-serif;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 8px 0 0;
+  color: rgba(247, 252, 255, 0.96);
+  font: 500 clamp(24px, 7.6vw, 44px) / 1.04 'Cormorant Garamond', serif;
+  letter-spacing: 0.01em;
+  text-wrap: balance;
+}
+
+.cardsRoot {
+  border-top: 1px solid rgba(228, 240, 255, 0.22);
+}

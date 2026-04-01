@@ -1,34 +1,8 @@
 import { useMemo, useState } from 'react'
-import {
-  InfiniteCardSlider,
-  type InfiniteCardSliderCard,
-} from '../components/InfiniteCardSlider'
+import { ServicesStackedCards } from '../components/ServicesStackedCards'
 import type { EnterTransitionPhase } from '../hooks/useEnterTransition'
 import { ASSISTANT_QUESTIONS, createRefinedPrompt } from '../services/dreamAssistantService'
 import type { RawDreamInput } from '../types/dream'
-
-const HOME_TAROT_CARDS: InfiniteCardSliderCard[] = [
-  {
-    id: 'tarot-magician',
-    image: '/cards/the-magician.png',
-    title: 'The Magician',
-  },
-  {
-    id: 'tarot-fool',
-    image: '/cards/the-fool.jpg',
-    title: 'The Fool',
-  },
-  {
-    id: 'tarot-seven-of-wands',
-    image: '/cards/seven-of-wands.jpg',
-    title: 'Seven of Wands',
-  },
-  {
-    id: 'tarot-six-of-wands',
-    image: '/cards/six-of-wands.jpg',
-    title: 'Six of Wands',
-  },
-]
 
 interface DreamEntrySceneProps {
   active: boolean
@@ -56,6 +30,7 @@ export function DreamEntryScene({
   const [input, setInput] = useState(initialInput)
   const [questionIndex, setQuestionIndex] = useState(0)
   const [refinedText, setRefinedText] = useState(initialRefinedText)
+  const [homeScrollContainer, setHomeScrollContainer] = useState<HTMLDivElement | null>(null)
 
   const autoRefined = useMemo(() => createRefinedPrompt(input), [input])
 
@@ -126,7 +101,7 @@ export function DreamEntryScene({
   return (
     <section className={panelClassName}>
       {phase === 'dreamEntry' ? (
-        <div className="home-scene-shell" key={stageKey}>
+        <div className="home-scene-shell" key={stageKey} ref={setHomeScrollContainer}>
           <div className="home-scene-content">
             <header className="home-scene-copy">
               <p className="home-scene-eyebrow">Dreamkeeper Tarot</p>
@@ -136,15 +111,6 @@ export function DreamEntryScene({
               </p>
             </header>
 
-            <InfiniteCardSlider
-              cards={HOME_TAROT_CARDS}
-              spacing={0.082}
-              dragFactor={0.00124}
-              mobile
-              className="home-scene-slider"
-              ariaLabel="Tarot card carousel"
-            />
-
             <button
               type="button"
               className="primary-pill home-scene-cta"
@@ -152,6 +118,12 @@ export function DreamEntryScene({
             >
               Start Reading
             </button>
+
+            <ServicesStackedCards
+              scrollContainer={homeScrollContainer}
+              className="home-scene-stacked-cards"
+              ariaLabel="Tarot services stacked cards"
+            />
           </div>
         </div>
       ) : (
