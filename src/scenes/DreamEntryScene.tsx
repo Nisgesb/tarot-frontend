@@ -1,28 +1,55 @@
 import { useMemo, useState } from 'react'
+import {
+  InfiniteCardSlider,
+  type InfiniteCardSliderCard,
+} from '../components/InfiniteCardSlider'
 import type { EnterTransitionPhase } from '../hooks/useEnterTransition'
 import { ASSISTANT_QUESTIONS, createRefinedPrompt } from '../services/dreamAssistantService'
 import type { RawDreamInput } from '../types/dream'
 
+const HOME_TAROT_CARDS: InfiniteCardSliderCard[] = [
+  {
+    id: 'tarot-magician',
+    image: '/cards/the-magician.png',
+    title: 'The Magician',
+  },
+  {
+    id: 'tarot-fool',
+    image: '/cards/the-fool.jpg',
+    title: 'The Fool',
+  },
+  {
+    id: 'tarot-seven-of-wands',
+    image: '/cards/seven-of-wands.jpg',
+    title: 'Seven of Wands',
+  },
+  {
+    id: 'tarot-six-of-wands',
+    image: '/cards/six-of-wands.jpg',
+    title: 'Six of Wands',
+  },
+]
+
 interface DreamEntrySceneProps {
   active: boolean
-  enterTransitionActive?: boolean
-  enterTransitionPhase?: EnterTransitionPhase
   phase: 'dreamEntry' | 'assistantRefine'
   keyboardOpen: boolean
   initialInput: RawDreamInput
   initialRefinedText: string
+  homeIntroActive: boolean
+  homeIntroPhase: EnterTransitionPhase
   onPhaseChange: (phase: 'dreamEntry' | 'assistantRefine') => void
   onVisualize: (payload: { rawInput: RawDreamInput; refinedText: string }) => void
 }
 
 export function DreamEntryScene({
   active,
-  enterTransitionActive = false,
-  enterTransitionPhase = 'idle',
   phase,
   keyboardOpen,
   initialInput,
   initialRefinedText,
+  homeIntroActive,
+  homeIntroPhase,
   onPhaseChange,
   onVisualize,
 }: DreamEntrySceneProps) {
@@ -36,22 +63,16 @@ export function DreamEntryScene({
   const isRefineEditor = questionIndex >= ASSISTANT_QUESTIONS.length
   const stageKey =
     phase === 'dreamEntry'
-      ? 'memory'
+      ? 'home'
       : isRefineEditor
         ? 'refined'
         : currentQuestion?.id ?? 'assistant'
-  const isEnterPreview = enterTransitionActive && !active
 
   const updateField = (field: keyof RawDreamInput, value: string) => {
     setInput((previous) => ({
       ...previous,
       [field]: value,
     }))
-  }
-
-  const proceedFromMemory = () => {
-    setQuestionIndex(0)
-    onPhaseChange('assistantRefine')
   }
 
   const moveNext = () => {
@@ -89,62 +110,63 @@ export function DreamEntryScene({
 
   const panelClassName = [
     'scene-panel',
+    'scene-template-form',
     'dream-entry-scene',
     active ? 'is-active' : '',
-    isEnterPreview ? 'is-enter-preview' : '',
-    isEnterPreview && enterTransitionPhase !== 'idle'
-      ? `enter-transition-phase-${enterTransitionPhase}`
-      : '',
-    phase === 'assistantRefine' ? 'is-refining' : '',
+    phase === 'assistantRefine' ? 'is-refining' : 'is-home',
     keyboardOpen ? 'is-keyboard-open' : '',
+    homeIntroActive && phase === 'dreamEntry' ? 'home-intro-active' : '',
+    homeIntroActive && phase === 'dreamEntry' && homeIntroPhase !== 'idle'
+      ? `home-intro-phase-${homeIntroPhase}`
+      : '',
   ]
     .filter(Boolean)
     .join(' ')
 
   return (
     <section className={panelClassName}>
-      <div className="entry-shell">
-        <div className="entry-shell-glow entry-shell-glow-a" aria-hidden />
-        <div className="entry-shell-glow entry-shell-glow-b" aria-hidden />
-        <div className="entry-shell-grain" aria-hidden />
-        <header className="entry-header">
-          <p className="entry-eyebrow">Dream Assistant</p>
-          <h2>Let&apos;s reconstruct the dream together</h2>
-          <p>
-            Trace fragments first, then we will distill a cinematic description for
-            visualization.
-          </p>
-        </header>
-
-        <div key={stageKey} className="entry-stage">
-          {phase === 'dreamEntry' ? (
-            <div className="entry-memory-step">
-              <label htmlFor="dream-memory-input">What do you remember most vividly?</label>
-              <textarea
-                id="dream-memory-input"
-                value={input.memory}
-                onChange={(event) => updateField('memory', event.target.value)}
-                placeholder="A corridor made of moonlight, an old friend calling my name..."
-                rows={5}
-              />
-              <p className="entry-whisper">
-                Whisper fragments first. Precision can come later.
+      {phase === 'dreamEntry' ? (
+        <div className="home-scene-shell" key={stageKey}>
+          <div className="home-scene-content">
+            <header className="home-scene-copy">
+              <p className="home-scene-eyebrow">Dreamkeeper Tarot</p>
+              <h2 className="home-scene-title">抽取一张牌，捕捉今晚的潜意识引力。</h2>
+              <p className="home-scene-subtitle">
+                拖拽卡面感受直觉流向，停在最有回应的那张，开始本次梦境占卜。
               </p>
-              <div className="entry-memory-actions entry-mobile-sticky">
-                <button type="button" className="ghost-chip">
-                  Voice Soon
-                </button>
-                <button
-                  type="button"
-                  className="primary-pill"
-                  onClick={proceedFromMemory}
-                  disabled={input.memory.trim().length < 8}
-                >
-                  Begin Guidance
-                </button>
-              </div>
-            </div>
-          ) : (
+            </header>
+
+            <InfiniteCardSlider
+              cards={HOME_TAROT_CARDS}
+              spacing={0.082}
+              dragFactor={0.00124}
+              mobile
+              className="home-scene-slider"
+              ariaLabel="Tarot card carousel"
+            />
+
+            <button
+              type="button"
+              className="primary-pill home-scene-cta"
+              onClick={() => onPhaseChange('assistantRefine')}
+            >
+              Start Reading
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="entry-shell" key={stageKey}>
+          <div className="entry-shell-glow entry-shell-glow-a" aria-hidden />
+          <div className="entry-shell-glow entry-shell-glow-b" aria-hidden />
+          <div className="entry-shell-grain" aria-hidden />
+
+          <header className="entry-header entry-assistant-header">
+            <p className="entry-eyebrow">Dream Assistant</p>
+            <h2>引导式梦境解析</h2>
+            <p>完善细节后即可生成本次梦境视觉。</p>
+          </header>
+
+          <div className="entry-stage">
             <div className="assistant-refine-step">
               {!isRefineEditor && currentQuestion ? (
                 <>
@@ -223,9 +245,9 @@ export function DreamEntryScene({
                 </>
               )}
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
     </section>
   )
 }

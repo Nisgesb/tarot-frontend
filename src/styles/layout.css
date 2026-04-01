@@ -1,0 +1,76 @@
+.app-root .scene-panel {
+  padding-inline: max(var(--layout-gutter), var(--safe-left)) max(var(--layout-gutter), var(--safe-right));
+}
+
+.app-root .scene-template-form,
+.app-root .scene-template-visual {
+  padding-block: calc(var(--safe-top) + var(--scene-y-pad)) calc(var(--safe-bottom) + var(--scene-y-pad));
+}
+
+.app-root .scene-template-explore {
+  padding-block: calc(var(--safe-top) + var(--scene-y-pad)) calc(var(--safe-bottom) + var(--scene-y-pad));
+}
+
+.app-root .scene-panel.is-active {
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+.app-root .dream-entry-scene,
+.app-root .dream-loader-scene {
+  display: grid;
+  place-items: center;
+}
+
+.app-root .dream-entry-scene,
+.app-root .dream-result-scene {
+  overflow: auto;
+}
+
+.app-root .entry-shell,
+.app-root .loader-shell,
+.app-root .result-empty,
+.app-root .my-dreams-empty {
+  width: min(100%, var(--scene-shell-width));
+  border-radius: var(--surface-radius-large);
+}
+
+.app-root .entry-shell {
+  max-width: var(--entry-shell-width);
+  min-height: var(--entry-shell-min-h);
+  padding: var(--entry-shell-pad-y) var(--entry-shell-pad-x) calc(var(--entry-shell-pad-y) - 6px);
+}
+
+.app-root .loader-shell {
+  max-width: var(--loader-shell-width);
+  padding: var(--loader-shell-pad-y) var(--loader-shell-pad-x);
+}
+
+.app-root .loader-ring-wrap {
+  width: var(--loader-ring-size);
+}
+
+.app-root .entry-mobile-sticky {
+  bottom: calc(var(--safe-bottom) + var(--scene-y-pad) + var(--keyboard-offset));
+}
+
+.app-root .primary-pill,
+.app-root .secondary-pill,
+.app-root .outline-pill,
+.app-root .topbar-link,
+.app-root .ghost-chip {
+  min-height: 44px;
+}
+
+.app-root.device-phone-sm .primary-pill,
+.app-root.device-phone-sm .secondary-pill,
+.app-root.device-phone-sm .outline-pill,
+.app-root.device-phone-sm .topbar-link,
+.app-root.device-phone-sm .ghost-chip,
+.app-root.device-phone .primary-pill,
+.app-root.device-phone .secondary-pill,
+.app-root.device-phone .outline-pill,
+.app-root.device-phone .topbar-link,
+.app-root.device-phone .ghost-chip {
+  min-height: 42px;
+  padding-inline: 14px;
+}

@@ -2,10 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 export type EnterTransitionPhase =
   | 'idle'
-  | 'commit'
-  | 'pull'
-  | 'traverse'
-  | 'arrival'
+  | 'fadeOut'
+  | 'glow'
+  | 'settle'
 
 interface EnterTransitionState {
   active: boolean
@@ -15,35 +14,44 @@ interface EnterTransitionState {
 interface EnterTransitionStep {
   phase: Exclude<EnterTransitionPhase, 'idle'>
   durationMs: number
+  triggerSwap?: boolean
 }
 
 interface UseEnterTransitionOptions {
   reducedMotion: boolean
-  onComplete: () => void
 }
 
-export const ENTER_TRAVEL_TIMING = Object.freeze({
-  commitMs: 160,
-  pullMs: 460,
-  traverseMs: 480,
-  arrivalMs: 500,
+interface EnterTransitionStartOptions {
+  onSwap?: () => void
+  onComplete?: () => void
+}
+
+export const ENTER_SOFT_TIMING = Object.freeze({
+  fadeOutMs: 280,
+  glowMs: 360,
+  settleMs: 320,
 })
 
-export const ENTER_TRAVEL_TIMING_REDUCED = Object.freeze({
-  commitMs: 90,
-  arrivalMs: 180,
+export const ENTER_SOFT_TIMING_REDUCED = Object.freeze({
+  fadeOutMs: 140,
+  glowMs: 180,
+  settleMs: 200,
 })
 
-const CINEMATIC_STEPS: EnterTransitionStep[] = [
-  { phase: 'commit', durationMs: ENTER_TRAVEL_TIMING.commitMs },
-  { phase: 'pull', durationMs: ENTER_TRAVEL_TIMING.pullMs },
-  { phase: 'traverse', durationMs: ENTER_TRAVEL_TIMING.traverseMs },
-  { phase: 'arrival', durationMs: ENTER_TRAVEL_TIMING.arrivalMs },
+const SOFT_STEPS: EnterTransitionStep[] = [
+  { phase: 'fadeOut', durationMs: ENTER_SOFT_TIMING.fadeOutMs, triggerSwap: true },
+  { phase: 'glow', durationMs: ENTER_SOFT_TIMING.glowMs },
+  { phase: 'settle', durationMs: ENTER_SOFT_TIMING.settleMs },
 ]
 
 const REDUCED_STEPS: EnterTransitionStep[] = [
-  { phase: 'commit', durationMs: ENTER_TRAVEL_TIMING_REDUCED.commitMs },
-  { phase: 'arrival', durationMs: ENTER_TRAVEL_TIMING_REDUCED.arrivalMs },
+  {
+    phase: 'fadeOut',
+    durationMs: ENTER_SOFT_TIMING_REDUCED.fadeOutMs,
+    triggerSwap: true,
+  },
+  { phase: 'glow', durationMs: ENTER_SOFT_TIMING_REDUCED.glowMs },
+  { phase: 'settle', durationMs: ENTER_SOFT_TIMING_REDUCED.settleMs },
 ]
 
 function getTotalDuration(steps: EnterTransitionStep[]) {
@@ -52,18 +60,12 @@ function getTotalDuration(steps: EnterTransitionStep[]) {
 
 export function useEnterTransition({
   reducedMotion,
-  onComplete,
 }: UseEnterTransitionOptions) {
   const [state, setState] = useState<EnterTransitionState>({
     active: false,
     phase: 'idle',
   })
   const timersRef = useRef<number[]>([])
-  const onCompleteRef = useRef(onComplete)
-
-  useEffect(() => {
-    onCompleteRef.current = onComplete
-  }, [onComplete])
 
   const clearTimers = useCallback(() => {
     for (let index = 0; index < timersRef.current.length; index += 1) {
@@ -73,7 +75,7 @@ export function useEnterTransition({
   }, [])
 
   const steps = useMemo(
-    () => (reducedMotion ? REDUCED_STEPS : CINEMATIC_STEPS),
+    () => (reducedMotion ? REDUCED_STEPS : SOFT_STEPS),
     [reducedMotion],
   )
 
@@ -85,11 +87,12 @@ export function useEnterTransition({
     })
   }, [clearTimers])
 
-  const start = useCallback(() => {
+  const start = useCallback((options?: EnterTransitionStartOptions) => {
     clearTimers()
 
     if (steps.length === 0) {
-      onCompleteRef.current()
+      options?.onSwap?.()
+      options?.onComplete?.()
       return
     }
 
@@ -101,14 +104,22 @@ export function useEnterTransition({
     let elapsed = 0
 
     for (let index = 1; index < steps.length; index += 1) {
-      elapsed += steps[index - 1].durationMs
-      const phase = steps[index].phase
+      const previousStep = steps[index - 1]
+      elapsed += previousStep.durationMs
+
+      if (previousStep.triggerSwap) {
+        timersRef.current.push(
+          window.setTimeout(() => {
+            options?.onSwap?.()
+          }, elapsed),
+        )
+      }
 
       timersRef.current.push(
         window.setTimeout(() => {
           setState({
             active: true,
-            phase,
+            phase: steps[index].phase,
           })
         }, elapsed),
       )
@@ -117,7 +128,11 @@ export function useEnterTransition({
     const total = getTotalDuration(steps)
     timersRef.current.push(
       window.setTimeout(() => {
-        onCompleteRef.current()
+        setState({
+          active: false,
+          phase: 'idle',
+        })
+        options?.onComplete?.()
       }, total),
     )
   }, [clearTimers, steps])

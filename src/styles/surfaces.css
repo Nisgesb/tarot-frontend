@@ -1,0 +1,81 @@
+.app-root .hero-overlay {
+  top: var(--hero-overlay-top);
+  width: min(calc(100vw - (max(var(--layout-gutter), var(--safe-left)) + max(var(--layout-gutter), var(--safe-right)))), var(--hero-content-width));
+  padding:
+    calc(var(--safe-top) + var(--hero-top-pad))
+    var(--layout-gutter)
+    calc(var(--safe-bottom) + var(--hero-bottom-gap));
+}
+
+.app-root .hero-title-line:first-child {
+  font-size: calc(clamp(42px, 11vw, 66px) * var(--hero-title-scale));
+}
+
+.app-root .hero-title-line:last-child {
+  font-size: calc(clamp(54px, 12vw, 86px) * var(--hero-title-scale));
+}
+
+.app-root .hero-subtitle {
+  max-width: var(--hero-subtitle-width);
+}
+
+.app-root .hero-enter {
+  width: var(--hero-enter-size);
+}
+
+.app-root .portal-scene {
+  top: var(--portal-top);
+  width: var(--portal-w);
+  height: var(--portal-h);
+}
+
+.app-root .portal-shell {
+  border-radius: 160px 160px 15px 15px / 174px 174px 15px 15px;
+}
+
+.app-root .result-visual-shell {
+  width: min(100%, var(--result-visual-width));
+  height: var(--result-visual-height);
+  border-radius: var(--surface-radius-large);
+}
+
+.app-root .result-copy {
+  width: min(100%, var(--result-copy-width));
+}
+
+.app-root .bottom-action-cluster {
+  width: min(100%, var(--result-actions-width));
+}
+
+.app-root.device-phone-sm .hero-tag,
+.app-root.device-phone .hero-tag {
+  margin-bottom: 12px;
+  font-size: 0.6rem;
+  letter-spacing: 0.24em;
+}
+
+.app-root.device-phone-sm .hero-subtitle,
+.app-root.device-phone .hero-subtitle {
+  margin-top: 12px;
+  font-size: clamp(0.82rem, 3.3vw, 0.96rem);
+  line-height: 1.42;
+}
+
+.app-root.device-phone-sm .portal-halo,
+.app-root.device-phone .portal-halo {
+  inset: -24% -30%;
+  filter: blur(30px);
+  opacity: 0.82;
+}
+
+.app-root.device-phone-sm .portal-inner-glow,
+.app-root.device-phone .portal-inner-glow {
+  inset: 5% 11% 14%;
+  opacity: 0.78;
+}
+
+.app-root.device-tablet-landscape .hero-overlay,
+.app-root.device-desktop .hero-overlay,
+.app-root.device-desktop-wide .hero-overlay {
+  width: min(calc(100vw - (max(var(--layout-gutter), var(--safe-left)) + max(var(--layout-gutter), var(--safe-right)))), var(--hero-content-width));
+}

@@ -99,7 +99,12 @@ export function DreamInsightsLoader({
   }, [active, reducedMotion])
 
   const step = useMemo(() => GENERATING_STEPS[stepIndex], [stepIndex])
-  const className = ['scene-panel', 'dream-loader-scene', active ? 'is-active' : '']
+  const className = [
+    'scene-panel',
+    'scene-template-visual',
+    'dream-loader-scene',
+    active ? 'is-active' : '',
+  ]
     .filter(Boolean)
     .join(' ')
 

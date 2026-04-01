@@ -39,7 +39,12 @@ export function DreamGalleryScene({
   onSelectDream,
   onRandomDream,
 }: DreamGallerySceneProps) {
-  const className = ['scene-panel', 'dream-gallery-scene', active ? 'is-active' : '']
+  const className = [
+    'scene-panel',
+    'scene-template-explore',
+    'dream-gallery-scene',
+    active ? 'is-active' : '',
+  ]
     .filter(Boolean)
     .join(' ')
 

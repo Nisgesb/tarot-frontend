@@ -39,7 +39,12 @@ export function MyDreamsScene({
   onStartNew,
   onSelectDream,
 }: MyDreamsSceneProps) {
-  const className = ['scene-panel', 'my-dreams-scene', active ? 'is-active' : '']
+  const className = [
+    'scene-panel',
+    'scene-template-explore',
+    'my-dreams-scene',
+    active ? 'is-active' : '',
+  ]
     .filter(Boolean)
     .join(' ')
 

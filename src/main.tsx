@@ -15,6 +15,11 @@ import '@fontsource/cormorant-garamond/latin-ext-400.css'
 import '@fontsource/cormorant-garamond/latin-ext-500.css'
 import '@fontsource/cormorant-garamond/latin-ext-600.css'
 import './index.css'
+import './styles/foundation.css'
+import './styles/layout.css'
+import './styles/surfaces.css'
+import './styles/scenes.css'
+import './styles/overlays.css'
 import App from './App.tsx'
 
 createRoot(document.getElementById('root')!).render(

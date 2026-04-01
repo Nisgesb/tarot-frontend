@@ -1,0 +1,135 @@
+.app-root .floating-audio-toggle {
+  right: calc(var(--safe-right) + var(--overlay-inline-gutter));
+  bottom: calc(var(--safe-bottom) + var(--overlay-audio-bottom));
+}
+
+.app-root .motion-control-dock {
+  left: calc(var(--safe-left) + var(--overlay-inline-gutter));
+  bottom: calc(var(--safe-bottom) + var(--overlay-dock-bottom));
+}
+
+.app-root .motion-debug-panel,
+.app-root .metaball-debug-panel {
+  width: min(var(--overlay-panel-width), calc(100vw - (var(--overlay-inline-gutter) * 2)));
+  max-height: var(--overlay-panel-max-height);
+}
+
+.app-root .motion-debug-panel {
+  right: calc(var(--safe-right) + var(--overlay-inline-gutter));
+  bottom: calc(var(--safe-bottom) + var(--overlay-debug-bottom));
+}
+
+.app-root .motion-debug-toggle {
+  right: calc(var(--safe-right) + var(--overlay-inline-gutter));
+  bottom: calc(var(--safe-bottom) + var(--overlay-debug-toggle-bottom));
+  width: var(--overlay-toggle-width);
+}
+
+.app-root .metaball-debug-panel {
+  left: calc(var(--safe-left) + var(--overlay-inline-gutter));
+  bottom: calc(var(--safe-bottom) + var(--overlay-metaball-bottom));
+}
+
+.app-root .metaball-debug-toggle {
+  left: calc(var(--safe-left) + var(--overlay-inline-gutter));
+  bottom: calc(var(--safe-bottom) + var(--overlay-metaball-toggle-bottom));
+}
+
+.app-root .motion-permission-prompt.is-onboarding {
+  padding:
+    calc(var(--safe-top) + 22px)
+    max(calc(var(--layout-gutter) + 4px), calc(var(--safe-right) + 18px))
+    calc(var(--safe-bottom) + 24px)
+    max(calc(var(--layout-gutter) + 4px), calc(var(--safe-left) + 18px));
+}
+
+.app-root .motion-permission-prompt.is-recovery {
+  width: min(calc(100vw - (var(--overlay-inline-gutter) * 2)), var(--overlay-recovery-width));
+}
+
+.app-root.device-tablet-landscape .motion-permission-prompt.is-recovery,
+.app-root.device-desktop .motion-permission-prompt.is-recovery,
+.app-root.device-desktop-wide .motion-permission-prompt.is-recovery {
+  left: auto;
+  right: calc(var(--safe-right) + var(--layout-gutter));
+  bottom: calc(var(--safe-bottom) + 18px);
+  transform: none;
+}
+
+.app-root .soft-page-transition {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  pointer-events: none;
+}
+
+.app-root .soft-page-transition-mist,
+.app-root .soft-page-transition-glow,
+.app-root .soft-page-transition-grain {
+  position: absolute;
+  inset: -10%;
+  opacity: 0;
+  transition: opacity 360ms ease, transform 520ms ease, filter 480ms ease;
+}
+
+.app-root .soft-page-transition-mist {
+  background:
+    radial-gradient(circle at 50% 44%, rgba(164, 212, 255, 0.3), rgba(164, 212, 255, 0) 56%),
+    radial-gradient(circle at 56% 60%, rgba(233, 204, 255, 0.28), rgba(233, 204, 255, 0) 50%);
+  filter: blur(20px);
+}
+
+.app-root .soft-page-transition-glow {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(243, 225, 255, 0.3), rgba(163, 209, 255, 0.18) 34%, rgba(16, 34, 98, 0) 66%);
+  mix-blend-mode: screen;
+  filter: blur(8px);
+}
+
+.app-root .soft-page-transition-grain {
+  background: repeating-radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 0.04) 0,
+    rgba(255, 255, 255, 0.04) 1px,
+    rgba(255, 255, 255, 0) 1px,
+    rgba(255, 255, 255, 0) 5px
+  );
+  mix-blend-mode: soft-light;
+}
+
+.app-root .soft-page-transition-phase-fadeOut .soft-page-transition-mist {
+  opacity: 0.22;
+  transform: scale(1.04);
+}
+
+.app-root .soft-page-transition-phase-fadeOut .soft-page-transition-glow {
+  opacity: 0.18;
+  transform: scale(0.96);
+}
+
+.app-root .soft-page-transition-phase-glow .soft-page-transition-mist {
+  opacity: 0.44;
+  transform: scale(1.12);
+  filter: blur(32px);
+}
+
+.app-root .soft-page-transition-phase-glow .soft-page-transition-glow {
+  opacity: 0.56;
+  transform: scale(1.08);
+  filter: blur(16px);
+}
+
+.app-root .soft-page-transition-phase-glow .soft-page-transition-grain {
+  opacity: 0.16;
+}
+
+.app-root .soft-page-transition-phase-settle .soft-page-transition-mist {
+  opacity: 0.24;
+  transform: scale(1.06);
+  filter: blur(24px);
+}
+
+.app-root .soft-page-transition-phase-settle .soft-page-transition-glow {
+  opacity: 0.3;
+  transform: scale(1.02);
+}

@@ -1,5 +1,4 @@
 import type { CSSProperties } from 'react'
-import type { EnterTransitionPhase } from '../hooks/useEnterTransition'
 
 export interface PortalTransitionOrigin {
   x: number
@@ -9,18 +8,12 @@ export interface PortalTransitionOrigin {
 }
 
 interface PortalTransitionProps {
-  mode: 'enter' | 'orb'
   active: boolean
-  phase?: EnterTransitionPhase
-  reducedMotion?: boolean
   origin?: PortalTransitionOrigin | null
 }
 
 export function PortalTransition({
-  mode,
   active,
-  phase = 'idle',
-  reducedMotion = false,
   origin,
 }: PortalTransitionProps) {
   if (!active) {
@@ -36,9 +29,7 @@ export function PortalTransition({
 
   const className = [
     'portal-transition',
-    `portal-transition-${mode}`,
-    mode === 'enter' ? `portal-transition-phase-${phase}` : '',
-    reducedMotion ? 'is-reduced-motion' : '',
+    'portal-transition-orb',
   ]
     .filter(Boolean)
     .join(' ')

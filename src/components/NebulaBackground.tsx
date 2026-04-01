@@ -20,10 +20,10 @@ interface NebulaBackgroundProps {
   composition?: NebulaCompositionFrame
 }
 
-const DEFAULT_PHONE_COMPOSITION: NebulaCompositionFrame = {
-  offsetX: 0.072,
-  offsetY: 0.046,
-  scale: 0.84,
+const DEFAULT_COMPOSITION: NebulaCompositionFrame = {
+  offsetX: 0,
+  offsetY: 0,
+  scale: 1,
 }
 
 const vertexShaderSource = `
@@ -178,7 +178,7 @@ export function NebulaBackground({
   timeScale = 1,
   motionProfile = { x: 1, y: 1 },
   performanceTier = 'high',
-  composition = DEFAULT_PHONE_COMPOSITION,
+  composition = DEFAULT_COMPOSITION,
 }: NebulaBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const timeScaleRef = useRef(timeScale)
@@ -316,13 +316,10 @@ export function NebulaBackground({
         elapsedSeconds * (reducedMotion ? 0.55 : 1) * Math.max(0.2, timeScaleRef.current),
       )
       gl.uniform2f(parallaxLocation, x * profile.x, y * profile.y)
-      const minSide = Math.min(window.innerWidth, window.innerHeight)
-      const maxSide = Math.max(window.innerWidth, window.innerHeight)
-      const isPhoneViewport = minSide <= 500 && maxSide <= 1040
       const compositionFrame = compositionRef.current
-      const compositionOffsetX = isPhoneViewport ? compositionFrame.offsetX : 0
-      const compositionOffsetY = isPhoneViewport ? compositionFrame.offsetY : 0
-      const compositionScale = isPhoneViewport ? compositionFrame.scale : 1
+      const compositionOffsetX = compositionFrame.offsetX
+      const compositionOffsetY = compositionFrame.offsetY
+      const compositionScale = compositionFrame.scale
       gl.uniform3f(
         compositionLocation,
         compositionOffsetX,

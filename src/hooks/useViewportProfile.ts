@@ -1,10 +1,20 @@
 import { useEffect, useState } from 'react'
 
 export type PerformanceTier = 'low' | 'medium' | 'high'
+export type ViewportOrientation = 'portrait' | 'landscape'
+export type DeviceClass =
+  | 'phone-sm'
+  | 'phone'
+  | 'tablet-portrait'
+  | 'tablet-landscape'
+  | 'desktop'
+  | 'desktop-wide'
 
 export interface ViewportProfile {
   width: number
   height: number
+  orientation: ViewportOrientation
+  deviceClass: DeviceClass
   isPhone: boolean
   isSmallPhone: boolean
   isTablet: boolean
@@ -27,20 +37,53 @@ function resolvePerformanceTier(width: number, height: number) {
   return 'high'
 }
 
+function resolveOrientation(width: number, height: number): ViewportOrientation {
+  return width >= height ? 'landscape' : 'portrait'
+}
+
+function resolveDeviceClass(
+  width: number,
+  height: number,
+  pointerCoarse: boolean,
+): DeviceClass {
+  const orientation = resolveOrientation(width, height)
+  const minSide = Math.min(width, height)
+  const maxSide = Math.max(width, height)
+
+  if (pointerCoarse) {
+    const phoneLike = minSide <= 430 && maxSide <= 932
+
+    if (phoneLike) {
+      return minSide <= 390 ? 'phone-sm' : 'phone'
+    }
+
+    return orientation === 'portrait' ? 'tablet-portrait' : 'tablet-landscape'
+  }
+
+  if (width >= 1680) {
+    return 'desktop-wide'
+  }
+
+  return 'desktop'
+}
+
 function readProfile(): ViewportProfile {
   const width = window.innerWidth
   const height = window.innerHeight
-  const minSide = Math.min(width, height)
-  const maxSide = Math.max(width, height)
-  const isPhone = minSide <= 480 && maxSide <= 980
-  const isSmallPhone = width <= 390 && height <= 844
-  const isTablet = minSide > 480 && minSide <= 1024
-  const isDesktop = !isPhone && !isTablet
   const pointerCoarse = window.matchMedia('(pointer: coarse)').matches
+  const orientation = resolveOrientation(width, height)
+  const deviceClass = resolveDeviceClass(width, height, pointerCoarse)
+  const isPhone = deviceClass === 'phone-sm' || deviceClass === 'phone'
+  const isSmallPhone = deviceClass === 'phone-sm'
+  const isTablet =
+    deviceClass === 'tablet-portrait' || deviceClass === 'tablet-landscape'
+  const isDesktop = deviceClass === 'desktop' || deviceClass === 'desktop-wide'
 
   return {
     width,
     height,
+    orientation,
+    deviceClass,
     isPhone,
     isSmallPhone,
     isTablet,

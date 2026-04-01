@@ -45,7 +45,12 @@ export function DreamResultScene({
 }: DreamResultSceneProps) {
   const [canvasNode, setCanvasNode] = useState<HTMLCanvasElement | null>(null)
 
-  const className = ['scene-panel', 'dream-result-scene', active ? 'is-active' : '']
+  const className = [
+    'scene-panel',
+    'scene-template-visual',
+    'dream-result-scene',
+    active ? 'is-active' : '',
+  ]
     .filter(Boolean)
     .join(' ')
   const sectionClassName = `${className} ${mode === 'inspect' ? 'is-inspect' : ''}`

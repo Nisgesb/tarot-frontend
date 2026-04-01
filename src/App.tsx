@@ -9,6 +9,7 @@ import { NebulaBackground } from './components/NebulaBackground'
 import type { NebulaCompositionFrame } from './components/NebulaBackground'
 import { PortalTransition } from './components/PortalTransition'
 import type { PortalTransitionOrigin } from './components/PortalTransition'
+import { SoftPageTransitionOverlay } from './components/SoftPageTransitionOverlay'
 import { StarField } from './components/StarField'
 import { useAmbientAudio } from './hooks/useAmbientAudio'
 import { useKeyboardAwareViewport } from './hooks/useKeyboardAwareViewport'
@@ -18,6 +19,7 @@ import { useReducedMotion } from './hooks/useReducedMotion'
 import { useSceneMachine } from './hooks/useSceneMachine'
 import { useSafeAreaInsets } from './hooks/useSafeAreaInsets'
 import { useViewportProfile } from './hooks/useViewportProfile'
+import type { DeviceClass } from './hooks/useViewportProfile'
 import { MobileAppShell } from './layout/MobileAppShell'
 import type { MotionProfile, MotionSceneTuning, MotionTuning } from './motion/types'
 import { exportCanvasResult } from './platform/exportShareAdapter'
@@ -37,6 +39,7 @@ import { EMPTY_RAW_DREAM_INPUT } from './types/dream'
 import type { DreamRecord, RawDreamInput } from './types/dream'
 
 const ORB_ZOOM_MS = 560
+const SHOW_HERO_ON_BOOT = import.meta.env.VITE_SHOW_HERO_ON_BOOT !== 'false'
 const MOTION_TUNING_KEY = 'motion-debug-tuning-v1'
 const SCENE_TUNING_KEY = 'motion-debug-scene-v1'
 const MOTION_ONBOARDING_KEY = 'motion-onboarding-complete'
@@ -191,14 +194,34 @@ function resolveStarSpeed(scene: string) {
   }
 }
 
-function resolveNebulaComposition(scene: string): NebulaCompositionFrame {
-  switch (scene) {
-    case 'hero':
-      return { offsetX: 0.108, offsetY: 0.014, scale: 0.76 }
-    case 'entering':
-      return { offsetX: 0.098, offsetY: 0.008, scale: 0.74 }
+function resolveNebulaComposition(
+  scene: string,
+  deviceClass: DeviceClass,
+): NebulaCompositionFrame {
+  switch (deviceClass) {
+    case 'phone-sm':
+    case 'phone':
+      return { offsetX: 0, offsetY: 0, scale: 1 }
+    case 'tablet-portrait':
+      return scene === 'hero' || scene === 'entering'
+        ? { offsetX: 0.014, offsetY: 0.012, scale: 0.93 }
+        : { offsetX: 0.008, offsetY: 0.02, scale: 0.95 }
+    case 'tablet-landscape':
+      return scene === 'hero' || scene === 'entering'
+        ? { offsetX: 0.022, offsetY: 0.01, scale: 0.88 }
+        : { offsetX: 0.016, offsetY: 0.018, scale: 0.91 }
+    case 'desktop-wide':
+      return scene === 'hero'
+        ? { offsetX: 0.112, offsetY: 0.016, scale: 0.74 }
+        : scene === 'entering'
+          ? { offsetX: 0.102, offsetY: 0.01, scale: 0.72 }
+          : { offsetX: 0.076, offsetY: 0.044, scale: 0.82 }
     default:
-      return { offsetX: 0.072, offsetY: 0.046, scale: 0.84 }
+      return scene === 'hero'
+        ? { offsetX: 0.108, offsetY: 0.014, scale: 0.76 }
+        : scene === 'entering'
+          ? { offsetX: 0.098, offsetY: 0.008, scale: 0.74 }
+          : { offsetX: 0.072, offsetY: 0.046, scale: 0.84 }
   }
 }
 
@@ -278,6 +301,13 @@ function App() {
     loadMotionLastPermission(),
   )
   const [motionRecoveryDismissed, setMotionRecoveryDismissed] = useState(false)
+  const [homeIntroPending, setHomeIntroPending] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false
+    }
+
+    return window.location.pathname === '/dream/new' || !SHOW_HERO_ON_BOOT
+  })
   const [myDreams, setMyDreams] = useState<DreamRecord[]>([])
   const [draftInput, setDraftInput] = useState<RawDreamInput>(EMPTY_RAW_DREAM_INPUT)
   const [draftRefinedText, setDraftRefinedText] = useState('')
@@ -296,18 +326,13 @@ function App() {
     origin: null,
   })
 
-  const completeEnterTransition = useCallback(() => {
-    actions.goDreamEntry()
-  }, [actions])
   const {
     state: enterTransitionState,
     start: startEnterTransition,
     reset: resetEnterTransition,
   } = useEnterTransition({
     reducedMotion,
-    onComplete: completeEnterTransition,
   })
-
   const galleryDreams = useMemo(() => getGalleryDreams(), [])
   const activeDream = useMemo(
     () => findDreamById(sceneState.dreamId, myDreams, galleryDreams),
@@ -417,10 +442,42 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (sceneState.scene !== 'entering') {
-      resetEnterTransition()
+    if (!enterTransitionState.active) {
+      return
     }
-  }, [resetEnterTransition, sceneState.scene])
+
+    if (sceneState.scene === 'entering' || sceneState.scene === 'dreamEntry') {
+      return
+    }
+
+    resetEnterTransition()
+  }, [enterTransitionState.active, resetEnterTransition, sceneState.scene])
+
+  useEffect(() => {
+    if (SHOW_HERO_ON_BOOT) {
+      return
+    }
+
+    if (sceneState.scene === 'hero') {
+      actions.goDreamEntry(true)
+    }
+  }, [actions, sceneState.scene])
+
+  useEffect(() => {
+    if (sceneState.scene !== 'dreamEntry') {
+      return
+    }
+
+    if (!homeIntroPending) {
+      return
+    }
+
+    startEnterTransition({
+      onComplete: () => {
+        setHomeIntroPending(false)
+      },
+    })
+  }, [homeIntroPending, sceneState.scene, startEnterTransition])
 
   useEffect(() => {
     if (sceneState.scene === 'generating' && !pendingGenerationRef.current) {
@@ -507,8 +564,13 @@ function App() {
     setDraftInput(EMPTY_RAW_DREAM_INPUT)
     setDraftRefinedText('')
     setEntryRenderKey((previous) => previous + 1)
+    setHomeIntroPending(false)
     actions.startEntering()
-    startEnterTransition()
+    startEnterTransition({
+      onSwap: () => {
+        actions.goDreamEntry(true)
+      },
+    })
   }
 
   const handleDreamEntryPhaseChange = (phase: 'dreamEntry' | 'assistantRefine') => {
@@ -640,12 +702,14 @@ function App() {
     sceneState.scene === 'entering' && enterTransitionState.active
       ? 'enter-transition-active'
       : '',
-    sceneState.scene === 'entering' && enterTransitionState.phase !== 'idle'
+    enterTransitionState.active && enterTransitionState.phase !== 'idle'
       ? `enter-phase-${enterTransitionState.phase}`
       : '',
     `motion-${motion.snapshot.source}`,
-    viewportProfile.isPhone ? 'platform-phone' : 'platform-wide',
-    viewportProfile.isSmallPhone ? 'platform-small-phone' : '',
+    `device-${viewportProfile.deviceClass}`,
+    `orientation-${viewportProfile.orientation}`,
+    viewportProfile.pointerCoarse ? 'pointer-coarse' : 'pointer-fine',
+    `performance-${viewportProfile.performanceTier}`,
     keyboardAware.keyboardOpen ? 'is-keyboard-open' : '',
   ]
     .filter(Boolean)
@@ -654,10 +718,13 @@ function App() {
   const shellStyle: CSSProperties = {
     ...safeAreaInsets,
     '--app-dvh': `${keyboardAware.viewportHeight}px`,
+    '--viewport-width': `${viewportProfile.width}px`,
+    '--viewport-height': `${viewportProfile.height}px`,
   } as CSSProperties
 
   const heroLikeScene =
     sceneState.scene === 'hero' || sceneState.scene === 'entering'
+  const heroHiddenByConfig = !SHOW_HERO_ON_BOOT && sceneState.scene === 'hero'
   const showMotionOnboarding =
     sceneState.scene === 'hero' &&
     motionDiagnostics.transport === 'native' &&
@@ -703,13 +770,12 @@ function App() {
     heroLikeScene ? sceneTuning.starSpeed : 1
   )
 
-  const showFloatingAudio =
-    sceneState.scene !== 'result' &&
-    sceneState.scene !== 'inspectDream'
-  const showMotionDebug =
-    viewportProfile.pointerCoarse &&
-    sceneState.scene !== 'result' &&
-    sceneState.scene !== 'inspectDream'
+  const showFloatingAudio = sceneState.scene === 'hero'
+  const showMotionDebug = viewportProfile.pointerCoarse && sceneState.scene === 'hero'
+  const shouldHoldHomeForIntro =
+    sceneState.scene === 'dreamEntry' &&
+    homeIntroPending &&
+    !enterTransitionState.active
 
   return (
     <MobileAppShell
@@ -724,7 +790,7 @@ function App() {
         motionProfile={nebulaProfile}
         performanceTier={viewportProfile.performanceTier}
         timeScale={nebulaTimeScale}
-        composition={resolveNebulaComposition(sceneState.scene)}
+        composition={resolveNebulaComposition(sceneState.scene, viewportProfile.deviceClass)}
       />
       <StarField
         entered={entered}
@@ -734,14 +800,11 @@ function App() {
         performanceTier={viewportProfile.performanceTier}
         speedMultiplier={starSpeed}
       />
-      <div className="enter-inner-world-layer" aria-hidden>
-        <div className="enter-inner-world-window">
-          <div className="enter-inner-world-stars" />
-          <div className="enter-inner-world-rim" />
-          <div className="enter-inner-world-grain" />
-        </div>
-      </div>
 
+      <SoftPageTransitionOverlay
+        active={enterTransitionState.active}
+        phase={enterTransitionState.phase}
+      />
       <DreamPortal
         entered={entered}
         reducedMotion={reducedMotion}
@@ -751,7 +814,10 @@ function App() {
 
       <HeroOverlay
         entered={entered}
-        hidden={sceneState.scene !== 'hero' && sceneState.scene !== 'entering'}
+        hidden={
+          (sceneState.scene !== 'hero' && sceneState.scene !== 'entering') ||
+          heroHiddenByConfig
+        }
         reducedMotion={reducedMotion}
         onEnter={startEnterFlow}
       />
@@ -769,14 +835,15 @@ function App() {
         active={
           sceneState.scene === 'dreamEntry' || sceneState.scene === 'assistantRefine'
         }
-        enterTransitionActive={
-          sceneState.scene === 'entering' && enterTransitionState.active
-        }
-        enterTransitionPhase={enterTransitionState.phase}
         phase={sceneState.scene === 'assistantRefine' ? 'assistantRefine' : 'dreamEntry'}
         keyboardOpen={keyboardAware.keyboardOpen}
         initialInput={draftInput}
         initialRefinedText={draftRefinedText}
+        homeIntroActive={
+          shouldHoldHomeForIntro ||
+          (enterTransitionState.active && sceneState.scene === 'dreamEntry')
+        }
+        homeIntroPhase={shouldHoldHomeForIntro ? 'fadeOut' : enterTransitionState.phase}
         onPhaseChange={handleDreamEntryPhaseChange}
         onVisualize={handleVisualize}
       />
@@ -839,13 +906,7 @@ function App() {
         onSelectDream={inspectFromMyDreams}
       />
 
-      <PortalTransition
-        mode="enter"
-        active={sceneState.scene === 'entering' && enterTransitionState.active}
-        phase={enterTransitionState.phase}
-        reducedMotion={reducedMotion}
-      />
-      <PortalTransition mode="orb" active={orbTransition.active} origin={orbTransition.origin} />
+      <PortalTransition active={orbTransition.active} origin={orbTransition.origin} />
 
       {showMotionDebug ? (
         <MotionDebugPanel
