@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
-import { AudioToggle } from './components/AudioToggle'
 import { DreamPortal } from './components/DreamPortal'
 import { HeroOverlay } from './components/HeroOverlay'
 import { MotionDebugPanel } from './components/MotionDebugPanel'
@@ -11,7 +10,6 @@ import { PortalTransition } from './components/PortalTransition'
 import type { PortalTransitionOrigin } from './components/PortalTransition'
 import { SoftPageTransitionOverlay } from './components/SoftPageTransitionOverlay'
 import { StarField } from './components/StarField'
-import { useAmbientAudio } from './hooks/useAmbientAudio'
 import { useKeyboardAwareViewport } from './hooks/useKeyboardAwareViewport'
 import { useEnterTransition } from './hooks/useEnterTransition'
 import { DEFAULT_MOTION_TUNING, useMotionInput } from './hooks/useMotionInput'
@@ -271,7 +269,6 @@ function DreamHeroApp() {
   const reducedMotion = useReducedMotion()
   const viewportProfile = useViewportProfile()
   const safeAreaInsets = useSafeAreaInsets()
-  const { muted, activate, toggleMuted } = useAmbientAudio()
   const { state: sceneState, actions } = useSceneMachine()
 
   const keyboardAware = useKeyboardAwareViewport(
@@ -422,18 +419,6 @@ function DreamHeroApp() {
   const entered = reducedMotion || hasAnimatedIn
 
   useEffect(() => {
-    const initializeExperience = () => {
-      void activate()
-    }
-
-    window.addEventListener('pointerdown', initializeExperience, { once: true })
-
-    return () => {
-      window.removeEventListener('pointerdown', initializeExperience)
-    }
-  }, [activate])
-
-  useEffect(() => {
     return () => {
       if (zoomTimerRef.current) {
         window.clearTimeout(zoomTimerRef.current)
@@ -560,7 +545,6 @@ function DreamHeroApp() {
   }, [openTiltSettings])
 
   const startEnterFlow = () => {
-    void activate()
     setDraftInput(EMPTY_RAW_DREAM_INPUT)
     setDraftRefinedText('')
     setEntryRenderKey((previous) => previous + 1)
@@ -770,7 +754,6 @@ function DreamHeroApp() {
     heroLikeScene ? sceneTuning.starSpeed : 1
   )
 
-  const showFloatingAudio = sceneState.scene === 'hero'
   const showMotionDebug = viewportProfile.pointerCoarse && sceneState.scene === 'hero'
   const shouldHoldHomeForIntro =
     sceneState.scene === 'dreamEntry' &&
@@ -868,14 +851,12 @@ function DreamHeroApp() {
         motionRef={motion.motionRef}
         motionProfile={resultProfile}
         performanceTier={viewportProfile.performanceTier}
-        muted={muted}
         onGoHome={actions.goHome}
         onGoGallery={actions.goGallery}
         onGoMyDreams={actions.goMyDreams}
         onBackFromInspect={goBackFromInspect}
         onDreamAgain={handleDreamAgain}
         onDownload={handleResultDownload}
-        onToggleAudio={() => void toggleMuted()}
       />
 
       <DreamGalleryScene
@@ -933,14 +914,6 @@ function DreamHeroApp() {
           onResetScene={() => {
             setSceneTuning(DEFAULT_SCENE_TUNING)
           }}
-        />
-      ) : null}
-
-      {showFloatingAudio ? (
-        <AudioToggle
-          muted={muted}
-          onToggle={() => void toggleMuted()}
-          className="floating-audio-toggle"
         />
       ) : null}
     </MobileAppShell>

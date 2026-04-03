@@ -15,14 +15,12 @@ interface DreamResultSceneProps {
   motionRef: MutableRefObject<MotionVector>
   motionProfile?: MotionProfile
   performanceTier: PerformanceTier
-  muted: boolean
   onGoHome: () => void
   onGoGallery: () => void
   onGoMyDreams: () => void
   onBackFromInspect: () => void
   onDreamAgain: (record: DreamRecord) => void
   onDownload: (record: DreamRecord, canvas: HTMLCanvasElement | null) => void
-  onToggleAudio: () => void
 }
 
 export function DreamResultScene({
@@ -34,14 +32,12 @@ export function DreamResultScene({
   motionRef,
   motionProfile = { x: 1, y: 1 },
   performanceTier,
-  muted,
   onGoHome,
   onGoGallery,
   onGoMyDreams,
   onBackFromInspect,
   onDreamAgain,
   onDownload,
-  onToggleAudio,
 }: DreamResultSceneProps) {
   const [canvasNode, setCanvasNode] = useState<HTMLCanvasElement | null>(null)
 
@@ -114,8 +110,6 @@ export function DreamResultScene({
         onDownload={() => onDownload(dream, canvasNode)}
         onDreamAgain={() => onDreamAgain(dream)}
         onExploreGallery={onGoGallery}
-        muted={muted}
-        onToggleAudio={onToggleAudio}
       />
 
       <a href="#" className="privacy-link" onClick={(event) => event.preventDefault()}>

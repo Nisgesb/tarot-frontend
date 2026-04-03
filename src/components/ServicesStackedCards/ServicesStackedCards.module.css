@@ -1,7 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap');
-
 .root {
-  --stack-bg: #f4f4f3;
   --stack-text: #161616;
   --stack-stage-max-width: 1180px;
   --stack-stage-height: 54vh;
@@ -12,15 +9,11 @@
   --stack-body-radius: 30px;
   --stack-image-radius: 22px;
   --stack-desktop-section-height: 362vh;
-  --stack-tablet-section-height: 346vh;
-  --stack-mobile-section-height: 334vh;
-
-  background:
-    radial-gradient(circle at 12% -10%, rgba(255, 255, 255, 0.88), transparent 44%),
-    radial-gradient(circle at 100% 4%, rgba(255, 234, 246, 0.52), transparent 42%),
-    var(--stack-bg);
+  --stack-tablet-section-height: 326vh;
+  --stack-mobile-section-height: 296vh;
+  background: transparent;
   color: var(--stack-text);
-  font-family: 'Plus Jakarta Sans', 'Avenir Next', 'Helvetica Neue', sans-serif;
+  font-family: 'Outfit', 'Avenir Next', 'Helvetica Neue', sans-serif;
 }
 
 .desktopSection {
@@ -112,7 +105,8 @@
 
 .title {
   margin: 0;
-  font-family: 'Syne', 'Avenir Next', 'Helvetica Neue', sans-serif;
+  font-family: 'Outfit', 'Avenir Next', 'Helvetica Neue', sans-serif;
+  font-weight: 700;
   font-size: clamp(38px, 4.1vw, 68px);
   line-height: 0.9;
   letter-spacing: -0.04em;
@@ -139,7 +133,8 @@
 
 .metricValue {
   margin: 0;
-  font-family: 'Syne', 'Avenir Next', 'Helvetica Neue', sans-serif;
+  font-family: 'Outfit', 'Avenir Next', 'Helvetica Neue', sans-serif;
+  font-weight: 700;
   font-size: clamp(40px, 4vw, 66px);
   line-height: 0.86;
   letter-spacing: -0.05em;
@@ -181,7 +176,7 @@
 
 @media (max-width: 1279px) {
   .root {
-    --stack-stage-height: 58vh;
+    --stack-stage-height: 56vh;
     --stack-sticky-top: 82px;
   }
 
@@ -220,7 +215,7 @@
 
 @media (max-width: 767px) {
   .root {
-    --stack-stage-height: 66svh;
+    --stack-stage-height: 56svh;
     --stack-sticky-top: calc(env(safe-area-inset-top, 0px) + 10px);
   }
 
@@ -233,16 +228,16 @@
   }
 
   .card::before {
-    width: 58%;
+    width: var(--tab-width);
     height: 40px;
     border-radius: 16px 16px 10px 10px;
-    left: 0;
+    left: var(--tab-left);
   }
 
   .tabLabel {
-    width: 58%;
+    width: var(--tab-width);
     height: 40px;
-    left: 0;
+    left: var(--tab-left);
     padding: 11px 16px 0;
     font-size: 10px;
   }
@@ -250,22 +245,22 @@
   .body {
     inset: 18px 0 0;
     border-radius: 24px;
-    padding: 20px;
+    padding: 18px;
     grid-template-columns: 1fr;
-    gap: 20px;
+    gap: 16px;
   }
 
   .title {
-    font-size: clamp(32px, 8.2vw, 48px);
+    font-size: clamp(30px, 7.6vw, 43px);
   }
 
   .description {
-    font-size: 14px;
+    font-size: 13px;
     line-height: 1.48;
   }
 
   .metricValue {
-    font-size: clamp(34px, 9vw, 48px);
+    font-size: clamp(32px, 8.4vw, 44px);
   }
 
   .metricLabel {
@@ -273,7 +268,7 @@
   }
 
   .mediaWrap {
-    min-height: 320px;
+    min-height: 204px;
     border-radius: 18px;
   }
 }
