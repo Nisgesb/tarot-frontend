@@ -1,4 +1,9 @@
 import { useCallback, useEffect, useMemo, useReducer } from 'react'
+import {
+  getFeatureLandingConfigByPath,
+  getFeatureLandingConfigBySlug,
+  type FeatureLandingSlug,
+} from '../config/homeMenu'
 
 export type SceneKey =
   | 'hero'
@@ -6,6 +11,7 @@ export type SceneKey =
   | 'dreamEntry'
   | 'assistantRefine'
   | 'generating'
+  | 'featureLanding'
   | 'result'
   | 'gallery'
   | 'myDreams'
@@ -18,6 +24,7 @@ export interface SceneMachineState {
   path: string
   dreamId: string | null
   inspectSource: InspectSource
+  featureSlug: FeatureLandingSlug | null
 }
 
 interface ParsedLocation {
@@ -25,6 +32,7 @@ interface ParsedLocation {
   path: string
   dreamId: string | null
   inspectSource: InspectSource
+  featureSlug: FeatureLandingSlug | null
 }
 
 type Action =
@@ -47,6 +55,7 @@ function parseLocation(pathname: string, search: string): ParsedLocation {
       path: '/',
       dreamId: null,
       inspectSource: null,
+      featureSlug: null,
     }
   }
 
@@ -64,6 +73,17 @@ function parseLocation(pathname: string, search: string): ParsedLocation {
       path: `${normalizedPath}${search}`,
       dreamId: null,
       inspectSource: null,
+      featureSlug: null,
+    }
+  }
+
+  if (normalizedPath === '/ai-reading') {
+    return {
+      scene: 'assistantRefine',
+      path: normalizedPath,
+      dreamId: null,
+      inspectSource: null,
+      featureSlug: null,
     }
   }
 
@@ -73,6 +93,7 @@ function parseLocation(pathname: string, search: string): ParsedLocation {
       path: normalizedPath,
       dreamId: null,
       inspectSource: null,
+      featureSlug: null,
     }
   }
 
@@ -82,6 +103,29 @@ function parseLocation(pathname: string, search: string): ParsedLocation {
       path: normalizedPath,
       dreamId: null,
       inspectSource: null,
+      featureSlug: null,
+    }
+  }
+
+  if (normalizedPath === '/archive') {
+    return {
+      scene: 'myDreams',
+      path: normalizedPath,
+      dreamId: null,
+      inspectSource: null,
+      featureSlug: null,
+    }
+  }
+
+  const featureConfig = getFeatureLandingConfigByPath(normalizedPath)
+
+  if (featureConfig) {
+    return {
+      scene: 'featureLanding',
+      path: normalizedPath,
+      dreamId: null,
+      inspectSource: null,
+      featureSlug: featureConfig.slug,
     }
   }
 
@@ -105,6 +149,7 @@ function parseLocation(pathname: string, search: string): ParsedLocation {
       path: `${normalizedPath}${search}`,
       dreamId,
       inspectSource,
+      featureSlug: null,
     }
   }
 
@@ -113,6 +158,7 @@ function parseLocation(pathname: string, search: string): ParsedLocation {
     path: '/',
     dreamId: null,
     inspectSource: null,
+    featureSlug: null,
   }
 }
 
@@ -123,12 +169,14 @@ function reducer(state: SceneMachineState, action: Action): SceneMachineState {
       path: action.payload.path,
       dreamId: action.payload.dreamId,
       inspectSource: action.payload.inspectSource,
+      featureSlug: action.payload.featureSlug,
     }
   }
 
   return {
     ...state,
     scene: action.scene,
+    featureSlug: action.scene === 'featureLanding' ? state.featureSlug : null,
   }
 }
 
@@ -179,8 +227,15 @@ export function useSceneMachine() {
       goHome: () => applyNavigation('/'),
       startEntering: () => dispatch({ type: 'SET_SCENE', scene: 'entering' }),
       goDreamEntry: (replace = false) => applyNavigation('/dream/new', replace),
+      goAiReading: () => applyNavigation('/ai-reading'),
       goAssistantRefine: () => applyNavigation('/dream/new?phase=assistant'),
       goGenerating: () => applyNavigation('/dream/new?phase=generating'),
+      goArchive: () => applyNavigation('/archive'),
+      goFeature: (slug: FeatureLandingSlug) => {
+        const feature = getFeatureLandingConfigBySlug(slug)
+
+        applyNavigation(feature?.path ?? '/dream/new')
+      },
       goGallery: () => applyNavigation('/gallery'),
       goMyDreams: () => applyNavigation('/my-dreams'),
       openResult: (dreamId: string) =>

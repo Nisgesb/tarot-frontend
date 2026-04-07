@@ -54,9 +54,9 @@ export function DreamGalleryScene({
         <button type="button" className="topbar-link" onClick={onGoHome}>
           The Dreamkeeper
         </button>
-        <p>Dream Gallery</p>
+        <p>圈子</p>
         <button type="button" className="topbar-link" onClick={onGoMyDreams}>
-          My Dreams
+          我的
         </button>
       </header>
       <OrbFieldCanvas

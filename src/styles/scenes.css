@@ -4,6 +4,10 @@
   align-items: center;
 }
 
+.app-root.has-primary-bottom-nav {
+  --bottom-nav-reserved: calc(var(--safe-bottom) + 96px);
+}
+
 .app-root .result-topbar,
 .app-root .gallery-topbar {
   width: min(100%, var(--scene-max-width));
@@ -28,11 +32,11 @@
 
 .app-root .gallery-hint {
   width: min(calc(100vw - (max(var(--layout-gutter), var(--safe-left)) + max(var(--layout-gutter), var(--safe-right)))), var(--gallery-hint-width));
-  bottom: calc(var(--safe-bottom) + var(--gallery-hint-bottom));
+  bottom: calc(var(--bottom-nav-reserved, 0px) + var(--gallery-hint-bottom));
 }
 
 .app-root .random-dream-button {
-  bottom: calc(var(--safe-bottom) + var(--gallery-action-bottom));
+  bottom: calc(var(--bottom-nav-reserved, 0px) + var(--gallery-action-bottom));
 }
 
 .app-root .my-dreams-empty {
@@ -199,7 +203,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding-bottom: calc(var(--safe-bottom) + 24px);
+  padding-bottom: calc(var(--bottom-nav-reserved, 0px) + 24px);
 }
 
 .app-root .home-scene-copy {
@@ -223,6 +227,8 @@
 .app-root .home-scene-velocity-mobile {
   width: min(100%, var(--scene-shell-width));
   margin-inline: auto;
+  padding-top: calc(var(--safe-top) + 12px);
+  padding-bottom: 12px;
   padding-inline: max(var(--layout-gutter), var(--safe-left))
     max(var(--layout-gutter), var(--safe-right));
 }
@@ -275,6 +281,73 @@
 .app-root.device-phone-sm .home-scene-content,
 .app-root.device-phone .home-scene-content {
   gap: 12px;
+}
+
+.app-root .feature-landing-scene {
+  display: grid;
+  place-items: center;
+}
+
+.app-root .feature-landing-shell {
+  max-width: min(100%, 620px);
+  padding-bottom: calc(var(--entry-shell-pad-y) + var(--bottom-nav-reserved, 0px));
+}
+
+.app-root .feature-landing-header > p:last-child {
+  max-width: 480px;
+}
+
+.app-root .feature-landing-stage {
+  display: grid;
+  gap: 14px;
+}
+
+.app-root .feature-landing-status,
+.app-root .feature-landing-note {
+  position: relative;
+  z-index: 1;
+  border: 1px solid rgba(213, 225, 255, 0.18);
+  border-radius: 18px;
+  padding: 16px 16px 15px;
+  background:
+    linear-gradient(145deg, rgba(14, 27, 84, 0.34), rgba(10, 21, 66, 0.24)),
+    radial-gradient(circle at 18% 12%, rgba(200, 225, 255, 0.14), rgba(200, 225, 255, 0) 40%);
+  box-shadow:
+    0 12px 28px rgba(7, 14, 52, 0.18),
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+  backdrop-filter: blur(14px) saturate(1.08);
+}
+
+.app-root .feature-landing-status-label,
+.app-root .feature-landing-status-value,
+.app-root .feature-landing-note p {
+  margin: 0;
+}
+
+.app-root .feature-landing-status-label {
+  color: rgba(220, 231, 255, 0.56);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.app-root .feature-landing-status-value {
+  margin-top: 8px;
+  color: rgba(244, 248, 255, 0.96);
+  font-size: clamp(1.08rem, 4.2vw, 1.34rem);
+  line-height: 1.1;
+}
+
+.app-root .feature-landing-note p:first-child {
+  color: rgba(242, 247, 255, 0.9);
+  font-size: 1rem;
+}
+
+.app-root .feature-landing-note p:last-child {
+  margin-top: 8px;
+  color: rgba(225, 236, 255, 0.72);
+  line-height: 1.5;
+  font-size: 0.92rem;
 }
 
 .app-root.device-phone-sm .home-scene-copy,
@@ -369,4 +442,10 @@
 
 .app-root.scene-dreamEntry .portal-lines {
   opacity: 0.2;
+}
+
+.app-root.scene-featureLanding .portal-scene {
+  opacity: 0.14;
+  transform: translate3d(-50%, -55%, 0) scale(0.86);
+  filter: saturate(0.94) brightness(0.88);
 }

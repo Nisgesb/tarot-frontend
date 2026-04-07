@@ -6,10 +6,12 @@ import { MotionDebugPanel } from './components/MotionDebugPanel'
 import { MotionPermissionPrompt } from './components/MotionPermissionPrompt'
 import { NebulaBackground } from './components/NebulaBackground'
 import type { NebulaCompositionFrame } from './components/NebulaBackground'
+import { PrimaryBottomNav, type PrimaryBottomNavTab } from './components/PrimaryBottomNav'
 import { PortalTransition } from './components/PortalTransition'
 import type { PortalTransitionOrigin } from './components/PortalTransition'
 import { SoftPageTransitionOverlay } from './components/SoftPageTransitionOverlay'
 import { StarField } from './components/StarField'
+import type { HomeMenuItem } from './config/homeMenu'
 import { useKeyboardAwareViewport } from './hooks/useKeyboardAwareViewport'
 import { useEnterTransition } from './hooks/useEnterTransition'
 import { DEFAULT_MOTION_TUNING, useMotionInput } from './hooks/useMotionInput'
@@ -32,6 +34,7 @@ import { DreamEntryScene } from './scenes/DreamEntryScene'
 import { DreamGalleryScene } from './scenes/DreamGalleryScene'
 import { DreamInsightsLoader } from './scenes/DreamInsightsLoader'
 import { DreamResultScene } from './scenes/DreamResultScene'
+import { FeatureLandingScene } from './scenes/FeatureLandingScene'
 import { MyDreamsScene } from './scenes/MyDreamsScene'
 import { EMPTY_RAW_DREAM_INPUT } from './types/dream'
 import type { DreamRecord, RawDreamInput } from './types/dream'
@@ -159,6 +162,7 @@ function resolveBackgroundSpeed(scene: string) {
     case 'dreamEntry':
       return 0.88
     case 'assistantRefine':
+    case 'featureLanding':
       return 0.94
     case 'generating':
       return 0.66
@@ -181,6 +185,7 @@ function resolveStarSpeed(scene: string) {
       return 2.64
     case 'dreamEntry':
     case 'assistantRefine':
+    case 'featureLanding':
       return 0.92
     case 'generating':
       return 0.52
@@ -566,6 +571,15 @@ function DreamHeroApp() {
     actions.goDreamEntry()
   }
 
+  const handleHomeMenuSelect = (item: HomeMenuItem) => {
+    if (item.destinationKind === 'ai-flow') {
+      actions.goAiReading()
+      return
+    }
+
+    actions.goFeature(item.slug)
+  }
+
   const handleVisualize = (payload: { rawInput: RawDreamInput; refinedText: string }) => {
     pendingGenerationRef.current = payload
     setDraftInput(payload.rawInput)
@@ -695,6 +709,14 @@ function DreamHeroApp() {
     viewportProfile.pointerCoarse ? 'pointer-coarse' : 'pointer-fine',
     `performance-${viewportProfile.performanceTier}`,
     keyboardAware.keyboardOpen ? 'is-keyboard-open' : '',
+    (
+      sceneState.scene === 'dreamEntry' ||
+      sceneState.scene === 'featureLanding' ||
+      sceneState.scene === 'gallery' ||
+      sceneState.scene === 'myDreams'
+    )
+      ? 'has-primary-bottom-nav'
+      : '',
   ]
     .filter(Boolean)
     .join(' ')
@@ -759,6 +781,17 @@ function DreamHeroApp() {
     sceneState.scene === 'dreamEntry' &&
     homeIntroPending &&
     !enterTransitionState.active
+  const showPrimaryBottomNav =
+    sceneState.scene === 'dreamEntry' ||
+    sceneState.scene === 'featureLanding' ||
+    sceneState.scene === 'gallery' ||
+    sceneState.scene === 'myDreams'
+  const activePrimaryTab: PrimaryBottomNavTab =
+    sceneState.scene === 'myDreams'
+      ? 'my'
+      : sceneState.scene === 'gallery'
+        ? 'circle'
+        : 'home'
 
   return (
     <MobileAppShell
@@ -827,6 +860,8 @@ function DreamHeroApp() {
           (enterTransitionState.active && sceneState.scene === 'dreamEntry')
         }
         homeIntroPhase={shouldHoldHomeForIntro ? 'fadeOut' : enterTransitionState.phase}
+        currentPath={sceneState.path}
+        onMenuSelect={handleHomeMenuSelect}
         onPhaseChange={handleDreamEntryPhaseChange}
         onVisualize={handleVisualize}
       />
@@ -836,6 +871,12 @@ function DreamHeroApp() {
         active={sceneState.scene === 'generating'}
         reducedMotion={reducedMotion}
         onComplete={completeGeneration}
+      />
+
+      <FeatureLandingScene
+        active={sceneState.scene === 'featureLanding'}
+        featureSlug={sceneState.featureSlug}
+        onGoHome={actions.goDreamEntry}
       />
 
       <DreamResultScene
@@ -876,6 +917,7 @@ function DreamHeroApp() {
       <MyDreamsScene
         active={sceneState.scene === 'myDreams'}
         dreams={myDreams}
+        title="我的"
         reducedMotion={reducedMotion}
         motionRef={motion.motionRef}
         motionProfile={galleryProfile}
@@ -886,6 +928,15 @@ function DreamHeroApp() {
         onStartNew={startFreshDreamEntry}
         onSelectDream={inspectFromMyDreams}
       />
+
+      {showPrimaryBottomNav ? (
+        <PrimaryBottomNav
+          activeTab={activePrimaryTab}
+          onGoMy={actions.goArchive}
+          onGoHome={actions.goDreamEntry}
+          onGoCircle={actions.goGallery}
+        />
+      ) : null}
 
       <PortalTransition active={orbTransition.active} origin={orbTransition.origin} />
 

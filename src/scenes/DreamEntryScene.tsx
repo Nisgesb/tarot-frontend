@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
+import { HomeVelocityMenu } from '../components/HomeVelocityMenu'
 import {
   InfiniteCardSlider,
   type InfiniteCardSliderCard,
 } from '../components/InfiniteCardSlider'
-import { MobileMenuDemo } from '../components/library/VelocitySkew'
+import type { HomeMenuItem } from '../config/homeMenu'
 import { useViewportProfile } from '../hooks/useViewportProfile'
 import type { EnterTransitionPhase } from '../hooks/useEnterTransition'
 import { ASSISTANT_QUESTIONS, createRefinedPrompt } from '../services/dreamAssistantService'
@@ -40,6 +41,8 @@ interface DreamEntrySceneProps {
   initialRefinedText: string
   homeIntroActive: boolean
   homeIntroPhase: EnterTransitionPhase
+  currentPath: string
+  onMenuSelect: (item: HomeMenuItem) => void
   onPhaseChange: (phase: 'dreamEntry' | 'assistantRefine') => void
   onVisualize: (payload: { rawInput: RawDreamInput; refinedText: string }) => void
 }
@@ -52,6 +55,8 @@ export function DreamEntryScene({
   initialRefinedText,
   homeIntroActive,
   homeIntroPhase,
+  currentPath,
+  onMenuSelect,
   onPhaseChange,
   onVisualize,
 }: DreamEntrySceneProps) {
@@ -59,6 +64,7 @@ export function DreamEntryScene({
   const [input, setInput] = useState(initialInput)
   const [questionIndex, setQuestionIndex] = useState(0)
   const [refinedText, setRefinedText] = useState(initialRefinedText)
+  const [homeScroller, setHomeScroller] = useState<HTMLDivElement | null>(null)
   const showMobileVelocity =
     viewportProfile.isPhone || viewportProfile.isTablet || viewportProfile.pointerCoarse
 
@@ -131,27 +137,35 @@ export function DreamEntryScene({
   return (
     <section className={panelClassName}>
       {phase === 'dreamEntry' ? (
-        <div className="home-scene-shell" key={stageKey}>
+        <div className="home-scene-shell" key={stageKey} ref={setHomeScroller}>
           <div className="home-scene-content">
-            <header className="home-scene-copy">
-              <p className="home-scene-eyebrow">Dreamkeeper Tarot</p>
-              <h2 className="home-scene-title">抽取一张牌，捕捉今晚的潜意识引力。</h2>
-              <p className="home-scene-subtitle">
-                上下滑动菜单感受速度反馈，进入你最有感应的占卜入口。
-              </p>
-            </header>
+            {!showMobileVelocity ? (
+              <>
+                <header className="home-scene-copy">
+                  <p className="home-scene-eyebrow">Dreamkeeper Tarot</p>
+                  <h2 className="home-scene-title">抽取一张牌，捕捉今晚的潜意识引力。</h2>
+                  <p className="home-scene-subtitle">
+                    上下滑动菜单感受速度反馈，进入你最有感应的占卜入口。
+                  </p>
+                </header>
 
-            <button
-              type="button"
-              className="primary-pill home-scene-cta"
-              onClick={() => onPhaseChange('assistantRefine')}
-            >
-              Start Reading
-            </button>
+                <button
+                  type="button"
+                  className="primary-pill home-scene-cta"
+                  onClick={() => onPhaseChange('assistantRefine')}
+                >
+                  Start Reading
+                </button>
+              </>
+            ) : null}
 
             {showMobileVelocity ? (
               <div className="home-scene-velocity-mobile">
-                <MobileMenuDemo maxSkew={18} velocityScale={1} velocityDivisor={320} />
+                <HomeVelocityMenu
+                  scroller={homeScroller}
+                  currentPath={currentPath}
+                  onSelect={onMenuSelect}
+                />
               </div>
             ) : (
               <InfiniteCardSlider

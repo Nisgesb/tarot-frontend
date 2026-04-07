@@ -1,21 +1,16 @@
+import { HOME_MENU_ITEMS } from '../../../../config/homeMenu'
+
 export type MenuItem = {
   id: string
   label: string
   subtitle: string
 }
 
-export const MOBILE_MENU_ITEMS: MenuItem[] = [
-  { id: 'menu-1', label: 'Dream Archive', subtitle: 'Saved spreads and notes' },
-  { id: 'menu-2', label: 'Daily Draw', subtitle: 'One card for today' },
-  { id: 'menu-3', label: 'Three Card Spread', subtitle: 'Past / Present / Future' },
-  { id: 'menu-4', label: 'Relationship Reading', subtitle: 'Connection and intention' },
-  { id: 'menu-5', label: 'Career Focus', subtitle: 'Direction and obstacles' },
-  { id: 'menu-6', label: 'Moon Phase Ritual', subtitle: 'Guided symbolic reading' },
-  { id: 'menu-7', label: 'Manifestation Prompt', subtitle: 'Action for this week' },
-  { id: 'menu-8', label: 'Journal Companion', subtitle: 'Reflective follow-up' },
-  { id: 'menu-9', label: 'Card Meanings', subtitle: 'Quick interpretation index' },
-  { id: 'menu-10', label: 'Settings', subtitle: 'Theme, language and sound' },
-]
+export const MOBILE_MENU_ITEMS: MenuItem[] = HOME_MENU_ITEMS.map(({ id, label, subtitle }) => ({
+  id,
+  label,
+  subtitle,
+}))
 
 export type GalleryCard = {
   id: string

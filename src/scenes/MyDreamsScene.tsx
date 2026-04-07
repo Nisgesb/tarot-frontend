@@ -7,6 +7,7 @@ import type { DreamRecord } from '../types/dream'
 interface MyDreamsSceneProps {
   active: boolean
   dreams: DreamRecord[]
+  title?: string
   reducedMotion: boolean
   motionRef: MutableRefObject<MotionVector>
   motionProfile?: MotionProfile
@@ -29,6 +30,7 @@ interface MyDreamsSceneProps {
 export function MyDreamsScene({
   active,
   dreams,
+  title = '我的',
   reducedMotion,
   motionRef,
   motionProfile = { x: 1, y: 1 },
@@ -54,9 +56,9 @@ export function MyDreamsScene({
         <button type="button" className="topbar-link" onClick={onGoHome}>
           The Dreamkeeper
         </button>
-        <p>My Dreams</p>
+        <p>{title}</p>
         <button type="button" className="topbar-link" onClick={onGoGallery}>
-          Dream Gallery
+          圈子
         </button>
       </header>
 
