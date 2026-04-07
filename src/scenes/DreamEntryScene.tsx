@@ -1,37 +1,8 @@
 import { useMemo, useState } from 'react'
-import { HomeVelocityMenu } from '../components/HomeVelocityMenu'
-import {
-  InfiniteCardSlider,
-  type InfiniteCardSliderCard,
-} from '../components/InfiniteCardSlider'
-import type { HomeMenuItem } from '../config/homeMenu'
-import { useViewportProfile } from '../hooks/useViewportProfile'
+import { HomePage } from '../components/HomePage'
 import type { EnterTransitionPhase } from '../hooks/useEnterTransition'
 import { ASSISTANT_QUESTIONS, createRefinedPrompt } from '../services/dreamAssistantService'
 import type { RawDreamInput } from '../types/dream'
-
-const HOME_TAROT_CARDS: InfiniteCardSliderCard[] = [
-  {
-    id: 'tarot-magician',
-    image: '/cards/the-magician.png',
-    title: 'The Magician',
-  },
-  {
-    id: 'tarot-fool',
-    image: '/cards/the-fool.jpg',
-    title: 'The Fool',
-  },
-  {
-    id: 'tarot-seven-of-wands',
-    image: '/cards/seven-of-wands.jpg',
-    title: 'Seven of Wands',
-  },
-  {
-    id: 'tarot-six-of-wands',
-    image: '/cards/six-of-wands.jpg',
-    title: 'Six of Wands',
-  },
-]
 
 interface DreamEntrySceneProps {
   active: boolean
@@ -41,8 +12,6 @@ interface DreamEntrySceneProps {
   initialRefinedText: string
   homeIntroActive: boolean
   homeIntroPhase: EnterTransitionPhase
-  currentPath: string
-  onMenuSelect: (item: HomeMenuItem) => void
   onPhaseChange: (phase: 'dreamEntry' | 'assistantRefine') => void
   onVisualize: (payload: { rawInput: RawDreamInput; refinedText: string }) => void
 }
@@ -55,18 +24,12 @@ export function DreamEntryScene({
   initialRefinedText,
   homeIntroActive,
   homeIntroPhase,
-  currentPath,
-  onMenuSelect,
   onPhaseChange,
   onVisualize,
 }: DreamEntrySceneProps) {
-  const viewportProfile = useViewportProfile()
   const [input, setInput] = useState(initialInput)
   const [questionIndex, setQuestionIndex] = useState(0)
   const [refinedText, setRefinedText] = useState(initialRefinedText)
-  const [homeScroller, setHomeScroller] = useState<HTMLDivElement | null>(null)
-  const showMobileVelocity =
-    viewportProfile.isPhone || viewportProfile.isTablet || viewportProfile.pointerCoarse
 
   const autoRefined = useMemo(() => createRefinedPrompt(input), [input])
 
@@ -137,48 +100,7 @@ export function DreamEntryScene({
   return (
     <section className={panelClassName}>
       {phase === 'dreamEntry' ? (
-        <div className="home-scene-shell" key={stageKey} ref={setHomeScroller}>
-          <div className="home-scene-content">
-            {!showMobileVelocity ? (
-              <>
-                <header className="home-scene-copy">
-                  <p className="home-scene-eyebrow">Dreamkeeper Tarot</p>
-                  <h2 className="home-scene-title">抽取一张牌，捕捉今晚的潜意识引力。</h2>
-                  <p className="home-scene-subtitle">
-                    上下滑动菜单感受速度反馈，进入你最有感应的占卜入口。
-                  </p>
-                </header>
-
-                <button
-                  type="button"
-                  className="primary-pill home-scene-cta"
-                  onClick={() => onPhaseChange('assistantRefine')}
-                >
-                  Start Reading
-                </button>
-              </>
-            ) : null}
-
-            {showMobileVelocity ? (
-              <div className="home-scene-velocity-mobile">
-                <HomeVelocityMenu
-                  scroller={homeScroller}
-                  currentPath={currentPath}
-                  onSelect={onMenuSelect}
-                />
-              </div>
-            ) : (
-              <InfiniteCardSlider
-                cards={HOME_TAROT_CARDS}
-                spacing={0.082}
-                dragFactor={0.00124}
-                mobile
-                className="home-scene-slider-secondary"
-                ariaLabel="Tarot card carousel"
-              />
-            )}
-          </div>
-        </div>
+        <HomePage key={stageKey} />
       ) : (
         <div className="entry-shell" key={stageKey}>
           <div className="entry-shell-glow entry-shell-glow-a" aria-hidden />

@@ -11,7 +11,6 @@ import { PortalTransition } from './components/PortalTransition'
 import type { PortalTransitionOrigin } from './components/PortalTransition'
 import { SoftPageTransitionOverlay } from './components/SoftPageTransitionOverlay'
 import { StarField } from './components/StarField'
-import type { HomeMenuItem } from './config/homeMenu'
 import { useKeyboardAwareViewport } from './hooks/useKeyboardAwareViewport'
 import { useEnterTransition } from './hooks/useEnterTransition'
 import { DEFAULT_MOTION_TUNING, useMotionInput } from './hooks/useMotionInput'
@@ -571,15 +570,6 @@ function DreamHeroApp() {
     actions.goDreamEntry()
   }
 
-  const handleHomeMenuSelect = (item: HomeMenuItem) => {
-    if (item.destinationKind === 'ai-flow') {
-      actions.goAiReading()
-      return
-    }
-
-    actions.goFeature(item.slug)
-  }
-
   const handleVisualize = (payload: { rawInput: RawDreamInput; refinedText: string }) => {
     pendingGenerationRef.current = payload
     setDraftInput(payload.rawInput)
@@ -786,6 +776,7 @@ function DreamHeroApp() {
     sceneState.scene === 'featureLanding' ||
     sceneState.scene === 'gallery' ||
     sceneState.scene === 'myDreams'
+  const showDreamEntryAltarBackground = sceneState.scene === 'dreamEntry'
   const activePrimaryTab: PrimaryBottomNavTab =
     sceneState.scene === 'myDreams'
       ? 'my'
@@ -799,34 +790,40 @@ function DreamHeroApp() {
       keyboardOffset={keyboardAware.keyboardOffset}
       style={shellStyle}
     >
-      <NebulaBackground
-        entered={entered}
-        reducedMotion={reducedMotion}
-        motionRef={motion.motionRef}
-        motionProfile={nebulaProfile}
-        performanceTier={viewportProfile.performanceTier}
-        timeScale={nebulaTimeScale}
-        composition={resolveNebulaComposition(sceneState.scene, viewportProfile.deviceClass)}
-      />
-      <StarField
-        entered={entered}
-        reducedMotion={reducedMotion}
-        motionRef={motion.motionRef}
-        motionProfile={starProfile}
-        performanceTier={viewportProfile.performanceTier}
-        speedMultiplier={starSpeed}
-      />
+      {!showDreamEntryAltarBackground ? (
+        <NebulaBackground
+          entered={entered}
+          reducedMotion={reducedMotion}
+          motionRef={motion.motionRef}
+          motionProfile={nebulaProfile}
+          performanceTier={viewportProfile.performanceTier}
+          timeScale={nebulaTimeScale}
+          composition={resolveNebulaComposition(sceneState.scene, viewportProfile.deviceClass)}
+        />
+      ) : null}
+      {!showDreamEntryAltarBackground ? (
+        <StarField
+          entered={entered}
+          reducedMotion={reducedMotion}
+          motionRef={motion.motionRef}
+          motionProfile={starProfile}
+          performanceTier={viewportProfile.performanceTier}
+          speedMultiplier={starSpeed}
+        />
+      ) : null}
 
       <SoftPageTransitionOverlay
         active={enterTransitionState.active}
         phase={enterTransitionState.phase}
       />
-      <DreamPortal
-        entered={entered}
-        reducedMotion={reducedMotion}
-        motionRef={motion.motionRef}
-        motionProfile={portalProfile}
-      />
+      {!showDreamEntryAltarBackground ? (
+        <DreamPortal
+          entered={entered}
+          reducedMotion={reducedMotion}
+          motionRef={motion.motionRef}
+          motionProfile={portalProfile}
+        />
+      ) : null}
 
       <HeroOverlay
         entered={entered}
@@ -860,8 +857,6 @@ function DreamHeroApp() {
           (enterTransitionState.active && sceneState.scene === 'dreamEntry')
         }
         homeIntroPhase={shouldHoldHomeForIntro ? 'fadeOut' : enterTransitionState.phase}
-        currentPath={sceneState.path}
-        onMenuSelect={handleHomeMenuSelect}
         onPhaseChange={handleDreamEntryPhaseChange}
         onVisualize={handleVisualize}
       />
