@@ -14,7 +14,8 @@
     "cap:sync:ios": "npm run build && npx cap sync ios",
     "cap:sync:android": "npm run build && npx cap sync android",
     "cap:open:ios": "npx cap open ios",
-    "cap:open:android": "npx cap open android"
+    "cap:open:android": "npx cap open android",
+    "cap:run:ios": "npx cap run ios --target 17F4566D-A1D9-4A14-8274-2A83123FC499"
   },
   "dependencies": {
     "@capacitor/core": "^8.2.0",

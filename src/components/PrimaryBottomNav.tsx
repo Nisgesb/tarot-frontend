@@ -130,18 +130,12 @@ export function PrimaryBottomNav({
     return rawProgress
   }
 
-  const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+  const handlePointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
     if (event.button !== 0) {
       return
     }
 
-    const shell = shellRef.current
-
-    if (!shell) {
-      return
-    }
-
-    shell.setPointerCapture(event.pointerId)
+    event.currentTarget.setPointerCapture(event.pointerId)
     setIsDragging(false)
     dragRef.current = {
       pointerId: event.pointerId,
@@ -155,7 +149,7 @@ export function PrimaryBottomNav({
     clickSuppressedRef.current = false
   }
 
-  const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+  const handlePointerMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
     if (event.pointerId !== dragRef.current.pointerId) {
       return
     }
@@ -185,15 +179,15 @@ export function PrimaryBottomNav({
     setVisualIndex(Math.round(clampProgress(resolveProgressFromClientX(event.clientX))))
   }
 
-  const handlePointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
+  const handlePointerUp = (event: ReactPointerEvent<HTMLButtonElement>) => {
     if (event.pointerId !== dragRef.current.pointerId) {
       return
     }
 
     const shell = shellRef.current
 
-    if (shell?.hasPointerCapture(event.pointerId)) {
-      shell.releasePointerCapture(event.pointerId)
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
     }
 
     if (!dragRef.current.dragging) {
@@ -227,15 +221,13 @@ export function PrimaryBottomNav({
     }, 40)
   }
 
-  const handlePointerCancel = (event: ReactPointerEvent<HTMLDivElement>) => {
+  const handlePointerCancel = (event: ReactPointerEvent<HTMLButtonElement>) => {
     if (event.pointerId !== dragRef.current.pointerId) {
       return
     }
 
-    const shell = shellRef.current
-
-    if (shell?.hasPointerCapture(event.pointerId)) {
-      shell.releasePointerCapture(event.pointerId)
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
     }
 
     dragRef.current.dragging = false
@@ -258,6 +250,13 @@ export function PrimaryBottomNav({
     navigateToIndex(targetIndex, 'click')
   }
 
+  const dragHandlers = {
+    onPointerDown: handlePointerDown,
+    onPointerMove: handlePointerMove,
+    onPointerUp: handlePointerUp,
+    onPointerCancel: handlePointerCancel,
+  } as const
+
   return (
     <nav className={styles.root} aria-label="Primary navigation">
       <div
@@ -265,10 +264,6 @@ export function PrimaryBottomNav({
         className={styles.shell}
         data-snap-mode={snapMode}
         data-dragging={isDragging ? 'true' : 'false'}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerCancel}
         style={
           {
             '--nav-progress': progress.toString(),
@@ -278,25 +273,28 @@ export function PrimaryBottomNav({
         <span className={styles.activePill} aria-hidden />
         <button
           type="button"
-          className={`${styles.tab} ${visualIndex === 0 ? styles.tabCurrent : ''}`}
+          className={`${styles.tab} ${visualIndex === 0 ? styles.tabCurrent : ''} ${activeIndex === 0 ? styles.tabDraggable : ''}`}
           aria-current={activeTab === 'my' ? 'page' : undefined}
           onClick={() => handleClick(0)}
+          {...(activeIndex === 0 ? dragHandlers : {})}
         >
           我的
         </button>
         <button
           type="button"
-          className={`${styles.tab} ${visualIndex === 1 ? styles.tabCurrent : ''}`}
+          className={`${styles.tab} ${visualIndex === 1 ? styles.tabCurrent : ''} ${activeIndex === 1 ? styles.tabDraggable : ''}`}
           aria-current={activeTab === 'home' ? 'page' : undefined}
           onClick={() => handleClick(1)}
+          {...(activeIndex === 1 ? dragHandlers : {})}
         >
           首页
         </button>
         <button
           type="button"
-          className={`${styles.tab} ${visualIndex === 2 ? styles.tabCurrent : ''}`}
+          className={`${styles.tab} ${visualIndex === 2 ? styles.tabCurrent : ''} ${activeIndex === 2 ? styles.tabDraggable : ''}`}
           aria-current={activeTab === 'circle' ? 'page' : undefined}
           onClick={() => handleClick(2)}
+          {...(activeIndex === 2 ? dragHandlers : {})}
         >
           圈子
         </button>

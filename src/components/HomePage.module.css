@@ -64,15 +64,15 @@
 
 .heroTitle {
   margin: 0;
+  display: inline-block;
   color: var(--color-inverse-primary);
   font-family: 'Cormorant Garamond', serif;
   font-weight: 500;
   font-size: clamp(3rem, 12.8vw, 4.25rem);
   line-height: 0.94;
   letter-spacing: -0.032em;
-  text-wrap: balance;
+  white-space: nowrap;
   text-shadow: 0 14px 42px rgba(0, 0, 0, 0.26);
-  max-width: 7ch;
 }
 
 .heroTitleLine {

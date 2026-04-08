@@ -30,7 +30,6 @@
   backdrop-filter: blur(18px) saturate(1.02);
   pointer-events: auto;
   user-select: none;
-  touch-action: pan-y;
 }
 
 .activePill {
@@ -94,4 +93,8 @@
 
 .tabCurrent {
   color: rgba(247, 250, 255, 0.96);
+}
+
+.tabDraggable {
+  touch-action: pan-y;
 }
