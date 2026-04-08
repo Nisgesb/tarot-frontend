@@ -17,7 +17,7 @@ export interface HomeInfoSection {
   rows: HomeInfoRow[]
 }
 
-export const HOME_HERO_TITLE = ['Monstera', 'Unique'] as const
+export const HOME_HERO_TITLE = ['今日运势'] as const
 
 export const HOME_FEATURE_CARDS: HomeFeatureCard[] = [
   {

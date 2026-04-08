@@ -49,17 +49,19 @@ export function DreamGalleryScene({
 
   return (
     <section className={className}>
-      <OrbFieldCanvas
-        className="explore-orb-canvas"
-        dreams={dreams}
-        active={active}
-        reducedMotion={reducedMotion}
-        motionRef={motionRef}
-        motionProfile={motionProfile}
-        performanceTier={performanceTier}
-        pointerCoarse={pointerCoarse}
-        onSelect={onSelectDream}
-      />
+      {active && dreams.length > 0 ? (
+        <OrbFieldCanvas
+          className="explore-orb-canvas"
+          dreams={dreams}
+          active={active}
+          reducedMotion={reducedMotion}
+          motionRef={motionRef}
+          motionProfile={motionProfile}
+          performanceTier={performanceTier}
+          pointerCoarse={pointerCoarse}
+          onSelect={onSelectDream}
+        />
+      ) : null}
       <div className="explore-scene-scrim" aria-hidden />
       <div className="explore-scene-shell">
         <header className="explore-topbar">

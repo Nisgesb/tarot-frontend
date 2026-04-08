@@ -275,7 +275,10 @@ export function OrbFieldCanvas({
             motionOffsetY * (0.32 + orb.depth * 0.28)) *
             camera.zoom
         const pulse = reducedMotion ? 1 : 0.96 + Math.sin(elapsed * 0.7 + orb.phase) * 0.06
-        const radius = orb.radius * (0.46 + orb.depth * 0.74) * pulse * camera.zoom
+        const radius = Math.max(
+          orb.radius * (0.46 + orb.depth * 0.74) * pulse * camera.zoom,
+          0.001,
+        )
 
         if (screenX < -radius * 2 || screenX > width + radius * 2) continue
         if (screenY < -radius * 2 || screenY > height + radius * 2) continue
@@ -339,7 +342,7 @@ export function OrbFieldCanvas({
             screenY +
             (layer.y - 0.5) * radius * 1.8 +
             Math.cos(elapsed * (0.55 + layerIndex * 0.2) + orb.phase) * radius * 0.1
-          const lr = radius * (0.3 + layer.size * 0.35)
+          const lr = Math.max(radius * (0.3 + layer.size * 0.35), 0.001)
           const layerGradient = context.createRadialGradient(lx, ly, lr * 0.1, lx, ly, lr)
           layerGradient.addColorStop(
             0,

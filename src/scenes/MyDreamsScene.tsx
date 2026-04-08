@@ -67,7 +67,7 @@ export function MyDreamsScene({
 
   return (
     <section className={className}>
-      {dreams.length > 0 ? (
+      {active && dreams.length > 0 ? (
         <OrbFieldCanvas
           className="explore-orb-canvas"
           dreams={dreams}

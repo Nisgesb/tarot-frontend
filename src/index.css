@@ -86,7 +86,9 @@ body {
   mix-blend-mode: soft-light;
 }
 
-.app-root.scene-dreamEntry {
+.app-root.scene-dreamEntry,
+.app-root.scene-gallery,
+.app-root.scene-myDreams {
   background:
     radial-gradient(circle at 50% 76%, rgba(180, 160, 118, 0.05), transparent 18%),
     radial-gradient(circle at 50% 18%, rgba(85, 93, 143, 0.16), transparent 34%),
@@ -94,7 +96,9 @@ body {
     linear-gradient(180deg, #050711 0%, #0a1020 34%, #0d162f 64%, #070b16 100%);
 }
 
-.app-root.scene-dreamEntry::before {
+.app-root.scene-dreamEntry::before,
+.app-root.scene-gallery::before,
+.app-root.scene-myDreams::before {
   background:
     radial-gradient(circle at 50% 74%, rgba(238, 223, 190, 0.12), rgba(238, 223, 190, 0.04) 10%, rgba(238, 223, 190, 0) 28%),
     radial-gradient(circle at 50% 78%, rgba(99, 107, 164, 0.2), rgba(99, 107, 164, 0.08) 24%, rgba(99, 107, 164, 0) 52%),
@@ -104,7 +108,9 @@ body {
   mix-blend-mode: screen;
 }
 
-.app-root.scene-dreamEntry::after {
+.app-root.scene-dreamEntry::after,
+.app-root.scene-gallery::after,
+.app-root.scene-myDreams::after {
   background:
     radial-gradient(circle at 20% 22%, rgba(236, 229, 214, 0.08) 0 1px, transparent 1.8px),
     radial-gradient(circle at 74% 34%, rgba(236, 229, 214, 0.06) 0 1px, transparent 1.8px),

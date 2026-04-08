@@ -222,7 +222,7 @@ interface HomePageProps {
 }
 
 export function HomePage({ embedded = false }: HomePageProps) {
-  const pageClassName = [styles.page, embedded ? styles.pageEmbedded : '']
+  const pageClassName = ['shared-home-surface', styles.page, embedded ? styles.pageEmbedded : '']
     .filter(Boolean)
     .join(' ')
 

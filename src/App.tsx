@@ -776,7 +776,10 @@ function DreamHeroApp() {
     sceneState.scene === 'featureLanding' ||
     sceneState.scene === 'gallery' ||
     sceneState.scene === 'myDreams'
-  const showDreamEntryAltarBackground = sceneState.scene === 'dreamEntry'
+  const useSceneOwnedBackground =
+    sceneState.scene === 'dreamEntry' ||
+    sceneState.scene === 'gallery' ||
+    sceneState.scene === 'myDreams'
   const activePrimaryTab: PrimaryBottomNavTab =
     sceneState.scene === 'myDreams'
       ? 'my'
@@ -790,7 +793,7 @@ function DreamHeroApp() {
       keyboardOffset={keyboardAware.keyboardOffset}
       style={shellStyle}
     >
-      {!showDreamEntryAltarBackground ? (
+      {!useSceneOwnedBackground ? (
         <NebulaBackground
           entered={entered}
           reducedMotion={reducedMotion}
@@ -801,7 +804,7 @@ function DreamHeroApp() {
           composition={resolveNebulaComposition(sceneState.scene, viewportProfile.deviceClass)}
         />
       ) : null}
-      {!showDreamEntryAltarBackground ? (
+      {!useSceneOwnedBackground ? (
         <StarField
           entered={entered}
           reducedMotion={reducedMotion}
@@ -816,7 +819,7 @@ function DreamHeroApp() {
         active={enterTransitionState.active}
         phase={enterTransitionState.phase}
       />
-      {!showDreamEntryAltarBackground ? (
+      {!useSceneOwnedBackground ? (
         <DreamPortal
           entered={entered}
           reducedMotion={reducedMotion}
