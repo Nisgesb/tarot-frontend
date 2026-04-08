@@ -11,6 +11,12 @@ node_modules
 dist
 dist-ssr
 *.local
+android
+ios
+.playwright-cli
+.playwright-cli/
+.tmp-services-stacked-run-preview.png
+ios/build/
 
 # Editor directories and files
 .vscode/*
