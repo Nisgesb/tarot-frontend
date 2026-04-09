@@ -17,6 +17,7 @@ ios
 .playwright-cli/
 .tmp-services-stacked-run-preview.png
 ios/build/
+.claude/settings.local.json
 
 # Editor directories and files
 .vscode/*
