@@ -147,73 +147,18 @@ function iconForRow(icon: HomeInfoRow['icon']) {
   }
 }
 
-function HeroArtwork() {
+function HeroMediaVideo() {
   return (
-    <svg viewBox="0 0 700 780" className={styles.heroArtwork} preserveAspectRatio="xMidYMid slice" aria-hidden>
-      <defs>
-        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#93886f" />
-          <stop offset="28%" stopColor="#c4bfaa" />
-          <stop offset="68%" stopColor="#f2e9d2" />
-          <stop offset="100%" stopColor="#dedbcf" />
-        </linearGradient>
-        <radialGradient id="sun" cx="76%" cy="68%" r="32%">
-          <stop offset="0%" stopColor="#f7dca1" stopOpacity="0.9" />
-          <stop offset="46%" stopColor="#f0c97e" stopOpacity="0.34" />
-          <stop offset="100%" stopColor="#f0c97e" stopOpacity="0" />
-        </radialGradient>
-        <linearGradient id="leafLight" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#889f47" />
-          <stop offset="45%" stopColor="#b5c85f" />
-          <stop offset="100%" stopColor="#657238" />
-        </linearGradient>
-        <linearGradient id="leafWarm" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#9ba046" />
-          <stop offset="55%" stopColor="#f2dc78" />
-          <stop offset="100%" stopColor="#9f7e35" />
-        </linearGradient>
-        <filter id="blurGlow">
-          <feGaussianBlur stdDeviation="18" />
-        </filter>
-        <filter id="softBlur">
-          <feGaussianBlur stdDeviation="3.5" />
-        </filter>
-      </defs>
-
-      <rect width="700" height="780" fill="url(#bg)" />
-      <rect x="66" y="28" width="18" height="724" rx="9" fill="#674e31" opacity="0.68" />
-      <rect x="88" y="52" width="10" height="690" rx="5" fill="#9d7d55" opacity="0.62" />
-      <rect x="0" y="0" width="700" height="780" fill="url(#sun)" />
-      <ellipse cx="540" cy="564" rx="140" ry="92" fill="#f2c978" opacity="0.34" filter="url(#blurGlow)" />
-      <ellipse cx="244" cy="558" rx="132" ry="98" fill="#e4b471" opacity="0.3" filter="url(#blurGlow)" />
-      <g opacity="0.22" fill="#ffffff">
-        <circle cx="522" cy="132" r="2.5" />
-        <circle cx="564" cy="164" r="1.8" />
-        <circle cx="604" cy="108" r="1.6" />
-        <circle cx="472" cy="208" r="1.8" />
-        <circle cx="584" cy="228" r="1.4" />
-        <circle cx="535" cy="258" r="1.6" />
-      </g>
-
-      <g fill="none" stroke="#5c452c" strokeLinecap="round">
-        <path d="M252 756C242 632 262 536 312 450" strokeWidth="7" />
-        <path d="M406 756C396 632 432 560 490 492" strokeWidth="7" />
-        <path d="M286 656C242 618 216 586 214 548" strokeWidth="5.5" opacity="0.8" />
-      </g>
-
-      <g transform="translate(160 180) rotate(-12 126 116)">
-        <path d="M18 140C30 56 118 14 214 24c6 84-32 164-126 178-38 6-72-14-88-62Z" fill="url(#leafLight)" />
-        <path d="M54 136c38-14 74-44 108-94M88 152c18-30 32-66 44-112M126 158c4-36 8-78 2-122M160 148c-8-28-16-62-18-104" stroke="#5d6b2d" strokeWidth="4.4" opacity="0.44" />
-      </g>
-
-      <g transform="translate(368 394) rotate(22 120 104)">
-        <path d="M24 136C38 62 112 16 214 34c-2 90-60 164-150 174-42 4-74-16-88-72Z" fill="url(#leafWarm)" />
-        <path d="M62 132c40-14 84-46 118-94M100 148c20-28 38-62 54-108M140 152c4-32 6-72 2-114M172 144c-8-30-18-64-26-102" stroke="#8d7b3b" strokeWidth="4.4" opacity="0.44" />
-      </g>
-
-      <ellipse cx="570" cy="700" rx="56" ry="20" fill="#3b3126" opacity="0.22" filter="url(#softBlur)" />
-      <ellipse cx="214" cy="706" rx="42" ry="18" fill="#3b3126" opacity="0.22" filter="url(#softBlur)" />
-    </svg>
+    <video
+      className={styles.heroMediaVideo}
+      src="/media/home-hero-video.mp4"
+      autoPlay
+      muted
+      loop
+      playsInline
+      preload="auto"
+      aria-hidden
+    />
   )
 }
 
@@ -252,7 +197,7 @@ export function HomePage({ embedded = false }: HomePageProps) {
           </h1>
 
           <div className={styles.heroMedia}>
-            <HeroArtwork />
+            <HeroMediaVideo />
             <div className={styles.heroMediaGlow} />
             <div className={styles.heroMediaOverlay} />
           </div>

@@ -63,12 +63,13 @@
 }
 
 .heroTitle {
-  margin: 0;
-  display: inline-block;
+  margin: 0 auto;
+  width: fit-content;
+  display: block;
   color: var(--color-inverse-primary);
   font-family: 'Cormorant Garamond', serif;
   font-weight: 500;
-  font-size: clamp(3rem, 12.8vw, 4.25rem);
+  font-size: clamp(1.95rem, 8.32vw, 2.76rem);
   line-height: 0.94;
   letter-spacing: -0.032em;
   white-space: nowrap;
@@ -81,10 +82,12 @@
 
 .heroMedia {
   position: relative;
+  width: 80%;
+  margin-inline: auto;
   margin-top: 26px;
   aspect-ratio: 0.88;
   overflow: hidden;
-  border-radius: 42px;
+  border-radius: 29px;
   background:
     linear-gradient(180deg, rgba(249, 249, 255, 0.06), rgba(249, 249, 255, 0.02)),
     linear-gradient(140deg, rgba(86, 95, 113, 0.16), rgba(65, 95, 145, 0.14));
@@ -112,16 +115,17 @@
     linear-gradient(90deg, rgba(24, 18, 14, 0.28) 0%, transparent 16%, transparent 100%);
 }
 
-.heroArtwork {
+.heroMediaVideo {
   width: 100%;
   height: 100%;
   display: block;
+  object-fit: cover;
 }
 
 .featureRail {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: minmax(248px, 76%);
+  grid-auto-columns: minmax(198px, 61%);
   gap: 14px;
   margin-top: 18px;
   padding: 4px 0 2px;
@@ -138,10 +142,10 @@
 
 .featureCard {
   scroll-snap-align: start;
-  min-height: 188px;
-  padding: 18px 18px 20px;
+  min-height: 150px;
+  padding: 14px 14px 16px;
   border: 1px solid rgba(250, 216, 253, 0.08);
-  border-radius: 30px;
+  border-radius: 24px;
   background:
     linear-gradient(180deg, rgba(112, 85, 117, 0.94), rgba(103, 79, 108, 0.96)),
     linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0));
@@ -161,7 +165,7 @@
   margin: 18px 0 0;
   color: var(--color-surface-container-lowest);
   font-family: 'Cormorant Garamond', serif;
-  font-size: 2rem;
+  font-size: 1.7rem;
   font-weight: 500;
   line-height: 0.96;
   letter-spacing: -0.03em;
@@ -172,7 +176,7 @@
   max-width: 14ch;
   color: rgba(255, 250, 255, 0.9);
   font-family: 'Outfit', sans-serif;
-  font-size: 0.95rem;
+  font-size: 0.81rem;
   line-height: 1.32;
 }
 
@@ -185,7 +189,7 @@
   margin: 0 0 16px;
   color: var(--color-surface-container-lowest);
   font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(2.25rem, 9vw, 3rem);
+  font-size: clamp(1.46rem, 5.85vw, 1.95rem);
   font-weight: 500;
   line-height: 0.94;
   letter-spacing: -0.03em;
@@ -223,7 +227,7 @@
 .rowText {
   color: rgba(240, 240, 247, 0.96);
   font-family: 'Outfit', sans-serif;
-  font-size: clamp(1.06rem, 4.8vw, 1.22rem);
+  font-size: clamp(0.69rem, 3.12vw, 0.79rem);
   font-weight: 400;
   line-height: 1.2;
   letter-spacing: -0.015em;
