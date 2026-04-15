@@ -24,6 +24,11 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 	<key>NSMotionUsageDescription</key>
 	<string>用于根据手机倾斜生成梦境空间的动态视差效果</string>
 	<key>UILaunchStoryboardName</key>

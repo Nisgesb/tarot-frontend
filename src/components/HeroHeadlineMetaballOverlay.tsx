@@ -140,6 +140,27 @@ function getColorUniform(color: DebugColor) {
   }
 }
 
+function isHeroDebugEnabled() {
+  if (typeof window === 'undefined') {
+    return false
+  }
+
+  try {
+    const query = new URLSearchParams(window.location.search)
+    if (query.get('debug') === '0' || query.get('debug-ui') === '0') {
+      return false
+    }
+
+    if (query.get('debug') === '1' || query.get('debug-ui') === '1') {
+      return true
+    }
+
+    return window.matchMedia('(pointer: coarse)').matches
+  } catch {
+    return window.matchMedia('(pointer: coarse)').matches
+  }
+}
+
 async function ensureTexture(texture: Texture) {
   if (texture.baseTexture.valid) {
     return
@@ -167,6 +188,7 @@ export function HeroHeadlineMetaballOverlay({
   text,
   onUnsupported,
 }: HeroHeadlineMetaballOverlayProps) {
+  const debugEnabled = isHeroDebugEnabled()
   const hostRef = useRef<HTMLDivElement>(null)
   const onUnsupportedRef = useRef(onUnsupported)
   const [debugOpen, setDebugOpen] = useState(false)
@@ -748,9 +770,11 @@ export function HeroHeadlineMetaballOverlay({
   return (
     <>
       <div className="hero-headline-metaball" ref={hostRef} aria-hidden="true" />
-      {typeof document !== 'undefined'
-        ? createPortal(debugControls, document.body)
-        : debugControls}
+      {debugEnabled
+        ? typeof document !== 'undefined'
+          ? createPortal(debugControls, document.body)
+          : debugControls
+        : null}
     </>
   )
 }

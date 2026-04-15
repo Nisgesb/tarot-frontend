@@ -33,6 +33,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
   margin-bottom: 24px;
 }
 
@@ -55,6 +56,29 @@
 
 .iconButtonSecondary {
   opacity: 0.68;
+}
+
+.liveReadingDebugButton {
+  flex: 1;
+  min-height: 44px;
+  border: 1px solid rgba(214, 227, 255, 0.2);
+  border-radius: 999px;
+  padding: 0 14px;
+  background:
+    linear-gradient(145deg, rgba(112, 85, 117, 0.46), rgba(65, 95, 145, 0.56)),
+    rgba(25, 32, 49, 0.38);
+  color: rgba(240, 240, 247, 0.94);
+  font: 500 0.78rem/1 'Outfit', sans-serif;
+  letter-spacing: 0.04em;
+  text-align: center;
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 8px 20px rgba(0, 0, 0, 0.18);
+}
+
+.liveReadingDebugButton:active {
+  transform: scale(0.98);
 }
 
 .hero {

@@ -164,9 +164,10 @@ function HeroMediaVideo() {
 
 interface HomePageProps {
   embedded?: boolean
+  onOpenLiveReadingDebug?: () => void
 }
 
-export function HomePage({ embedded = false }: HomePageProps) {
+export function HomePage({ embedded = false, onOpenLiveReadingDebug }: HomePageProps) {
   const pageClassName = ['shared-home-surface', styles.page, embedded ? styles.pageEmbedded : '']
     .filter(Boolean)
     .join(' ')
@@ -178,6 +179,15 @@ export function HomePage({ embedded = false }: HomePageProps) {
           <button type="button" className={styles.iconButton} aria-label="Open settings">
             <SettingsIcon />
           </button>
+          {onOpenLiveReadingDebug ? (
+            <button
+              type="button"
+              className={styles.liveReadingDebugButton}
+              onClick={onOpenLiveReadingDebug}
+            >
+              真人连线调试入口
+            </button>
+          ) : null}
           <button
             type="button"
             className={`${styles.iconButton} ${styles.iconButtonSecondary}`}

@@ -34,6 +34,7 @@ import { DreamGalleryScene } from './scenes/DreamGalleryScene'
 import { DreamInsightsLoader } from './scenes/DreamInsightsLoader'
 import { DreamResultScene } from './scenes/DreamResultScene'
 import { FeatureLandingScene } from './scenes/FeatureLandingScene'
+import { LiveReadingScene } from './scenes/LiveReadingScene'
 import { MyDreamsScene } from './scenes/MyDreamsScene'
 import { EMPTY_RAW_DREAM_INPUT } from './types/dream'
 import type { DreamRecord, RawDreamInput } from './types/dream'
@@ -766,7 +767,9 @@ function DreamHeroApp() {
     heroLikeScene ? sceneTuning.starSpeed : 1
   )
 
-  const showMotionDebug = viewportProfile.pointerCoarse && sceneState.scene === 'hero'
+  const showMotionDebug =
+    viewportProfile.pointerCoarse &&
+    sceneState.scene === 'hero'
   const shouldHoldHomeForIntro =
     sceneState.scene === 'dreamEntry' &&
     homeIntroPending &&
@@ -776,6 +779,10 @@ function DreamHeroApp() {
     sceneState.scene === 'featureLanding' ||
     sceneState.scene === 'gallery' ||
     sceneState.scene === 'myDreams'
+  const liveReadingActive =
+    sceneState.scene === 'featureLanding' && sceneState.featureSlug === 'live-reading'
+  const allowTextInputFocus =
+    sceneState.scene === 'assistantRefine' || liveReadingActive
   const useSceneOwnedBackground =
     sceneState.scene === 'dreamEntry' ||
     sceneState.scene === 'gallery' ||
@@ -786,6 +793,42 @@ function DreamHeroApp() {
       : sceneState.scene === 'gallery'
         ? 'circle'
         : 'home'
+
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return
+    }
+
+    if (!allowTextInputFocus) {
+      const activeElement = document.activeElement
+
+      if (activeElement instanceof HTMLElement) {
+        const isFormField =
+          activeElement.tagName === 'INPUT' ||
+          activeElement.tagName === 'TEXTAREA' ||
+          activeElement.tagName === 'SELECT' ||
+          activeElement.isContentEditable
+
+        if (isFormField) {
+          activeElement.blur()
+        }
+      }
+    }
+
+    if (sceneState.scene === 'hero' || sceneState.scene === 'entering') {
+      window.scrollTo(0, 0)
+      document.documentElement.scrollTop = 0
+      document.body.scrollTop = 0
+
+      document
+        .querySelectorAll<HTMLElement>('.scene-panel, .home-scene-shell')
+        .forEach((node) => {
+          if (node.scrollTop !== 0) {
+            node.scrollTop = 0
+          }
+        })
+    }
+  }, [allowTextInputFocus, sceneState.scene])
 
   return (
     <MobileAppShell
@@ -846,23 +889,24 @@ function DreamHeroApp() {
         onOpenSettings={handleOpenMotionSettings}
       />
 
-      <DreamEntryScene
-        key={`entry-${entryRenderKey}`}
-        active={
-          sceneState.scene === 'dreamEntry' || sceneState.scene === 'assistantRefine'
-        }
-        phase={sceneState.scene === 'assistantRefine' ? 'assistantRefine' : 'dreamEntry'}
-        keyboardOpen={keyboardAware.keyboardOpen}
-        initialInput={draftInput}
-        initialRefinedText={draftRefinedText}
-        homeIntroActive={
-          shouldHoldHomeForIntro ||
-          (enterTransitionState.active && sceneState.scene === 'dreamEntry')
-        }
-        homeIntroPhase={shouldHoldHomeForIntro ? 'fadeOut' : enterTransitionState.phase}
-        onPhaseChange={handleDreamEntryPhaseChange}
-        onVisualize={handleVisualize}
-      />
+      {sceneState.scene === 'dreamEntry' || sceneState.scene === 'assistantRefine' ? (
+        <DreamEntryScene
+          key={`entry-${entryRenderKey}`}
+          active
+          phase={sceneState.scene === 'assistantRefine' ? 'assistantRefine' : 'dreamEntry'}
+          keyboardOpen={keyboardAware.keyboardOpen}
+          initialInput={draftInput}
+          initialRefinedText={draftRefinedText}
+          homeIntroActive={
+            shouldHoldHomeForIntro ||
+            (enterTransitionState.active && sceneState.scene === 'dreamEntry')
+          }
+          homeIntroPhase={shouldHoldHomeForIntro ? 'fadeOut' : enterTransitionState.phase}
+          onPhaseChange={handleDreamEntryPhaseChange}
+          onVisualize={handleVisualize}
+          onOpenLiveReadingDebug={() => actions.goFeature('live-reading')}
+        />
+      ) : null}
 
       <DreamInsightsLoader
         key={`loader-${generationToken}`}
@@ -871,8 +915,15 @@ function DreamHeroApp() {
         onComplete={completeGeneration}
       />
 
+      {liveReadingActive ? (
+        <LiveReadingScene
+          active
+          onGoHome={actions.goDreamEntry}
+        />
+      ) : null}
+
       <FeatureLandingScene
-        active={sceneState.scene === 'featureLanding'}
+        active={sceneState.scene === 'featureLanding' && sceneState.featureSlug !== 'live-reading'}
         featureSlug={sceneState.featureSlug}
         onGoHome={actions.goDreamEntry}
       />
