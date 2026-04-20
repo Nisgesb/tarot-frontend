@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
+  facingModeFromDeviceLabel,
+  facingModeFromLocalTrack,
   Room,
   RoomEvent,
   Track,
@@ -12,12 +14,14 @@ import {
   endCallSession,
   getOnlineReaders,
   getTarotDecks,
+  isLiveReadingApiError,
   loadStoredAuth,
   loginWithEmail,
   registerWithEmail,
   saveStoredAuth,
   submitRevealEvent,
 } from '../services/liveReadingApi'
+import { getRuntimePlatform, isNativeApp } from '../platform/runtime'
 import type {
   AuthPayload,
   CardRevealPayload,
@@ -38,11 +42,7 @@ interface VideoTileData {
   label: string
   track: VideoTrack | null
   isLocal: boolean
-}
-
-interface SimulatorVideoFeed {
-  track: MediaStreamTrack
-  stop: () => void
+  mirrorPreview: boolean
 }
 
 const EFFECT_TITLES: Record<EffectPreset, string> = {
@@ -56,6 +56,373 @@ const EFFECT_TITLES: Record<EffectPreset, string> = {
   'halo-world': '世界光环',
 }
 
+type LiveReadingRuntimeSource =
+  | 'capacitor-ios'
+  | 'capacitor-android'
+  | 'system-browser'
+  | 'wechat-webview'
+  | 'third-party-webview'
+  | 'unknown-web'
+
+interface LiveReadingRuntimeInfo {
+  source: LiveReadingRuntimeSource
+  label: string
+  isNativeApp: boolean
+  isSecureContext: boolean
+  hasMediaDevicesApi: boolean
+  supportsGetUserMedia: boolean
+}
+
+type LiveReadingFailureStage =
+  | 'bootstrap-readers-decks'
+  | 'login-refresh'
+  | 'create-session'
+  | 'join-token'
+  | 'room-connect'
+  | 'local-media-publish'
+  | 'remote-subscribe'
+
+type MediaPermissionState = PermissionState | 'unsupported'
+type MediaProbeStatus = 'idle' | 'running' | 'success' | 'error'
+type MediaProbeTrigger = 'auto' | 'manual'
+type CameraFacingMode = 'user' | 'environment'
+
+interface LiveReadingFailureDetail {
+  stage: LiveReadingFailureStage
+  stageLabel: string
+  runtimeLabel: string
+  secureContext: boolean
+  hasMediaDevicesApi: boolean
+  supportsGetUserMedia: boolean
+  errorName: string
+  message: string
+  code: string | null
+  status: number | null
+  method: string | null
+  path: string | null
+  url: string | null
+  timestamp: string
+}
+
+interface LiveReadingStageError extends Error {
+  name: 'LiveReadingStageError'
+  detail: LiveReadingFailureDetail
+}
+
+interface MediaDiagnosticsResult {
+  hasNavigator: boolean
+  hasMediaDevicesApi: boolean
+  getUserMediaFunctionType: string
+  getUserMediaCallable: boolean
+  cameraPermission: MediaPermissionState
+  microphonePermission: MediaPermissionState
+  probeStatus: MediaProbeStatus
+  probeErrorName: string | null
+  probeErrorMessage: string | null
+  lastCheckedAt: string | null
+  lastProbeTriggeredBy: MediaProbeTrigger | null
+}
+
+interface MediaPublicationSummary {
+  localCameraPublished: boolean
+  localMicrophonePublished: boolean
+  remoteParticipantCount: number
+  remoteCameraPublishedCount: number
+  remoteCameraSubscribedCount: number
+}
+
+function resolveFailureStageLabel(stage: LiveReadingFailureStage) {
+  switch (stage) {
+    case 'bootstrap-readers-decks':
+      return 'readers/decks bootstrap'
+    case 'login-refresh':
+      return '登录后资源刷新'
+    case 'create-session':
+      return 'createSession'
+    case 'join-token':
+      return 'join-token'
+    case 'room-connect':
+      return '房间连接'
+    case 'local-media-publish':
+      return '本地媒体发布'
+    case 'remote-subscribe':
+      return '远端订阅'
+    default:
+      return stage
+  }
+}
+
+function createStageError(detail: LiveReadingFailureDetail): LiveReadingStageError {
+  const error = new Error(detail.message) as LiveReadingStageError
+  error.name = 'LiveReadingStageError'
+  error.detail = detail
+  return error
+}
+
+function isLiveReadingStageError(error: unknown): error is LiveReadingStageError {
+  if (!(error instanceof Error)) {
+    return false
+  }
+
+  const candidate = error as Partial<LiveReadingStageError>
+  return candidate.name === 'LiveReadingStageError' && !!candidate.detail
+}
+
+function resolveErrorMessage(exception: unknown, fallbackMessage: string) {
+  if (exception instanceof Error && exception.message.trim().length > 0) {
+    return exception.message
+  }
+
+  return fallbackMessage
+}
+
+function resolveErrorName(exception: unknown) {
+  if (exception instanceof Error && exception.name.trim().length > 0) {
+    return exception.name
+  }
+
+  return 'UnknownError'
+}
+
+function formatPermissionState(state: MediaPermissionState) {
+  if (state === 'unsupported') {
+    return '不支持查询'
+  }
+
+  if (state === 'granted') {
+    return 'granted'
+  }
+
+  if (state === 'denied') {
+    return 'denied'
+  }
+
+  return 'prompt'
+}
+
+function normalizeFacingMode(mode: string | undefined | null): CameraFacingMode | null {
+  if (mode === 'environment') {
+    return 'environment'
+  }
+
+  if (mode === 'user' || mode === 'left' || mode === 'right') {
+    return 'user'
+  }
+
+  return null
+}
+
+function resolveFacingModeFromDeviceLabel(label: string): CameraFacingMode | null {
+  const inferredByLiveKit = normalizeFacingMode(facingModeFromDeviceLabel(label)?.facingMode)
+
+  if (inferredByLiveKit) {
+    return inferredByLiveKit
+  }
+
+  const normalizedLabel = label.trim().toLowerCase()
+
+  if (normalizedLabel.length === 0) {
+    return null
+  }
+
+  if (/front|user|facetime|前置|前摄/.test(normalizedLabel)) {
+    return 'user'
+  }
+
+  if (/back|rear|environment|后置|后摄|主摄/.test(normalizedLabel)) {
+    return 'environment'
+  }
+
+  return null
+}
+
+function resolveLocalCameraFacingMode(
+  participant: Participant,
+  fallbackFacingMode: CameraFacingMode,
+): CameraFacingMode {
+  const localTrack = getCameraVideoTrack(participant)
+
+  if (!localTrack) {
+    return fallbackFacingMode
+  }
+
+  const inferredMode = facingModeFromLocalTrack(localTrack.mediaStreamTrack, {
+    defaultFacingMode: fallbackFacingMode,
+  }).facingMode
+
+  return normalizeFacingMode(inferredMode) ?? fallbackFacingMode
+}
+
+function resolveCameraSwitchTarget(
+  devices: MediaDeviceInfo[],
+  currentDeviceId: string | undefined,
+  currentFacingMode: CameraFacingMode,
+) {
+  const desiredFacingMode: CameraFacingMode =
+    currentFacingMode === 'user' ? 'environment' : 'user'
+  const candidates = devices
+    .map((device) => ({
+      device,
+      facingMode: resolveFacingModeFromDeviceLabel(device.label),
+    }))
+    .filter(({ device }) => {
+      if (!currentDeviceId) {
+        return true
+      }
+
+      return device.deviceId !== currentDeviceId
+    })
+
+  const preferred = candidates.find((candidate) => candidate.facingMode === desiredFacingMode)
+
+  if (preferred) {
+    return {
+      deviceId: preferred.device.deviceId,
+      nextFacingMode: desiredFacingMode,
+    }
+  }
+
+  const fallback = candidates[0]
+
+  if (!fallback) {
+    return null
+  }
+
+  return {
+    deviceId: fallback.device.deviceId,
+    nextFacingMode: fallback.facingMode ?? desiredFacingMode,
+  }
+}
+
+function createInitialMediaDiagnostics(runtimeInfo: LiveReadingRuntimeInfo): MediaDiagnosticsResult {
+  const hasNavigator = typeof navigator !== 'undefined'
+  const mediaDevices = hasNavigator ? navigator.mediaDevices : undefined
+  const getUserMediaFunctionType = typeof mediaDevices?.getUserMedia
+
+  return {
+    hasNavigator,
+    hasMediaDevicesApi: !!mediaDevices,
+    getUserMediaFunctionType,
+    getUserMediaCallable: getUserMediaFunctionType === 'function',
+    cameraPermission: 'unsupported',
+    microphonePermission: 'unsupported',
+    probeStatus: runtimeInfo.supportsGetUserMedia ? 'idle' : 'error',
+    probeErrorName: runtimeInfo.supportsGetUserMedia ? null : 'NotSupportedError',
+    probeErrorMessage: runtimeInfo.supportsGetUserMedia ? null : 'getUserMedia 不可用',
+    lastCheckedAt: null,
+    lastProbeTriggeredBy: null,
+  }
+}
+
+async function queryMediaPermission(name: 'camera' | 'microphone'): Promise<MediaPermissionState> {
+  if (typeof navigator === 'undefined' || !navigator.permissions?.query) {
+    return 'unsupported'
+  }
+
+  try {
+    const result = await navigator.permissions.query({ name: name as PermissionName })
+    return result.state
+  } catch {
+    return 'unsupported'
+  }
+}
+
+function detectLiveReadingRuntime(): LiveReadingRuntimeInfo {
+  const hasWindow = typeof window !== 'undefined'
+  const hasNavigator = typeof navigator !== 'undefined'
+  const userAgent = hasNavigator ? navigator.userAgent : ''
+  const isNative = isNativeApp()
+  const isSecure = hasWindow ? window.isSecureContext : true
+  const hasMediaDevicesApi =
+    hasNavigator &&
+    !!navigator.mediaDevices &&
+    typeof navigator.mediaDevices.getUserMedia === 'function'
+
+  if (isNative) {
+    const platform = getRuntimePlatform()
+    const source: LiveReadingRuntimeSource =
+      platform === 'android' ? 'capacitor-android' : 'capacitor-ios'
+    const label = platform === 'android' ? 'Capacitor Android' : 'Capacitor iOS'
+
+    return {
+      source,
+      label,
+      isNativeApp: true,
+      isSecureContext: true,
+      hasMediaDevicesApi,
+      supportsGetUserMedia: hasMediaDevicesApi,
+    }
+  }
+
+  const isWechat = /MicroMessenger/i.test(userAgent)
+  const isIos = /\b(iPhone|iPad|iPod)\b/i.test(userAgent)
+  const isAndroid = /\bAndroid\b/i.test(userAgent)
+  const isIosWebView = isIos && /AppleWebKit/i.test(userAgent) && !/Safari/i.test(userAgent)
+  const isAndroidWebView = /\bwv\b/i.test(userAgent) || /; wv\)/i.test(userAgent)
+
+  if (isWechat) {
+    return {
+      source: 'wechat-webview',
+      label: '微信 WebView',
+      isNativeApp: false,
+      isSecureContext: isSecure,
+      hasMediaDevicesApi,
+      supportsGetUserMedia: hasMediaDevicesApi && isSecure,
+    }
+  }
+
+  if (isIosWebView || isAndroidWebView) {
+    return {
+      source: 'third-party-webview',
+      label: isAndroid ? '第三方 Android WebView' : '第三方 iOS WebView',
+      isNativeApp: false,
+      isSecureContext: isSecure,
+      hasMediaDevicesApi,
+      supportsGetUserMedia: hasMediaDevicesApi && isSecure,
+    }
+  }
+
+  if (isIos || isAndroid) {
+    return {
+      source: 'system-browser',
+      label: isAndroid ? '系统浏览器(Android)' : '系统浏览器(iOS)',
+      isNativeApp: false,
+      isSecureContext: isSecure,
+      hasMediaDevicesApi,
+      supportsGetUserMedia: hasMediaDevicesApi && isSecure,
+    }
+  }
+
+  return {
+    source: 'unknown-web',
+    label: 'Web 运行时(未识别)',
+    isNativeApp: false,
+    isSecureContext: isSecure,
+    hasMediaDevicesApi,
+    supportsGetUserMedia: hasMediaDevicesApi && isSecure,
+  }
+}
+
+function resolveUnsupportedMediaMessage(runtimeInfo: LiveReadingRuntimeInfo) {
+  if (runtimeInfo.source === 'wechat-webview') {
+    return `当前运行时为${runtimeInfo.label}，不支持本页面实时音视频采集。请改用系统浏览器或 Capacitor App 打开后重试。`
+  }
+
+  if (runtimeInfo.source === 'third-party-webview') {
+    return `当前运行时为${runtimeInfo.label}，媒体采集能力受容器限制。请改用系统浏览器或 Capacitor App 打开后重试。`
+  }
+
+  if (!runtimeInfo.isSecureContext) {
+    return `当前运行时为${runtimeInfo.label}，且页面不在安全上下文（HTTPS）中，浏览器已禁用摄像头/麦克风。`
+  }
+
+  if (runtimeInfo.source === 'capacitor-ios' || runtimeInfo.source === 'capacitor-android') {
+    return `当前运行时为${runtimeInfo.label}，但未检测到可用的媒体采集接口。请检查容器权限与系统隐私设置后重试。`
+  }
+
+  return `当前运行时为${runtimeInfo.label}，未检测到可用的摄像头/麦克风采集能力。请检查浏览器权限与系统设置后重试。`
+}
+
 function getCameraVideoTrack(participant: Participant): VideoTrack | null {
   const publication = participant.getTrackPublication(Track.Source.Camera)
 
@@ -66,78 +433,11 @@ function getCameraVideoTrack(participant: Participant): VideoTrack | null {
   return publication.track as VideoTrack
 }
 
-function createSimulatorVideoFeed(label: string): SimulatorVideoFeed | null {
-  if (typeof document === 'undefined') {
-    return null
-  }
-
-  const canvas = document.createElement('canvas')
-  canvas.width = 720
-  canvas.height = 1280
-
-  const context = canvas.getContext('2d')
-
-  if (!context || typeof canvas.captureStream !== 'function') {
-    return null
-  }
-
-  let rafId = 0
-  const startTime = performance.now()
-
-  const render = (timestamp: number) => {
-    const elapsed = (timestamp - startTime) / 1000
-    const pulse = 0.5 + 0.5 * Math.sin(elapsed * 1.15)
-    const drift = Math.sin(elapsed * 0.7) * 42
-
-    context.clearRect(0, 0, canvas.width, canvas.height)
-
-    const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height)
-    gradient.addColorStop(0, '#0d1a46')
-    gradient.addColorStop(0.58, '#223a88')
-    gradient.addColorStop(1, '#4da7eb')
-    context.fillStyle = gradient
-    context.fillRect(0, 0, canvas.width, canvas.height)
-
-    context.globalAlpha = 0.28 + pulse * 0.25
-    context.fillStyle = '#b0d1ff'
-    context.beginPath()
-    context.arc(canvas.width * 0.5 + drift, canvas.height * 0.38, 220 + pulse * 110, 0, Math.PI * 2)
-    context.fill()
-    context.globalAlpha = 1
-
-    context.fillStyle = '#eaf3ff'
-    context.font = "700 64px 'Outfit', sans-serif"
-    context.textAlign = 'center'
-    context.fillText(label, canvas.width * 0.5, canvas.height * 0.86)
-
-    context.font = "500 34px 'Outfit', sans-serif"
-    context.fillStyle = '#cfe0ff'
-    context.fillText('Simulator Video Stream', canvas.width * 0.5, canvas.height * 0.91)
-
-    rafId = requestAnimationFrame(render)
-  }
-
-  rafId = requestAnimationFrame(render)
-
-  const stream = canvas.captureStream(20)
-  const track = stream.getVideoTracks()[0]
-
-  if (!track) {
-    cancelAnimationFrame(rafId)
-    return null
-  }
-
-  return {
-    track,
-    stop: () => {
-      cancelAnimationFrame(rafId)
-      track.stop()
-    },
-  }
-}
-
 function VideoTile({ tile }: { tile: VideoTileData }) {
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  const videoClassName = [styles.videoNode, tile.mirrorPreview ? styles.videoNodeMirror : '']
+    .filter(Boolean)
+    .join(' ')
 
   useEffect(() => {
     const node = videoRef.current
@@ -156,7 +456,7 @@ function VideoTile({ tile }: { tile: VideoTileData }) {
   return (
     <article className={styles.videoTile}>
       {tile.track ? (
-        <video ref={videoRef} autoPlay playsInline muted={tile.isLocal} className={styles.videoNode} />
+        <video ref={videoRef} autoPlay playsInline muted={tile.isLocal} className={videoClassName} />
       ) : (
         <div className={styles.videoPlaceholder}>等待视频流...</div>
       )}
@@ -185,14 +485,181 @@ export function LiveReadingScene({ active, onGoHome }: LiveReadingSceneProps) {
   const [, setTrackVersion] = useState(0)
   const [activeEffect, setActiveEffect] = useState<EffectPreset | null>(null)
   const [lastReveal, setLastReveal] = useState<CardRevealPayload | null>(null)
-  const supportsGetUserMedia =
-    typeof navigator !== 'undefined' &&
-    !!navigator.mediaDevices &&
-    typeof navigator.mediaDevices.getUserMedia === 'function'
+  const [failureDetail, setFailureDetail] = useState<LiveReadingFailureDetail | null>(null)
+  const [cameraFacingMode, setCameraFacingMode] = useState<CameraFacingMode>('user')
+  const [cameraSwitching, setCameraSwitching] = useState(false)
+  const [cameraSwitchSupported, setCameraSwitchSupported] = useState(false)
+  const runtimeInfo = useMemo(() => detectLiveReadingRuntime(), [])
+  const [mediaDiagnostics, setMediaDiagnostics] = useState<MediaDiagnosticsResult>(() =>
+    createInitialMediaDiagnostics(runtimeInfo),
+  )
+  const supportsGetUserMedia = runtimeInfo.isSecureContext && mediaDiagnostics.getUserMediaCallable
+  const unsupportedMediaMessage = useMemo(
+    () => resolveUnsupportedMediaMessage(runtimeInfo),
+    [runtimeInfo],
+  )
 
   const roomRef = useRef<Room | null>(null)
-  const simulatorVideoFeedRef = useRef<SimulatorVideoFeed | null>(null)
   const effectTimerRef = useRef<number | null>(null)
+
+  const captureFailure = useCallback(
+    (
+      stage: LiveReadingFailureStage,
+      exception: unknown,
+      fallbackMessage: string,
+    ): LiveReadingFailureDetail => {
+      if (isLiveReadingStageError(exception)) {
+        setFailureDetail(exception.detail)
+        return exception.detail
+      }
+
+      const detail: LiveReadingFailureDetail = {
+        stage,
+        stageLabel: resolveFailureStageLabel(stage),
+        runtimeLabel: runtimeInfo.label,
+        secureContext: runtimeInfo.isSecureContext,
+        hasMediaDevicesApi: runtimeInfo.hasMediaDevicesApi,
+        supportsGetUserMedia: runtimeInfo.supportsGetUserMedia,
+        errorName: resolveErrorName(exception),
+        message: resolveErrorMessage(exception, fallbackMessage),
+        code: null,
+        status: null,
+        method: null,
+        path: null,
+        url: null,
+        timestamp: new Date().toISOString(),
+      }
+
+      if (isLiveReadingApiError(exception)) {
+        detail.code = exception.code
+        detail.status = exception.status
+        detail.method = exception.method
+        detail.path = exception.path
+        detail.url = exception.url
+      }
+
+      setFailureDetail(detail)
+      console.error('[LiveReading][Failure]', detail, exception)
+
+      return detail
+    },
+    [
+      runtimeInfo.hasMediaDevicesApi,
+      runtimeInfo.isSecureContext,
+      runtimeInfo.label,
+      runtimeInfo.supportsGetUserMedia,
+    ],
+  )
+
+  const runMediaDiagnostics = useCallback(async (trigger: MediaProbeTrigger, runProbe: boolean) => {
+    const hasNavigator = typeof navigator !== 'undefined'
+    const mediaDevices = hasNavigator ? navigator.mediaDevices : undefined
+    const getUserMediaFunctionType = typeof mediaDevices?.getUserMedia
+    const getUserMediaCallable = getUserMediaFunctionType === 'function'
+
+    const [cameraPermission, microphonePermission] = await Promise.all([
+      queryMediaPermission('camera'),
+      queryMediaPermission('microphone'),
+    ])
+
+    setMediaDiagnostics((current) => ({
+      ...current,
+      hasNavigator,
+      hasMediaDevicesApi: !!mediaDevices,
+      getUserMediaFunctionType,
+      getUserMediaCallable,
+      cameraPermission,
+      microphonePermission,
+      probeStatus: runProbe
+        ? getUserMediaCallable
+          ? 'running'
+          : 'error'
+        : current.probeStatus,
+      probeErrorName: runProbe
+        ? getUserMediaCallable
+          ? null
+          : 'NotSupportedError'
+        : current.probeErrorName,
+      probeErrorMessage: runProbe
+        ? getUserMediaCallable
+          ? null
+          : 'navigator.mediaDevices.getUserMedia 不可用'
+        : current.probeErrorMessage,
+      lastCheckedAt: new Date().toISOString(),
+      lastProbeTriggeredBy: trigger,
+    }))
+
+    if (!runProbe) {
+      console.info('[LiveReading][MediaProbe]', {
+        trigger,
+        hasNavigator,
+        hasMediaDevicesApi: !!mediaDevices,
+        getUserMediaFunctionType,
+        getUserMediaCallable,
+        cameraPermission,
+        microphonePermission,
+      })
+      return
+    }
+
+    if (!mediaDevices || !getUserMediaCallable) {
+      return
+    }
+
+    try {
+      const stream = await mediaDevices.getUserMedia({ audio: true, video: true })
+      stream.getTracks().forEach((track) => track.stop())
+      const checkedAt = new Date().toISOString()
+
+      setMediaDiagnostics((current) => ({
+        ...current,
+        probeStatus: 'success',
+        probeErrorName: null,
+        probeErrorMessage: null,
+        lastCheckedAt: checkedAt,
+        lastProbeTriggeredBy: trigger,
+      }))
+
+      console.info('[LiveReading][MediaProbe]', {
+        trigger,
+        hasNavigator,
+        hasMediaDevicesApi: !!mediaDevices,
+        getUserMediaFunctionType,
+        getUserMediaCallable,
+        cameraPermission,
+        microphonePermission,
+        probeStatus: 'success',
+        checkedAt,
+      })
+    } catch (exception) {
+      const checkedAt = new Date().toISOString()
+      const errorName = resolveErrorName(exception)
+      const errorMessage = resolveErrorMessage(exception, 'getUserMedia 调用失败')
+
+      setMediaDiagnostics((current) => ({
+        ...current,
+        probeStatus: 'error',
+        probeErrorName: errorName,
+        probeErrorMessage: errorMessage,
+        lastCheckedAt: checkedAt,
+        lastProbeTriggeredBy: trigger,
+      }))
+
+      console.error('[LiveReading][MediaProbe]', {
+        trigger,
+        hasNavigator,
+        hasMediaDevicesApi: !!mediaDevices,
+        getUserMediaFunctionType,
+        getUserMediaCallable,
+        cameraPermission,
+        microphonePermission,
+        probeStatus: 'error',
+        errorName,
+        errorMessage,
+        checkedAt,
+      })
+    }
+  }, [])
 
   const selectedReader = useMemo(
     () => readers.find((reader) => reader.id === selectedReaderId) ?? null,
@@ -202,6 +669,59 @@ export function LiveReadingScene({ active, onGoHome }: LiveReadingSceneProps) {
   const selectedDeck = useMemo(
     () => decks.find((deck) => deck.id === selectedDeckId) ?? null,
     [decks, selectedDeckId],
+  )
+
+  const mediaPublicationSummary: MediaPublicationSummary = (() => {
+    const room = roomRef.current
+
+    if (!room) {
+      return {
+        localCameraPublished: false,
+        localMicrophonePublished: false,
+        remoteParticipantCount: 0,
+        remoteCameraPublishedCount: 0,
+        remoteCameraSubscribedCount: 0,
+      }
+    }
+
+    const localCameraPublication = room.localParticipant.getTrackPublication(Track.Source.Camera)
+    const localMicrophonePublication = room.localParticipant.getTrackPublication(Track.Source.Microphone)
+    let remoteCameraPublishedCount = 0
+    let remoteCameraSubscribedCount = 0
+
+    room.remoteParticipants.forEach((participant) => {
+      const cameraPublication = participant.getTrackPublication(Track.Source.Camera)
+
+      if (cameraPublication) {
+        remoteCameraPublishedCount += 1
+      }
+
+      if (cameraPublication?.track && cameraPublication.track.kind === Track.Kind.Video) {
+        remoteCameraSubscribedCount += 1
+      }
+    })
+
+    return {
+      localCameraPublished: !!localCameraPublication && !localCameraPublication.isMuted,
+      localMicrophonePublished: !!localMicrophonePublication && !localMicrophonePublication.isMuted,
+      remoteParticipantCount: room.remoteParticipants.size,
+      remoteCameraPublishedCount,
+      remoteCameraSubscribedCount,
+    }
+  })()
+
+  const refreshCameraFacingState = useCallback(
+    async (room: Room, fallbackFacingMode: CameraFacingMode) => {
+      setCameraFacingMode(resolveLocalCameraFacingMode(room.localParticipant, fallbackFacingMode))
+
+      try {
+        const devices = await Room.getLocalDevices('videoinput', false)
+        setCameraSwitchSupported(devices.length > 1)
+      } catch {
+        setCameraSwitchSupported(false)
+      }
+    },
+    [],
   )
 
   const videoTiles = (() => {
@@ -215,9 +735,12 @@ export function LiveReadingScene({ active, onGoHome }: LiveReadingSceneProps) {
 
     tiles.push({
       id: room.localParticipant.identity,
-      label: participantRole === 'READER' ? '你（占卜师）' : '你',
+      label: `${
+        participantRole === 'READER' ? '你（占卜师）' : '你'
+      } · ${cameraFacingMode === 'user' ? '前置镜像' : '后置非镜像'}`,
       track: getCameraVideoTrack(room.localParticipant),
       isLocal: true,
+      mirrorPreview: cameraFacingMode === 'user',
     })
 
     room.remoteParticipants.forEach((participant) => {
@@ -226,6 +749,7 @@ export function LiveReadingScene({ active, onGoHome }: LiveReadingSceneProps) {
         label: participant.name || participant.identity,
         track: getCameraVideoTrack(participant),
         isLocal: false,
+        mirrorPreview: false,
       })
     })
 
@@ -251,11 +775,19 @@ export function LiveReadingScene({ active, onGoHome }: LiveReadingSceneProps) {
       return
     }
 
+    void runMediaDiagnostics('auto', false)
+  }, [active, runMediaDiagnostics])
+
+  useEffect(() => {
+    if (!active) {
+      return
+    }
+
     void bootstrapLiveReading().catch((exception: unknown) => {
-      const message = exception instanceof Error ? exception.message : '加载连线资源失败'
-      setError(message)
+      const detail = captureFailure('bootstrap-readers-decks', exception, '加载连线资源失败')
+      setError(`[${detail.stageLabel}] ${detail.message}`)
     })
-  }, [active, bootstrapLiveReading])
+  }, [active, bootstrapLiveReading, captureFailure])
 
   useEffect(() => {
     if (!active || !auth) {
@@ -263,36 +795,31 @@ export function LiveReadingScene({ active, onGoHome }: LiveReadingSceneProps) {
     }
 
     void bootstrapLiveReading().catch((exception: unknown) => {
-      const message = exception instanceof Error ? exception.message : '加载占卜师列表失败'
-      setError(message)
+      const detail = captureFailure('login-refresh', exception, '登录后资源刷新失败')
+      setError(`[${detail.stageLabel}] ${detail.message}`)
     })
-  }, [active, auth, bootstrapLiveReading])
+  }, [active, auth, bootstrapLiveReading, captureFailure])
 
   useEffect(() => {
     if (active) {
       return
     }
 
-    if (simulatorVideoFeedRef.current) {
-      simulatorVideoFeedRef.current.stop()
-      simulatorVideoFeedRef.current = null
-    }
-
     roomRef.current?.disconnect()
     roomRef.current = null
     setTrackVersion((value) => value + 1)
     setRoomState('idle')
+    setError(null)
+    setFailureDetail(null)
+    setCameraSwitchSupported(false)
+    setCameraFacingMode('user')
+    setCameraSwitching(false)
   }, [active])
 
   useEffect(() => {
     return () => {
       if (effectTimerRef.current) {
         window.clearTimeout(effectTimerRef.current)
-      }
-
-      if (simulatorVideoFeedRef.current) {
-        simulatorVideoFeedRef.current.stop()
-        simulatorVideoFeedRef.current = null
       }
 
       roomRef.current?.disconnect()
@@ -313,7 +840,24 @@ export function LiveReadingScene({ active, onGoHome }: LiveReadingSceneProps) {
   }
 
   const connectRoom = async (sessionId: string, token: string) => {
-    const join = await createCallJoinToken(token, sessionId)
+    if (!supportsGetUserMedia) {
+      const detail = captureFailure(
+        'local-media-publish',
+        new Error(unsupportedMediaMessage),
+        unsupportedMediaMessage,
+      )
+      throw createStageError(detail)
+    }
+
+    let join: Awaited<ReturnType<typeof createCallJoinToken>>
+
+    try {
+      join = await createCallJoinToken(token, sessionId)
+    } catch (exception) {
+      const detail = captureFailure('join-token', exception, 'join-token 获取失败')
+      throw createStageError(detail)
+    }
+
     setParticipantRole(join.participantRole)
     setSession(join.session)
     setRoomState('connecting')
@@ -327,8 +871,20 @@ export function LiveReadingScene({ active, onGoHome }: LiveReadingSceneProps) {
     room.on(RoomEvent.ParticipantDisconnected, () => setTrackVersion((value) => value + 1))
     room.on(RoomEvent.TrackSubscribed, () => setTrackVersion((value) => value + 1))
     room.on(RoomEvent.TrackUnsubscribed, () => setTrackVersion((value) => value + 1))
-    room.on(RoomEvent.LocalTrackPublished, () => setTrackVersion((value) => value + 1))
+    room.on(RoomEvent.LocalTrackPublished, () => {
+      setTrackVersion((value) => value + 1)
+      void refreshCameraFacingState(room, cameraFacingMode)
+    })
     room.on(RoomEvent.LocalTrackUnpublished, () => setTrackVersion((value) => value + 1))
+    room.on(RoomEvent.TrackSubscriptionFailed, (trackSid, participant, exception) => {
+      const detail = captureFailure(
+        'remote-subscribe',
+        exception ?? new Error(`远端轨道订阅失败: ${trackSid}`),
+        '远端订阅失败',
+      )
+      const participantIdentity = participant?.identity ?? 'unknown-participant'
+      setError(`[${detail.stageLabel}] ${detail.message} (${participantIdentity}/${trackSid})`)
+    })
 
     room.on(RoomEvent.ConnectionStateChanged, (state) => {
       if (state === 'connected') {
@@ -354,37 +910,34 @@ export function LiveReadingScene({ active, onGoHome }: LiveReadingSceneProps) {
       }
     })
 
-    await room.connect(join.livekit.url, join.livekit.token)
+    try {
+      await room.connect(join.livekit.url, join.livekit.token)
+    } catch (exception) {
+      room.disconnect()
+      setParticipantRole(null)
+      setSession(null)
+      setRoomState('idle')
+      const detail = captureFailure('room-connect', exception, '房间连接失败')
+      throw createStageError(detail)
+    }
 
-    if (supportsGetUserMedia) {
+    try {
       await room.localParticipant.setCameraEnabled(true)
       await room.localParticipant.setMicrophoneEnabled(true)
       setMicEnabled(true)
       setCamEnabled(true)
-      if (simulatorVideoFeedRef.current) {
-        simulatorVideoFeedRef.current.stop()
-        simulatorVideoFeedRef.current = null
-      }
-    } else {
-      setMicEnabled(false)
-
-      const simulatorFeed = createSimulatorVideoFeed(
-        join.participantRole === 'READER' ? 'Reader Simulator' : 'User Simulator',
+      await refreshCameraFacingState(room, 'user')
+    } catch (exception) {
+      room.disconnect()
+      setParticipantRole(null)
+      setSession(null)
+      setRoomState('idle')
+      const detail = captureFailure(
+        'local-media-publish',
+        exception,
+        '未能启用真实摄像头/麦克风，请检查系统权限后重试。',
       )
-
-      if (simulatorFeed) {
-        await room.localParticipant.publishTrack(simulatorFeed.track, {
-          source: Track.Source.Camera,
-          name: 'simulator-camera',
-        })
-        simulatorVideoFeedRef.current?.stop()
-        simulatorVideoFeedRef.current = simulatorFeed
-        setCamEnabled(true)
-        setError('当前为模拟器模式：已启用虚拟视频流用于双端联调')
-      } else {
-        setCamEnabled(false)
-        setError('当前环境不支持摄像头/麦克风采集，已降级为仅信令与特效同步模式')
-      }
+      throw createStageError(detail)
     }
 
     roomRef.current?.disconnect()
@@ -394,6 +947,7 @@ export function LiveReadingScene({ active, onGoHome }: LiveReadingSceneProps) {
 
   const submitAuth = async () => {
     setError(null)
+    setFailureDetail(null)
     setBusy(true)
 
     try {
@@ -418,6 +972,7 @@ export function LiveReadingScene({ active, onGoHome }: LiveReadingSceneProps) {
     }
 
     setError(null)
+    setFailureDetail(null)
     setBusy(true)
 
     try {
@@ -425,8 +980,14 @@ export function LiveReadingScene({ active, onGoHome }: LiveReadingSceneProps) {
       setSession(created)
       await connectRoom(created.id, auth.accessToken)
     } catch (exception) {
-      const message = exception instanceof Error ? exception.message : '创建会话失败'
-      setError(message)
+      if (isLiveReadingStageError(exception)) {
+        const detail = exception.detail
+        setFailureDetail(detail)
+        setError(`[${detail.stageLabel}] ${detail.message}`)
+      } else {
+        const detail = captureFailure('create-session', exception, '创建会话失败')
+        setError(`[${detail.stageLabel}] ${detail.message}`)
+      }
     } finally {
       setBusy(false)
     }
@@ -438,13 +999,20 @@ export function LiveReadingScene({ active, onGoHome }: LiveReadingSceneProps) {
     }
 
     setError(null)
+    setFailureDetail(null)
     setBusy(true)
 
     try {
       await connectRoom(joinSessionId.trim(), auth.accessToken)
     } catch (exception) {
-      const message = exception instanceof Error ? exception.message : '加入会话失败'
-      setError(message)
+      if (isLiveReadingStageError(exception)) {
+        const detail = exception.detail
+        setFailureDetail(detail)
+        setError(`[${detail.stageLabel}] ${detail.message}`)
+      } else {
+        const detail = captureFailure('join-token', exception, '加入会话失败')
+        setError(`[${detail.stageLabel}] ${detail.message}`)
+      }
     } finally {
       setBusy(false)
     }
@@ -458,13 +1026,19 @@ export function LiveReadingScene({ active, onGoHome }: LiveReadingSceneProps) {
     }
 
     if (!supportsGetUserMedia) {
-      setError('当前环境不支持麦克风采集')
+      setError(unsupportedMediaMessage)
       return
     }
 
     const next = !micEnabled
-    await room.localParticipant.setMicrophoneEnabled(next)
-    setMicEnabled(next)
+
+    try {
+      await room.localParticipant.setMicrophoneEnabled(next)
+      setMicEnabled(next)
+    } catch (exception) {
+      const detail = captureFailure('local-media-publish', exception, '切换麦克风失败')
+      setError(`[${detail.stageLabel}] ${detail.message}`)
+    }
   }
 
   const toggleCamera = async () => {
@@ -475,38 +1049,71 @@ export function LiveReadingScene({ active, onGoHome }: LiveReadingSceneProps) {
     }
 
     if (!supportsGetUserMedia) {
-      if (simulatorVideoFeedRef.current) {
-        await room.localParticipant.unpublishTrack(simulatorVideoFeedRef.current.track, true)
-        simulatorVideoFeedRef.current.stop()
-        simulatorVideoFeedRef.current = null
-        setCamEnabled(false)
-        setTrackVersion((value) => value + 1)
-        return
-      }
-
-      const simulatorFeed = createSimulatorVideoFeed(
-        participantRole === 'READER' ? 'Reader Simulator' : 'User Simulator',
-      )
-
-      if (!simulatorFeed) {
-        setError('当前环境不支持摄像头采集')
-        return
-      }
-
-      await room.localParticipant.publishTrack(simulatorFeed.track, {
-        source: Track.Source.Camera,
-        name: 'simulator-camera',
-      })
-      simulatorVideoFeedRef.current = simulatorFeed
-      setCamEnabled(true)
-      setTrackVersion((value) => value + 1)
+      setError(unsupportedMediaMessage)
       return
     }
 
     const next = !camEnabled
-    await room.localParticipant.setCameraEnabled(next)
-    setCamEnabled(next)
-    setTrackVersion((value) => value + 1)
+
+    try {
+      await room.localParticipant.setCameraEnabled(next)
+      setCamEnabled(next)
+
+      if (next) {
+        await refreshCameraFacingState(room, cameraFacingMode)
+      }
+
+      setTrackVersion((value) => value + 1)
+    } catch (exception) {
+      const detail = captureFailure('local-media-publish', exception, '切换摄像头失败')
+      setError(`[${detail.stageLabel}] ${detail.message}`)
+    }
+  }
+
+  const switchCameraFacing = async () => {
+    const room = roomRef.current
+
+    if (!room) {
+      return
+    }
+
+    if (!supportsGetUserMedia) {
+      setError(unsupportedMediaMessage)
+      return
+    }
+
+    setError(null)
+    setCameraSwitching(true)
+
+    try {
+      const devices = await Room.getLocalDevices('videoinput', false)
+
+      if (devices.length < 2) {
+        setCameraSwitchSupported(false)
+        throw new Error('当前设备未检测到可切换的前后摄像头。')
+      }
+
+      setCameraSwitchSupported(true)
+
+      const target = resolveCameraSwitchTarget(
+        devices,
+        room.getActiveDevice('videoinput'),
+        cameraFacingMode,
+      )
+
+      if (!target) {
+        throw new Error('当前摄像头不可切换，请检查系统权限后重试。')
+      }
+
+      await room.switchActiveDevice('videoinput', target.deviceId)
+      await refreshCameraFacingState(room, target.nextFacingMode)
+      setTrackVersion((value) => value + 1)
+    } catch (exception) {
+      const detail = captureFailure('local-media-publish', exception, '切换前后摄失败')
+      setError(`[${detail.stageLabel}] ${detail.message}`)
+    } finally {
+      setCameraSwitching(false)
+    }
   }
 
   const handleReveal = async () => {
@@ -555,10 +1162,6 @@ export function LiveReadingScene({ active, onGoHome }: LiveReadingSceneProps) {
 
     roomRef.current?.disconnect()
     roomRef.current = null
-    if (simulatorVideoFeedRef.current) {
-      simulatorVideoFeedRef.current.stop()
-      simulatorVideoFeedRef.current = null
-    }
     setTrackVersion((value) => value + 1)
     setSession(null)
     setParticipantRole(null)
@@ -566,19 +1169,25 @@ export function LiveReadingScene({ active, onGoHome }: LiveReadingSceneProps) {
     setBusy(false)
     setActiveEffect(null)
     setLastReveal(null)
+    setFailureDetail(null)
+    setError(null)
+    setCameraSwitchSupported(false)
+    setCameraFacingMode('user')
+    setCameraSwitching(false)
   }
 
   const signOut = () => {
     roomRef.current?.disconnect()
     roomRef.current = null
-    if (simulatorVideoFeedRef.current) {
-      simulatorVideoFeedRef.current.stop()
-      simulatorVideoFeedRef.current = null
-    }
     setSession(null)
     setParticipantRole(null)
     setAuth(null)
     saveStoredAuth(null)
+    setFailureDetail(null)
+    setError(null)
+    setCameraSwitchSupported(false)
+    setCameraFacingMode('user')
+    setCameraSwitching(false)
   }
 
   const className = [
@@ -606,6 +1215,66 @@ export function LiveReadingScene({ active, onGoHome }: LiveReadingSceneProps) {
             <span className={styles.placeholderAction} />
           )}
         </header>
+
+        <p className={styles.runtimeHint}>
+          运行时：{runtimeInfo.label} · 上下文：
+          {runtimeInfo.isSecureContext ? '安全' : '非安全'} · 媒体能力：
+          {supportsGetUserMedia ? '可用' : '不可用'}
+        </p>
+        <div className={styles.runtimeDiagnostics}>
+          <div className={styles.runtimeDiagnosticsHeader}>
+            <p>媒体诊断</p>
+            <button
+              type="button"
+              className={styles.runtimeDiagnosticsButton}
+              onClick={() => void runMediaDiagnostics('manual', true)}
+              disabled={mediaDiagnostics.probeStatus === 'running'}
+            >
+              {mediaDiagnostics.probeStatus === 'running' ? '诊断中...' : '执行探测'}
+            </button>
+          </div>
+          <p>navigator.mediaDevices：{mediaDiagnostics.hasMediaDevicesApi ? '存在' : '不存在'}</p>
+          <p>
+            getUserMedia：
+            {mediaDiagnostics.getUserMediaCallable
+              ? '存在且可调用'
+              : `不可用（${mediaDiagnostics.getUserMediaFunctionType}）`}
+          </p>
+          <p>
+            摄像头权限：{formatPermissionState(mediaDiagnostics.cameraPermission)} · 麦克风权限：
+            {formatPermissionState(mediaDiagnostics.microphonePermission)}
+          </p>
+          <p>
+            当前摄像头：{cameraFacingMode === 'user' ? '前置' : '后置'} · 本地预览：
+            {cameraFacingMode === 'user' ? '镜像' : '非镜像'} · 前后摄切换：
+            {cameraSwitchSupported ? '可切换' : '不可切换'}
+          </p>
+          <p>
+            本地媒体发布：摄像头
+            {mediaPublicationSummary.localCameraPublished ? '已发布' : '未发布'} · 麦克风
+            {mediaPublicationSummary.localMicrophonePublished ? '已发布' : '未发布'}
+          </p>
+          <p>
+            远端订阅：参与者 {mediaPublicationSummary.remoteParticipantCount} · 摄像头已发布{' '}
+            {mediaPublicationSummary.remoteCameraPublishedCount} · 已订阅{' '}
+            {mediaPublicationSummary.remoteCameraSubscribedCount}
+          </p>
+          {mediaDiagnostics.probeStatus === 'success' ? (
+            <p>getUserMedia 探测：调用成功（已立即释放本地流）</p>
+          ) : null}
+          {mediaDiagnostics.probeStatus === 'error' ? (
+            <p>
+              getUserMedia 探测：{mediaDiagnostics.probeErrorName ?? 'UnknownError'} ·{' '}
+              {mediaDiagnostics.probeErrorMessage ?? '未知错误'}
+            </p>
+          ) : null}
+          {mediaDiagnostics.lastCheckedAt ? (
+            <p>
+              最近检查：{mediaDiagnostics.lastCheckedAt}（
+              {mediaDiagnostics.lastProbeTriggeredBy === 'manual' ? '手动' : '自动'}）
+            </p>
+          ) : null}
+        </div>
 
         {!auth ? (
           <div className={styles.authPanel}>
@@ -792,6 +1461,20 @@ export function LiveReadingScene({ active, onGoHome }: LiveReadingSceneProps) {
               <button type="button" className={styles.outlineButton} onClick={toggleCamera}>
                 {camEnabled ? '关闭摄像头' : '打开摄像头'}
               </button>
+              <button
+                type="button"
+                className={styles.outlineButton}
+                onClick={switchCameraFacing}
+                disabled={cameraSwitching || !camEnabled || !cameraSwitchSupported}
+              >
+                {cameraSwitching
+                  ? '切换中...'
+                  : cameraSwitchSupported
+                    ? cameraFacingMode === 'user'
+                      ? '切到后置'
+                      : '切到前置'
+                    : '前后摄不可切换'}
+              </button>
               <button type="button" className={styles.dangerButton} onClick={leaveCall} disabled={busy}>
                 挂断
               </button>
@@ -800,6 +1483,29 @@ export function LiveReadingScene({ active, onGoHome }: LiveReadingSceneProps) {
         )}
 
         {error ? <p className={styles.errorText}>{error}</p> : null}
+        {failureDetail ? (
+          <div className={styles.failureDetailCard}>
+            <p className={styles.failureDetailTitle}>失败阶段：{failureDetail.stageLabel}</p>
+            <p>
+              错误：{failureDetail.errorName} · {failureDetail.message}
+            </p>
+            <p>
+              请求：{failureDetail.method ?? 'N/A'} {failureDetail.path ?? '-'}
+            </p>
+            <p>请求 URL：{failureDetail.url ?? 'N/A'}</p>
+            <p>
+              状态：{failureDetail.status ?? 'network/no-status'} · 代码：
+              {failureDetail.code ?? 'N/A'}
+            </p>
+            <p>
+              运行时：{failureDetail.runtimeLabel} · 上下文：
+              {failureDetail.secureContext ? '安全' : '非安全'} · mediaDevices：
+              {failureDetail.hasMediaDevicesApi ? '存在' : '不存在'} · getUserMedia：
+              {failureDetail.supportsGetUserMedia ? '可用' : '不可用'}
+            </p>
+            <p>时间：{failureDetail.timestamp}</p>
+          </div>
+        ) : null}
       </div>
     </section>
   )

@@ -275,9 +275,13 @@ function DreamHeroApp() {
   const viewportProfile = useViewportProfile()
   const safeAreaInsets = useSafeAreaInsets()
   const { state: sceneState, actions } = useSceneMachine()
+  const liveReadingActive =
+    sceneState.scene === 'featureLanding' && sceneState.featureSlug === 'live-reading'
 
   const keyboardAware = useKeyboardAwareViewport(
-    sceneState.scene === 'dreamEntry' || sceneState.scene === 'assistantRefine',
+    sceneState.scene === 'dreamEntry' ||
+      sceneState.scene === 'assistantRefine' ||
+      liveReadingActive,
   )
 
   const [motionTuning, setMotionTuning] = useState<MotionTuning>(() => loadMotionTuning())
@@ -702,7 +706,7 @@ function DreamHeroApp() {
     keyboardAware.keyboardOpen ? 'is-keyboard-open' : '',
     (
       sceneState.scene === 'dreamEntry' ||
-      sceneState.scene === 'featureLanding' ||
+      (sceneState.scene === 'featureLanding' && !liveReadingActive) ||
       sceneState.scene === 'gallery' ||
       sceneState.scene === 'myDreams'
     )
@@ -776,11 +780,9 @@ function DreamHeroApp() {
     !enterTransitionState.active
   const showPrimaryBottomNav =
     sceneState.scene === 'dreamEntry' ||
-    sceneState.scene === 'featureLanding' ||
+    (sceneState.scene === 'featureLanding' && !liveReadingActive) ||
     sceneState.scene === 'gallery' ||
     sceneState.scene === 'myDreams'
-  const liveReadingActive =
-    sceneState.scene === 'featureLanding' && sceneState.featureSlug === 'live-reading'
   const allowTextInputFocus =
     sceneState.scene === 'assistantRefine' || liveReadingActive
   const useSceneOwnedBackground =
