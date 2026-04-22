@@ -25,6 +25,12 @@ interface Star {
   depth: number
 }
 
+interface FocusTarget {
+  focusX: number
+  focusY: number
+  absorbRadius: number
+}
+
 function isPhoneViewport(width: number, height: number) {
   const minSide = Math.min(width, height)
   const maxSide = Math.max(width, height)
@@ -71,6 +77,46 @@ function seedPhoneVelocity(
     (-dy / distance) * inwardPull * (0.74 + star.depth * 0.3)
 }
 
+function resolvePortalFocus(width: number, height: number): FocusTarget {
+  const fallbackFocusX = width * 0.5
+  const fallbackFocusY = height * 0.56
+  const fallbackRadius = Math.max(24, Math.min(width, height) * 0.05)
+
+  if (typeof document === 'undefined') {
+    return {
+      focusX: fallbackFocusX,
+      focusY: fallbackFocusY,
+      absorbRadius: fallbackRadius,
+    }
+  }
+
+  const portalElement = document.querySelector<HTMLElement>('.portal-scene')
+
+  if (!portalElement) {
+    return {
+      focusX: fallbackFocusX,
+      focusY: fallbackFocusY,
+      absorbRadius: fallbackRadius,
+    }
+  }
+
+  const rect = portalElement.getBoundingClientRect()
+
+  if (rect.width <= 0 || rect.height <= 0) {
+    return {
+      focusX: fallbackFocusX,
+      focusY: fallbackFocusY,
+      absorbRadius: fallbackRadius,
+    }
+  }
+
+  return {
+    focusX: rect.left + rect.width * 0.5,
+    focusY: rect.top + rect.height * 0.64,
+    absorbRadius: Math.max(20, Math.min(rect.width, rect.height) * 0.16),
+  }
+}
+
 function respawnStar(
   star: Star,
   width: number,
@@ -78,23 +124,24 @@ function respawnStar(
   phoneViewport: boolean,
   options?: { focusX?: number; focusY?: number; outerRing?: boolean },
 ) {
-  const focusX = options?.focusX ?? width * 0.44
-  const focusY = options?.focusY ?? height * 0.42
-  const spawnOuterRing = phoneViewport && Boolean(options?.outerRing)
+  const focusX = options?.focusX ?? width * 0.5
+  const focusY = options?.focusY ?? height * 0.56
+  const spawnOuterRing = Boolean(options?.outerRing)
 
   if (spawnOuterRing) {
     const angle = randomBetween(0, Math.PI * 2)
     const radius = randomBetween(
-      Math.max(width, height) * 0.56,
-      Math.max(width, height) * 0.94,
+      Math.max(width, height) * (phoneViewport ? 0.56 : 0.5),
+      Math.max(width, height) * (phoneViewport ? 0.94 : 0.86),
     )
     star.x = wrapPosition(focusX + Math.cos(angle) * radius, width)
     star.y = wrapPosition(focusY + Math.sin(angle) * radius * 0.82, height)
-  } else if (phoneViewport && Math.random() < 0.52) {
+  } else if (Math.random() < (phoneViewport ? 0.52 : 0.36)) {
     const angle = randomBetween(0, Math.PI * 2)
-    const radius = Math.pow(Math.random(), 0.62) * Math.max(width, height) * 0.66
+    const ringScale = phoneViewport ? 0.66 : 0.6
+    const radius = Math.pow(Math.random(), 0.62) * Math.max(width, height) * ringScale
     star.x = wrapPosition(focusX + Math.cos(angle) * radius, width)
-    star.y = wrapPosition(focusY + Math.sin(angle) * radius * 0.8, height)
+    star.y = wrapPosition(focusY + Math.sin(angle) * radius * (phoneViewport ? 0.8 : 0.88), height)
   } else {
     star.x = Math.random() * width
     star.y = Math.random() * height
@@ -106,13 +153,13 @@ function respawnStar(
   star.twinkleSpeed = Math.random() * 1.2 + 0.35
   star.twinklePhase = Math.random() * Math.PI * 2
 
-  if (phoneViewport) {
-    seedPhoneVelocity(star, focusX, focusY, 4.4, 3.6)
-    return
-  }
-
-  star.velocityX = (Math.random() - 0.5) * 5
-  star.velocityY = (Math.random() - 0.5) * 4
+  seedPhoneVelocity(
+    star,
+    focusX,
+    focusY,
+    phoneViewport ? 4.4 : 3.2,
+    phoneViewport ? 3.6 : 2.8,
+  )
 }
 
 function buildStarField(
@@ -120,6 +167,8 @@ function buildStarField(
   width: number,
   height: number,
   phoneViewport: boolean,
+  focusX: number,
+  focusY: number,
 ): Star[] {
   return Array.from({ length: count }, () => {
     const star: Star = {
@@ -134,7 +183,7 @@ function buildStarField(
       depth: 0,
     }
 
-    respawnStar(star, width, height, phoneViewport)
+    respawnStar(star, width, height, phoneViewport, { focusX, focusY })
     return star
   })
 }
@@ -207,8 +256,19 @@ export function StarField({
     let stars: Star[] = []
     let width = 0
     let height = 0
+    let focusX = 0
+    let focusY = 0
+    let absorbRadius = 0
+    let focusRefreshCountdown = 0
     let lastTime = 0
     let loopActive = false
+
+    const refreshFocusTarget = () => {
+      const focusTarget = resolvePortalFocus(width, height)
+      focusX = focusTarget.focusX
+      focusY = focusTarget.focusY
+      absorbRadius = focusTarget.absorbRadius
+    }
 
     const resize = () => {
       const pixelRatio = Math.min(
@@ -232,12 +292,16 @@ export function StarField({
       context.globalCompositeOperation = 'screen'
 
       const phoneViewport = isPhoneViewport(width, height)
+      refreshFocusTarget()
       stars = buildStarField(
         getStarCount(reducedMotion, performanceTier, width, height),
         width,
         height,
         phoneViewport,
+        focusX,
+        focusY,
       )
+      focusRefreshCountdown = 0
     }
 
     resize()
@@ -258,9 +322,14 @@ export function StarField({
       context.clearRect(0, 0, width, height)
 
       const phoneViewport = isPhoneViewport(width, height)
-      const focusX = phoneViewport ? width * 0.44 : width * 0.5
-      const focusY = phoneViewport ? height * 0.42 : height * 0.5
-      const absorbRadius = phoneViewport ? Math.max(26, Math.min(width, height) * 0.07) : 0
+
+      if (focusRefreshCountdown <= 0) {
+        refreshFocusTarget()
+        focusRefreshCountdown = 45
+      } else {
+        focusRefreshCountdown -= 1
+      }
+
       const absorbRadiusSquared = absorbRadius * absorbRadius
       const profile = motionProfileRef.current
       const parallaxX = motionRef.current.x * profile.x * (phoneViewport ? 13 : width <= 768 ? 8 : 16)
@@ -271,25 +340,31 @@ export function StarField({
         star.x += star.velocityX * delta * driftMultiplier
         star.y += star.velocityY * delta * driftMultiplier
 
-        if (phoneViewport && !reducedMotion) {
+        if (!reducedMotion) {
           const dx = focusX - star.x
           const dy = focusY - star.y
-          const distance = Math.max(72, Math.hypot(dx, dy))
-          const maxDistance = Math.max(width, height) * 1.08
+          const distance = Math.max(phoneViewport ? 72 : 88, Math.hypot(dx, dy))
+          const maxDistance = Math.max(width, height) * (phoneViewport ? 1.08 : 1.2)
           const distanceFactor = 1 - Math.min(1, distance / maxDistance)
-          const orbitStrength = (0.4 + star.depth * 0.72) * distanceFactor
-          const pullStrength = (0.2 + (1 - star.depth) * 0.4) * distanceFactor
+          const orbitStrength =
+            ((phoneViewport ? 0.4 : 0.32) + star.depth * (phoneViewport ? 0.72 : 0.58)) *
+            distanceFactor
+          const pullStrength =
+            ((phoneViewport ? 0.2 : 0.16) + (1 - star.depth) * (phoneViewport ? 0.4 : 0.34)) *
+            distanceFactor
 
-          star.x += (-dy / distance) * orbitStrength * delta * 32 * driftMultiplier
-          star.y += (dx / distance) * orbitStrength * delta * 32 * driftMultiplier
-          star.x += dx * pullStrength * delta * 0.7 * driftMultiplier
-          star.y += dy * pullStrength * delta * 0.7 * driftMultiplier
+          star.x +=
+            (-dy / distance) * orbitStrength * delta * (phoneViewport ? 32 : 26) * driftMultiplier
+          star.y +=
+            (dx / distance) * orbitStrength * delta * (phoneViewport ? 32 : 26) * driftMultiplier
+          star.x += dx * pullStrength * delta * (phoneViewport ? 0.7 : 0.58) * driftMultiplier
+          star.y += dy * pullStrength * delta * (phoneViewport ? 0.7 : 0.58) * driftMultiplier
 
           const dxFromFocus = star.x - focusX
           const dyFromFocus = star.y - focusY
 
           if (dxFromFocus * dxFromFocus + dyFromFocus * dyFromFocus <= absorbRadiusSquared) {
-            respawnStar(star, width, height, true, {
+            respawnStar(star, width, height, phoneViewport, {
               focusX,
               focusY,
               outerRing: true,

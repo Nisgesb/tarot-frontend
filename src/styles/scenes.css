@@ -1,56 +1,5 @@
-.app-root .dream-result-scene {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
 .app-root.has-primary-bottom-nav {
-  --bottom-nav-reserved: calc(var(--safe-bottom) + 96px);
-}
-
-.app-root .result-topbar,
-.app-root .gallery-topbar {
-  width: min(100%, var(--scene-max-width));
-  margin-inline: auto;
-}
-
-.app-root .result-topbar {
-  grid-template-columns: 1fr auto;
-}
-
-.app-root .result-nav {
-  grid-column: 1 / -1;
-  justify-content: center;
-}
-
-.app-root .gallery-topbar {
-  padding:
-    calc(var(--safe-top) + var(--scene-y-pad))
-    0
-    0;
-}
-
-.app-root .gallery-hint {
-  width: min(calc(100vw - (max(var(--layout-gutter), var(--safe-left)) + max(var(--layout-gutter), var(--safe-right)))), var(--gallery-hint-width));
-  bottom: calc(var(--bottom-nav-reserved, 0px) + var(--gallery-hint-bottom));
-}
-
-.app-root .random-dream-button {
-  bottom: calc(var(--bottom-nav-reserved, 0px) + var(--gallery-action-bottom));
-}
-
-.app-root .my-dreams-empty {
-  width: min(calc(100vw - (max(var(--layout-gutter), var(--safe-left)) + max(var(--layout-gutter), var(--safe-right)))), 560px);
-}
-
-.app-root .dream-gallery-scene,
-.app-root .my-dreams-scene {
-  position: absolute;
-  inset: 0;
-  z-index: 8;
-  overflow: auto;
-  isolation: isolate;
-  -webkit-overflow-scrolling: touch;
+  --bottom-nav-reserved: calc(var(--safe-bottom) + 94px);
 }
 
 .shared-home-surface,
@@ -58,9 +7,25 @@
 .app-root .my-dreams-scene {
   isolation: isolate;
   background:
-    radial-gradient(circle at 18% 14%, rgba(112, 85, 117, 0.16), transparent 30%),
-    radial-gradient(circle at 78% 22%, rgba(65, 95, 145, 0.18), transparent 36%),
-    linear-gradient(180deg, #15181e 0%, #20242b 28%, #232730 100%);
+    linear-gradient(
+      180deg,
+      var(--tarot-home-veil-soft) 0%,
+      rgba(20, 11, 24, 0.18) 14%,
+      var(--tarot-home-veil-mid) 54%,
+      var(--tarot-home-veil-strong) 100%
+    ),
+    radial-gradient(circle at 50% -6%, rgba(255, 255, 255, 0.18), transparent 28%),
+    radial-gradient(circle at 16% 10%, var(--tarot-home-fog-plum), transparent 28%),
+    radial-gradient(circle at 84% 16%, var(--tarot-home-fog-blue), transparent 30%),
+    radial-gradient(circle at 48% 92%, rgba(174, 141, 255, 0.18), transparent 40%),
+    linear-gradient(
+      180deg,
+      var(--tarot-home-sky-top) 0%,
+      var(--tarot-home-sky-mid) 22%,
+      var(--tarot-home-sky-bottom) 54%,
+      var(--tarot-home-base-deep) 76%,
+      var(--tarot-home-base-void) 100%
+    );
 }
 
 .shared-home-surface::before,
@@ -80,11 +45,12 @@
 .app-root .my-dreams-scene::before {
   z-index: 1;
   background:
-    radial-gradient(circle at 50% 28%, rgba(170, 199, 255, 0.08), transparent 22%),
-    radial-gradient(circle at 18% 72%, rgba(112, 85, 117, 0.08), transparent 24%),
-    radial-gradient(circle at 80% 84%, rgba(65, 95, 145, 0.12), transparent 26%);
-  filter: blur(18px);
-  opacity: 0.9;
+    radial-gradient(circle at 50% 8%, rgba(255, 255, 255, 0.13), transparent 20%),
+    radial-gradient(circle at 24% 72%, rgba(243, 189, 223, 0.2), transparent 26%),
+    radial-gradient(circle at 80% 74%, rgba(174, 141, 255, 0.16), transparent 30%),
+    radial-gradient(circle at 68% 20%, rgba(255, 245, 251, 0.1), transparent 18%);
+  filter: blur(22px);
+  opacity: 0.92;
 }
 
 .shared-home-surface::after,
@@ -92,11 +58,36 @@
 .app-root .my-dreams-scene::after {
   z-index: 1;
   background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.12), transparent 18%, transparent 82%, rgba(0, 0, 0, 0.18)),
-    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.022) 0 1px, transparent 1px),
-    radial-gradient(circle at 72% 64%, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px);
-  background-size: auto, 120px 120px, 160px 160px;
-  opacity: 0.7;
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.03) 0%,
+      transparent 20%,
+      transparent 76%,
+      rgba(0, 0, 0, 0.12) 100%
+    ),
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px),
+    radial-gradient(circle at 72% 64%, rgba(255, 255, 255, 0.02) 0 1px, transparent 1px),
+    radial-gradient(circle at 56% 18%, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px);
+  background-size: auto, 120px 120px, 160px 160px, 180px 180px;
+  opacity: 0.74;
+}
+
+.app-root.scene-dreamEntry .dream-entry-scene.home-intro-active,
+.app-root.scene-dreamEntry .dream-entry-scene.home-intro-phase-fadeOut,
+.app-root.scene-dreamEntry .dream-entry-scene.home-intro-phase-glow,
+.app-root.scene-dreamEntry .dream-entry-scene.home-intro-phase-settle {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  filter: none;
+}
+
+.app-root .dream-gallery-scene,
+.app-root .my-dreams-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .app-root .explore-orb-canvas {
@@ -109,106 +100,123 @@
 }
 
 .app-root .explore-scene-scrim {
-  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 22% 40%, rgba(20, 12, 24, 0.04), rgba(20, 12, 24, 0) 34%),
+    linear-gradient(180deg, rgba(16, 10, 19, 0.08), rgba(16, 10, 19, 0.26));
 }
 
 .app-root .explore-scene-shell {
   position: relative;
   z-index: 2;
-  width: min(100%, 430px);
+  width: min(100%, 1220px);
   min-height: var(--app-dvh);
   margin: 0 auto;
+  display: grid;
+  gap: 18px;
+  align-content: start;
   padding:
-    calc(var(--safe-top) + 14px)
-    22px
-    calc(var(--bottom-nav-reserved, 0px) + 140px);
+    calc(var(--safe-top) + 16px)
+    clamp(16px, 3.8vw, 42px)
+    calc(var(--bottom-nav-reserved, 0px) + 28px);
 }
 
 .app-root .explore-topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
 }
 
 .app-root .explore-nav-link {
-  min-height: 42px;
+  min-height: 40px;
   padding-inline: 16px;
-  border-color: rgba(240, 240, 247, 0.08);
-  background: rgba(243, 243, 250, 0.03);
-  color: rgba(240, 240, 247, 0.92);
+  border-radius: 999px;
+  border: 1px solid var(--tarot-home-glass-border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.03)),
+    linear-gradient(145deg, rgba(243, 189, 223, 0.18), rgba(174, 141, 255, 0.14) 54%, rgba(27, 16, 33, 0.3)),
+    rgba(44, 28, 52, 0.48);
+  color: rgba(251, 236, 248, 0.9);
   font-size: 0.72rem;
   letter-spacing: 0.08em;
-  text-transform: none;
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.04) inset,
-    0 8px 24px rgba(0, 0, 0, 0.16);
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 10px 20px rgba(18, 10, 22, 0.2);
   backdrop-filter: blur(16px);
 }
 
 .app-root .explore-hero {
-  max-width: 320px;
-  margin-top: 22px;
+  max-width: 560px;
+  display: grid;
+  gap: 10px;
 }
 
 .app-root .explore-eyebrow {
   margin: 0;
-  color: rgba(214, 223, 239, 0.64);
-  font-size: 0.72rem;
+  color: var(--tarot-home-text-meta);
+  font-size: 0.7rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
 }
 
 .app-root .explore-title {
-  margin: 10px 0 0;
-  color: var(--color-inverse-primary);
-  font: 500 clamp(3.5rem, 15vw, 5.2rem) / 0.88 'Cormorant Garamond', serif;
-  letter-spacing: -0.05em;
-  text-wrap: balance;
-  text-shadow: 0 14px 42px rgba(0, 0, 0, 0.26);
+  margin: 0;
+  color: var(--tarot-home-text-title);
+  font: 500 clamp(3.1rem, 12vw, 5.8rem) / 0.88 'Cormorant Garamond', serif;
+  letter-spacing: -0.045em;
+  text-shadow:
+    0 0 18px rgba(219, 230, 255, 0.2),
+    0 20px 36px rgba(50, 69, 143, 0.2);
 }
 
 .app-root .explore-subtitle {
-  margin: 14px 0 0;
-  color: rgba(240, 240, 247, 0.78);
-  font: 400 0.98rem/1.5 'Outfit', sans-serif;
+  margin: 0;
+  max-width: 36ch;
+  color: rgba(251, 236, 248, 0.82);
+  font: 400 0.98rem/1.56 'Outfit', sans-serif;
 }
 
 .app-root .explore-summary-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  margin-top: 24px;
 }
 
 .app-root .explore-summary-card,
 .app-root .explore-empty-card {
-  position: relative;
-  border: 1px solid rgba(250, 216, 253, 0.08);
-  border-radius: 30px;
+  border: 1px solid var(--tarot-home-glass-border);
+  border-radius: 28px;
   background:
-    linear-gradient(180deg, rgba(45, 48, 54, 0.86), rgba(31, 34, 40, 0.88)),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.03)),
+    radial-gradient(circle at 18% 12%, rgba(243, 189, 223, 0.16), transparent 26%),
+    linear-gradient(145deg, rgba(243, 189, 223, 0.2), rgba(174, 141, 255, 0.16) 50%, rgba(27, 16, 33, 0.52)),
+    rgba(46, 29, 54, 0.52);
   box-shadow:
-    0 18px 34px rgba(0, 0, 0, 0.18),
-    0 1px 0 rgba(255, 255, 255, 0.04) inset;
-  backdrop-filter: blur(18px);
+    0 16px 30px rgba(18, 10, 22, 0.22),
+    0 1px 0 rgba(255, 255, 255, 0.1) inset;
+  backdrop-filter: blur(20px) saturate(1.08);
 }
 
 .app-root .explore-summary-card {
-  min-height: 144px;
-  padding: 16px 16px 18px;
+  min-height: 152px;
+  padding: 16px;
 }
 
 .app-root .explore-summary-card-accent {
   background:
-    linear-gradient(180deg, rgba(112, 85, 117, 0.92), rgba(95, 72, 100, 0.94)),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.03)),
+    radial-gradient(circle at 18% 12%, rgba(255, 245, 251, 0.2), transparent 28%),
+    linear-gradient(145deg, rgba(243, 189, 223, 0.28), rgba(174, 141, 255, 0.22) 52%, rgba(30, 18, 35, 0.48)),
+    rgba(58, 36, 66, 0.58);
 }
 
 .app-root .explore-card-label {
   margin: 0;
-  color: rgba(240, 240, 247, 0.56);
+  color: var(--tarot-home-text-meta);
   font: 500 0.66rem/1 'Outfit', sans-serif;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -216,40 +224,41 @@
 
 .app-root .explore-card-value {
   margin: 16px 0 0;
-  color: rgba(249, 249, 255, 0.98);
-  font: 500 2.8rem/0.92 'Cormorant Garamond', serif;
+  color: var(--tarot-home-text-title);
+  font: 500 clamp(2.2rem, 7vw, 3.3rem) / 0.9 'Cormorant Garamond', serif;
   letter-spacing: -0.04em;
 }
 
 .app-root .explore-card-value-title {
-  font-size: 2.1rem;
+  font-size: clamp(1.8rem, 6vw, 2.6rem);
   line-height: 0.98;
-  text-wrap: balance;
 }
 
 .app-root .explore-card-copy {
   margin: 10px 0 0;
-  color: rgba(240, 240, 247, 0.82);
-  font: 400 0.92rem/1.4 'Outfit', sans-serif;
+  color: var(--tarot-home-text-body);
+  font: 400 0.9rem/1.45 'Outfit', sans-serif;
 }
 
 .app-root .explore-empty-card {
-  max-width: 356px;
-  margin-top: 28px;
-  padding: 24px 20px 22px;
+  width: min(100%, 760px);
+  margin-top: 4px;
+  padding: clamp(22px, 3vw, 30px);
 }
 
 .app-root .explore-empty-card h2 {
-  margin: 16px 0 0;
-  color: rgba(249, 249, 255, 0.98);
-  font: 500 clamp(2.2rem, 9vw, 3rem) / 0.96 'Cormorant Garamond', serif;
+  margin: 12px 0 0;
+  color: var(--tarot-home-text-title);
+  font: 500 clamp(2.2rem, 7vw, 3.4rem) / 0.9 'Cormorant Garamond', serif;
   letter-spacing: -0.04em;
 }
 
 .app-root .explore-empty-card > p:last-of-type {
   margin: 14px 0 0;
-  color: rgba(240, 240, 247, 0.8);
-  font: 400 0.95rem/1.52 'Outfit', sans-serif;
+  max-width: 42ch;
+  color: var(--tarot-home-text-body);
+  line-height: 1.56;
+  font-size: 0.94rem;
 }
 
 .app-root .explore-primary-action {
@@ -258,345 +267,101 @@
 }
 
 .app-root .explore-floating-note {
-  position: absolute;
-  left: 22px;
-  right: 22px;
-  bottom: calc(var(--bottom-nav-reserved, 0px) + 84px);
-  z-index: 3;
-  padding: 15px 16px 16px;
-  border: 1px solid rgba(214, 227, 255, 0.08);
-  border-radius: 26px;
+  position: static;
+  width: min(100%, 560px);
+  padding: 15px 16px;
+  border: 1px solid var(--tarot-home-glass-border-soft);
+  border-radius: 24px;
   background:
-    linear-gradient(180deg, rgba(28, 31, 38, 0.76), rgba(21, 24, 30, 0.84)),
-    radial-gradient(circle at 14% 10%, rgba(65, 95, 145, 0.16), rgba(65, 95, 145, 0) 44%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02)),
+    linear-gradient(145deg, rgba(243, 189, 223, 0.14), rgba(174, 141, 255, 0.12) 52%, rgba(25, 15, 30, 0.26)),
+    rgba(41, 26, 48, 0.44);
   box-shadow:
-    0 18px 34px rgba(0, 0, 0, 0.18),
-    0 1px 0 rgba(255, 255, 255, 0.04) inset;
+    0 12px 24px rgba(18, 10, 22, 0.2),
+    0 1px 0 rgba(255, 255, 255, 0.07) inset;
   backdrop-filter: blur(18px);
-  pointer-events: none;
 }
 
 .app-root .explore-floating-note p {
   margin: 0;
-  color: rgba(240, 240, 247, 0.86);
-  font: 400 0.82rem/1.44 'Outfit', sans-serif;
+  color: var(--tarot-home-text-body);
+  font: 400 0.84rem/1.44 'Outfit', sans-serif;
 }
 
 .app-root .explore-floating-note p + p {
   margin-top: 6px;
-  color: rgba(240, 240, 247, 0.64);
+  color: var(--tarot-home-text-meta);
 }
 
 .app-root .explore-random-button {
-  position: absolute;
-  left: 50%;
-  bottom: calc(var(--bottom-nav-reserved, 0px) + 18px);
-  transform: translateX(-50%);
-  z-index: 4;
-  min-width: 178px;
-  border-color: rgba(214, 227, 255, 0.18);
-  background:
-    linear-gradient(180deg, rgba(46, 48, 54, 0.88), rgba(28, 31, 38, 0.9)),
-    radial-gradient(circle at 50% 0%, rgba(170, 199, 255, 0.12), rgba(170, 199, 255, 0) 54%);
-  box-shadow:
-    0 18px 34px rgba(0, 0, 0, 0.22),
-    0 1px 0 rgba(255, 255, 255, 0.04) inset;
-}
-
-.app-root.device-phone-sm .entry-header h2,
-.app-root.device-phone .entry-header h2 {
-  font-size: clamp(32px, 9.6vw, 46px);
-}
-
-.app-root.device-phone-sm .entry-header > p:last-child,
-.app-root.device-phone .entry-header > p:last-child {
-  font-size: 0.88rem;
-}
-
-.app-root.device-phone-sm .assistant-actions,
-.app-root.device-phone-sm .entry-memory-actions,
-.app-root.device-phone .assistant-actions,
-.app-root.device-phone .entry-memory-actions {
-  gap: 8px;
-}
-
-.app-root.device-phone-sm .result-copy p,
-.app-root.device-phone .result-copy p {
-  font-size: clamp(18px, 5.4vw, 28px);
-}
-
-.app-root.device-phone-sm .gallery-hint,
-.app-root.device-phone .gallery-hint {
-  text-align: center;
-}
-
-.app-root.device-tablet-portrait .result-topbar,
-.app-root.device-tablet-landscape .result-topbar,
-.app-root.device-desktop .result-topbar,
-.app-root.device-desktop-wide .result-topbar,
-.app-root.device-tablet-portrait .gallery-topbar,
-.app-root.device-tablet-landscape .gallery-topbar,
-.app-root.device-desktop .gallery-topbar,
-.app-root.device-desktop-wide .gallery-topbar {
-  grid-template-columns: 1fr auto 1fr;
-}
-
-.app-root.device-tablet-portrait .result-top-title,
-.app-root.device-tablet-landscape .result-top-title,
-.app-root.device-desktop .result-top-title,
-.app-root.device-desktop-wide .result-top-title,
-.app-root.device-tablet-portrait .gallery-topbar p,
-.app-root.device-tablet-landscape .gallery-topbar p,
-.app-root.device-desktop .gallery-topbar p,
-.app-root.device-desktop-wide .gallery-topbar p {
-  justify-self: center;
-}
-
-.app-root.device-tablet-portrait .result-nav,
-.app-root.device-tablet-landscape .result-nav,
-.app-root.device-desktop .result-nav,
-.app-root.device-desktop-wide .result-nav {
-  grid-column: auto;
-  justify-self: end;
-}
-
-.app-root.device-tablet-landscape .dream-result-scene,
-.app-root.device-desktop .dream-result-scene,
-.app-root.device-desktop-wide .dream-result-scene {
-  display: grid;
-  align-content: start;
-  justify-items: center;
-  grid-template-columns: minmax(0, 1fr) minmax(420px, 0.96fr);
-  grid-template-areas:
-    'topbar topbar'
-    'copy visual'
-    'actions visual'
-    'privacy visual';
-  column-gap: clamp(24px, 4vw, 42px);
-  row-gap: 14px;
-}
-
-.app-root.device-tablet-landscape .result-topbar,
-.app-root.device-desktop .result-topbar,
-.app-root.device-desktop-wide .result-topbar {
-  grid-area: topbar;
-}
-
-.app-root.device-tablet-landscape .result-copy,
-.app-root.device-desktop .result-copy,
-.app-root.device-desktop-wide .result-copy {
-  grid-area: copy;
-  align-self: end;
-  justify-self: stretch;
-  margin-top: 0;
-}
-
-.app-root.device-tablet-landscape .result-copy p,
-.app-root.device-desktop .result-copy p,
-.app-root.device-desktop-wide .result-copy p {
-  text-align: left;
-}
-
-.app-root.device-tablet-landscape .result-copy-eyebrow,
-.app-root.device-desktop .result-copy-eyebrow,
-.app-root.device-desktop-wide .result-copy-eyebrow {
-  text-align: left;
-}
-
-.app-root.device-tablet-landscape .result-visual-shell,
-.app-root.device-desktop .result-visual-shell,
-.app-root.device-desktop-wide .result-visual-shell {
-  grid-area: visual;
-  margin-top: 0;
-  justify-self: stretch;
-}
-
-.app-root.device-tablet-landscape .bottom-action-cluster,
-.app-root.device-desktop .bottom-action-cluster,
-.app-root.device-desktop-wide .bottom-action-cluster {
-  grid-area: actions;
-  margin-top: 0;
-  justify-self: stretch;
   position: static;
-}
-
-.app-root.device-tablet-landscape .privacy-link,
-.app-root.device-desktop .privacy-link,
-.app-root.device-desktop-wide .privacy-link {
-  grid-area: privacy;
   justify-self: start;
-  margin-top: 0;
+  min-width: 182px;
 }
 
-.app-root.device-tablet-landscape .gallery-hint,
-.app-root.device-desktop .gallery-hint,
-.app-root.device-desktop-wide .gallery-hint {
-  left: max(var(--layout-gutter), var(--safe-left));
-  bottom: calc(var(--safe-bottom) + var(--gallery-hint-bottom));
-  transform: none;
-  text-align: left;
-}
-
-.app-root.device-tablet-landscape .random-dream-button,
-.app-root.device-desktop .random-dream-button,
-.app-root.device-desktop-wide .random-dream-button {
-  left: auto;
-  right: max(var(--layout-gutter), var(--safe-right));
-  transform: none;
-}
-.app-root .dream-entry-scene.is-home {
-  display: block;
-  overflow: hidden;
-  padding: 0;
-}
-
-.app-root .home-scene-shell {
-  position: relative;
-  isolation: isolate;
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior-y: contain;
-  -webkit-overflow-scrolling: touch;
-  transition: opacity 480ms ease, transform 520ms ease, filter 520ms ease;
-}
-
-.app-root.scene-dreamEntry .home-scene-shell::before,
-.app-root.scene-dreamEntry .home-scene-shell::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.app-root.scene-dreamEntry .home-scene-shell::before {
-  z-index: 0;
-  background:
-    radial-gradient(circle at 50% 69%, transparent 0, transparent 23%, rgba(196, 173, 127, 0.11) 23.4%, rgba(196, 173, 127, 0.11) 23.7%, transparent 24.2%),
-    radial-gradient(circle at 50% 69%, transparent 0, transparent 35%, rgba(196, 173, 127, 0.07) 35.4%, rgba(196, 173, 127, 0.07) 35.7%, transparent 36.2%),
-    radial-gradient(circle at 50% 69%, transparent 0, transparent 47%, rgba(196, 173, 127, 0.045) 47.4%, rgba(196, 173, 127, 0.045) 47.7%, transparent 48.1%),
-    linear-gradient(90deg, transparent calc(50% - 0.5px), rgba(184, 162, 118, 0.06) calc(50% - 0.5px), rgba(184, 162, 118, 0.06) calc(50% + 0.5px), transparent calc(50% + 0.5px));
-  opacity: 0.62;
-}
-
-.app-root.scene-dreamEntry .home-scene-shell::after {
-  z-index: 0;
-  background:
-    radial-gradient(ellipse at 50% 72%, rgba(235, 218, 181, 0.12) 0%, rgba(235, 218, 181, 0.06) 11%, rgba(235, 218, 181, 0) 32%),
-    radial-gradient(ellipse at 50% 82%, rgba(58, 69, 118, 0.26) 0%, rgba(58, 69, 118, 0.12) 26%, rgba(58, 69, 118, 0) 52%);
-  filter: blur(14px);
-  opacity: 0.94;
-}
-
-.app-root .home-scene-content {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding-bottom: calc(var(--bottom-nav-reserved, 0px) + 24px);
-}
-
-.app-root.scene-dreamEntry .home-scene-content {
-  min-height: 100%;
-}
-
-.app-root .home-scene-copy {
-  width: min(100%, 520px);
-  margin-inline: auto;
-  padding:
-    calc(var(--safe-top) + 12px)
-    max(var(--layout-gutter), var(--safe-left))
-    0
-    max(var(--layout-gutter), var(--safe-right));
-  text-align: center;
-}
-
-.app-root .home-scene-slider-secondary {
-  width: min(100%, var(--scene-shell-width));
-  margin-inline: auto;
-  padding-inline: max(var(--layout-gutter), var(--safe-left))
-    max(var(--layout-gutter), var(--safe-right));
-}
-
-.app-root .home-scene-velocity-mobile {
-  width: min(100%, var(--scene-shell-width));
-  margin-inline: auto;
-  padding-top: calc(var(--safe-top) + 12px);
-  padding-bottom: 12px;
-  padding-inline: max(var(--layout-gutter), var(--safe-left))
-    max(var(--layout-gutter), var(--safe-right));
-}
-
-.app-root.scene-dreamEntry .home-scene-velocity-mobile {
-  padding-top: calc(var(--safe-top) + clamp(64px, 14dvh, 118px));
-  padding-bottom: calc(var(--bottom-nav-reserved, 0px) + 40px);
-}
-
-.app-root .home-scene-cta {
-  min-width: clamp(180px, 52vw, 250px);
-  margin-inline: auto;
-  position: sticky;
-  bottom: calc(var(--safe-bottom) + 12px);
-  z-index: 8;
-}
-
-.app-root .home-scene-eyebrow {
-  margin: 0;
-  color: rgba(216, 232, 255, 0.82);
-  font-size: 0.68rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-}
-
-.app-root .home-scene-title {
-  margin: 10px 0 0;
-  color: rgba(246, 251, 255, 0.96);
-  font: 500 clamp(30px, 8.4vw, 52px) / 1.05 'Cormorant Garamond', serif;
-  letter-spacing: 0.01em;
-  text-shadow:
-    0 0 18px rgba(194, 225, 255, 0.2),
-    0 0 36px rgba(176, 164, 255, 0.2);
-}
-
-.app-root .home-scene-subtitle {
-  margin: 12px 0 0;
-  color: rgba(229, 239, 255, 0.82);
-  font-size: clamp(0.86rem, 3.2vw, 0.98rem);
-  line-height: 1.45;
-}
-
-.app-root .dream-entry-scene.home-intro-active {
-  opacity: 0;
-  transform: translate3d(0, 12px, 0) scale(0.985);
-  filter: blur(10px) saturate(0.94);
-}
-
-.app-root .dream-entry-scene.home-intro-phase-settle {
-  opacity: 1;
-  transform: translate3d(0, 0, 0) scale(1);
-  filter: blur(0) saturate(1);
-}
-
-.app-root.device-phone-sm .home-scene-content,
-.app-root.device-phone .home-scene-content {
-  gap: 12px;
-}
-
+.app-root .dream-entry-scene.is-refining,
 .app-root .feature-landing-scene {
   display: grid;
   place-items: center;
 }
 
-.app-root .feature-landing-shell {
-  max-width: min(100%, 620px);
-  padding-bottom: calc(var(--entry-shell-pad-y) + var(--bottom-nav-reserved, 0px));
+.app-root .entry-shell {
+  width: min(100%, 1180px);
+  max-width: none;
+  min-height: min(80dvh, 860px);
+  border-radius: 30px;
+  border: 1px solid var(--tarot-home-glass-border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.03)),
+    radial-gradient(circle at 14% 12%, rgba(243, 189, 223, 0.14), transparent 26%),
+    radial-gradient(circle at 84% 14%, rgba(255, 245, 251, 0.14), transparent 28%),
+    linear-gradient(145deg, rgba(243, 189, 223, 0.2), rgba(174, 141, 255, 0.16) 48%, rgba(27, 16, 33, 0.44)),
+    rgba(46, 29, 54, 0.5);
+  box-shadow:
+    0 24px 52px rgba(4, 8, 22, 0.22),
+    0 1px 0 rgba(255, 255, 255, 0.08) inset;
+  backdrop-filter: blur(20px) saturate(1.08);
 }
 
-.app-root .feature-landing-header > p:last-child {
-  max-width: 480px;
+.app-root .dream-entry-scene.is-refining .entry-shell {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.88fr) minmax(360px, 1.12fr);
+  gap: clamp(18px, 3vw, 34px);
+  align-content: start;
+  min-height: auto;
+}
+
+.app-root .entry-shell-glow {
+  filter: blur(22px);
+}
+
+.app-root .entry-header > p:last-child {
+  max-width: 44ch;
+  color: rgba(251, 236, 248, 0.82);
+}
+
+.app-root .entry-stage {
+  margin-top: 0;
+}
+
+.app-root .assistant-refine-step,
+.app-root .feature-landing-stage {
+  margin-top: 0;
+  padding: 18px;
+  border: 1px solid var(--tarot-home-glass-border-soft);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.015)),
+    linear-gradient(145deg, rgba(243, 189, 223, 0.14), rgba(174, 141, 255, 0.12) 52%, rgba(31, 18, 38, 0.22)),
+    rgba(27, 16, 33, 0.42);
+  box-shadow:
+    0 14px 26px rgba(17, 10, 20, 0.18),
+    0 1px 0 rgba(255, 255, 255, 0.05) inset;
+}
+
+.app-root .feature-landing-shell {
+  max-width: min(100%, 1120px);
+  min-height: auto;
 }
 
 .app-root .feature-landing-stage {
@@ -606,18 +371,13 @@
 
 .app-root .feature-landing-status,
 .app-root .feature-landing-note {
-  position: relative;
-  z-index: 1;
-  border: 1px solid rgba(213, 225, 255, 0.18);
+  border: 1px solid var(--tarot-home-glass-border-soft);
   border-radius: 18px;
-  padding: 16px 16px 15px;
+  padding: 14px 16px;
   background:
-    linear-gradient(145deg, rgba(14, 27, 84, 0.34), rgba(10, 21, 66, 0.24)),
-    radial-gradient(circle at 18% 12%, rgba(200, 225, 255, 0.14), rgba(200, 225, 255, 0) 40%);
-  box-shadow:
-    0 12px 28px rgba(7, 14, 52, 0.18),
-    0 0 0 1px rgba(255, 255, 255, 0.03) inset;
-  backdrop-filter: blur(14px) saturate(1.08);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+    linear-gradient(145deg, rgba(243, 189, 223, 0.12), rgba(174, 141, 255, 0.1) 56%, rgba(32, 18, 40, 0.18)),
+    rgba(34, 20, 41, 0.48);
 }
 
 .app-root .feature-landing-status-label,
@@ -627,7 +387,7 @@
 }
 
 .app-root .feature-landing-status-label {
-  color: rgba(220, 231, 255, 0.56);
+  color: var(--tarot-home-text-meta);
   font-size: 0.68rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -635,119 +395,298 @@
 
 .app-root .feature-landing-status-value {
   margin-top: 8px;
-  color: rgba(244, 248, 255, 0.96);
+  color: var(--tarot-home-text-title);
   font-size: clamp(1.08rem, 4.2vw, 1.34rem);
-  line-height: 1.1;
 }
 
 .app-root .feature-landing-note p:first-child {
-  color: rgba(242, 247, 255, 0.9);
-  font-size: 1rem;
+  color: var(--tarot-home-text-title);
 }
 
 .app-root .feature-landing-note p:last-child {
   margin-top: 8px;
-  color: rgba(225, 236, 255, 0.72);
-  line-height: 1.5;
+  color: var(--tarot-home-text-body);
+  line-height: 1.52;
   font-size: 0.92rem;
 }
 
-.app-root.device-phone-sm .home-scene-copy,
-.app-root.device-phone .home-scene-copy {
-  width: min(100%, 390px);
-  padding-top: calc(var(--safe-top) + 10px);
+.app-root .dream-result-scene {
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: 14px;
+  overflow: auto;
 }
 
-.app-root.device-phone-sm .home-scene-title,
-.app-root.device-phone .home-scene-title {
-  margin-top: 8px;
-  font-size: clamp(25px, 8.4vw, 38px);
+.app-root .result-topbar {
+  width: min(100%, 1240px);
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
 }
 
-.app-root.device-phone-sm .home-scene-subtitle,
-.app-root.device-phone .home-scene-subtitle {
-  margin-top: 8px;
-  font-size: clamp(0.8rem, 3.1vw, 0.9rem);
+.app-root .result-nav {
+  grid-column: 1 / -1;
+  justify-content: center;
 }
 
-.app-root .entry-assistant-header {
-  margin-bottom: 2px;
+.app-root .result-copy {
+  width: min(100%, 1240px);
+  margin-top: 0;
+  padding: 16px clamp(16px, 2.5vw, 26px);
+  border: 1px solid var(--tarot-home-glass-border-soft);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.015)),
+    linear-gradient(145deg, rgba(243, 189, 223, 0.12), rgba(174, 141, 255, 0.1) 50%, rgba(28, 17, 33, 0.22)),
+    rgba(28, 17, 33, 0.3);
+  box-shadow:
+    0 12px 24px rgba(17, 10, 20, 0.18),
+    0 1px 0 rgba(255, 255, 255, 0.05) inset;
 }
 
-.app-root .entry-assistant-header h2 {
-  margin-top: 6px;
+.app-root .result-copy-eyebrow {
+  text-align: left;
 }
 
-.app-root .entry-assistant-header > p:last-child {
-  margin-top: 8px;
+.app-root .result-copy p {
+  text-align: left;
+  font-size: clamp(1.6rem, 3.8vw, 2.56rem);
+  line-height: 1.18;
 }
 
-.app-root.scene-entering .hero-overlay {
-  opacity: 1;
-  transform: translate3d(-50%, -50%, 0) scale(1);
-  filter: blur(0);
+.app-root .result-visual-shell {
+  width: min(100%, 1240px);
+  height: min(56dvh, 600px);
+  margin-top: 0;
 }
 
-.app-root.scene-entering.enter-phase-fadeOut .hero-overlay {
-  opacity: 0.4;
-  transform: translate3d(-50%, -49.2%, 0) scale(0.985);
-  filter: blur(2px);
+.app-root .bottom-action-cluster {
+  width: min(100%, 1240px);
+  position: static;
+  margin-top: 0;
+  padding: 10px;
+  border: 1px solid var(--tarot-home-glass-border-soft);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.01)),
+    rgba(12, 19, 38, 0.32);
 }
 
-.app-root.scene-entering.enter-phase-glow .hero-overlay,
-.app-root.scene-entering.enter-phase-settle .hero-overlay {
-  opacity: 0;
-  transform: translate3d(-50%, -47.8%, 0) scale(0.96);
-  filter: blur(8px);
+.app-root .privacy-link {
+  width: min(100%, 1240px);
+  margin-top: -2px;
+  text-align: left;
 }
 
-.app-root.scene-entering .portal-scene {
-  opacity: 0.42;
-  transform: translate3d(-50%, -50.6%, 0) scale(0.94);
-  filter: saturate(1.08) brightness(1.02);
+.app-root .result-actions .outline-pill,
+.app-root .bottom-action-row .outline-pill {
+  border-color: var(--tarot-home-glass-border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02)),
+    linear-gradient(145deg, rgba(243, 189, 223, 0.14), rgba(174, 141, 255, 0.12) 52%, rgba(31, 18, 38, 0.26)),
+    rgba(39, 24, 47, 0.48);
 }
 
-.app-root.scene-entering.enter-phase-fadeOut .portal-scene {
-  opacity: 0.3;
-  transform: translate3d(-50%, -50.8%, 0) scale(0.9);
-  filter: saturate(1.03) brightness(0.98);
+.app-root .topbar-link,
+.app-root .outline-pill,
+.app-root .secondary-pill {
+  border-color: var(--tarot-home-glass-border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02)),
+    linear-gradient(145deg, rgba(243, 189, 223, 0.14), rgba(174, 141, 255, 0.1) 52%, rgba(31, 18, 38, 0.22)),
+    rgba(39, 24, 47, 0.46);
+  box-shadow:
+    0 8px 18px rgba(17, 10, 20, 0.18),
+    0 1px 0 rgba(255, 255, 255, 0.05) inset;
 }
 
-.app-root.scene-entering.enter-phase-glow .portal-scene,
-.app-root.scene-entering.enter-phase-settle .portal-scene {
-  opacity: 0.14;
-  transform: translate3d(-50%, -51.4%, 0) scale(0.86);
-  filter: saturate(0.98) brightness(0.92);
+.app-root .primary-pill {
+  border-color: var(--tarot-home-glass-border-strong);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.06)),
+    linear-gradient(145deg, rgba(255, 245, 251, 0.26), rgba(243, 189, 223, 0.24) 36%, rgba(174, 141, 255, 0.22) 72%, rgba(127, 82, 216, 0.18));
+  box-shadow:
+    0 12px 24px rgba(17, 10, 20, 0.22),
+    0 0 18px rgba(243, 189, 223, 0.14);
 }
 
-.app-root.scene-entering .nebula-layer {
-  filter: saturate(1.06) brightness(1.02);
+@media (max-width: 420px) {
+  .app-root .explore-scene-shell {
+    padding-inline: 14px;
+    gap: 14px;
+  }
+
+  .app-root .explore-title {
+    font-size: clamp(2.4rem, 12vw, 3.4rem);
+  }
+
+  .app-root .explore-summary-card {
+    min-height: 132px;
+    padding: 13px 12px;
+  }
+
+  .app-root .explore-card-value {
+    margin-top: 12px;
+    font-size: 2rem;
+  }
+
+  .app-root .explore-card-copy {
+    font-size: 0.82rem;
+  }
+
+  .app-root .dream-entry-scene.is-refining .entry-shell {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .app-root .entry-shell {
+    min-height: auto;
+    border-radius: 24px;
+    padding: 20px 14px 16px;
+  }
+
+  .app-root .assistant-refine-step,
+  .app-root .feature-landing-stage {
+    padding: 14px 12px;
+  }
+
+  .app-root .result-copy p {
+    font-size: clamp(1.26rem, 7.2vw, 1.7rem);
+  }
 }
 
-.app-root.scene-entering.enter-phase-fadeOut .nebula-layer {
-  filter: saturate(1.1) brightness(1.04);
+@media (min-width: 768px) {
+  .app-root .explore-scene-shell {
+    grid-template-columns: minmax(0, 1.18fr) minmax(280px, 0.82fr);
+    grid-template-areas:
+      'topbar topbar'
+      'hero summary'
+      'note summary'
+      'action summary';
+    gap: 20px 24px;
+  }
+
+  .app-root .explore-topbar {
+    grid-area: topbar;
+  }
+
+  .app-root .explore-hero {
+    grid-area: hero;
+    max-width: 620px;
+  }
+
+  .app-root .explore-summary-grid {
+    grid-area: summary;
+    align-content: start;
+  }
+
+  .app-root .explore-floating-note {
+    grid-area: note;
+  }
+
+  .app-root .explore-random-button {
+    grid-area: action;
+  }
+
+  .app-root .feature-landing-shell {
+    width: min(100%, 960px);
+  }
+
+  .app-root .feature-landing-stage {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .app-root .feature-landing-stage .assistant-actions {
+    grid-column: 1 / -1;
+  }
+
+  .app-root .result-topbar {
+    grid-template-columns: 1fr auto 1fr;
+  }
+
+  .app-root .result-top-title {
+    justify-self: center;
+  }
+
+  .app-root .result-nav {
+    grid-column: auto;
+    justify-self: end;
+  }
 }
 
-.app-root.scene-entering.enter-phase-glow .nebula-layer {
-  filter: saturate(1.14) brightness(1.08) blur(0.6px);
-}
+@media (min-width: 1024px) {
+  .app-root .explore-scene-shell {
+    grid-template-columns: minmax(0, 1.24fr) minmax(300px, 0.76fr);
+    gap: 24px 30px;
+    padding-top: calc(var(--safe-top) + 22px);
+    padding-bottom: calc(var(--bottom-nav-reserved, 0px) + 32px);
+  }
 
-.app-root.scene-entering.enter-phase-settle .nebula-layer {
-  filter: saturate(1.08) brightness(1.03);
-}
+  .app-root .explore-title {
+    font-size: clamp(4.4rem, 7vw, 6.3rem);
+  }
 
-.app-root.scene-dreamEntry .portal-scene {
-  opacity: 0.16;
-  transform: translate3d(-50%, -54%, 0) scale(0.84);
-  filter: saturate(0.95) brightness(0.9);
-}
+  .app-root .explore-summary-card {
+    min-height: 172px;
+    padding: 18px 18px 20px;
+  }
 
-.app-root.scene-dreamEntry .portal-lines {
-  opacity: 0.2;
-}
+  .app-root .explore-card-copy {
+    font-size: 0.94rem;
+  }
 
-.app-root.scene-featureLanding .portal-scene {
-  opacity: 0.14;
-  transform: translate3d(-50%, -55%, 0) scale(0.86);
-  filter: saturate(0.94) brightness(0.88);
+  .app-root .dream-entry-scene.is-refining .entry-shell {
+    grid-template-columns: minmax(280px, 0.82fr) minmax(420px, 1.18fr);
+    gap: 30px;
+    padding: 28px 28px 24px;
+  }
+
+  .app-root .entry-header h2 {
+    font-size: clamp(3rem, 5.6vw, 4.6rem);
+  }
+
+  .app-root .dream-result-scene {
+    grid-template-columns: minmax(0, 1fr) minmax(480px, 0.92fr);
+    grid-template-areas:
+      'topbar topbar'
+      'copy visual'
+      'actions visual'
+      'privacy visual';
+    column-gap: clamp(24px, 3vw, 40px);
+    row-gap: 14px;
+  }
+
+  .app-root .result-topbar {
+    grid-area: topbar;
+  }
+
+  .app-root .result-copy {
+    grid-area: copy;
+    align-self: start;
+    max-width: 560px;
+  }
+
+  .app-root .result-visual-shell {
+    grid-area: visual;
+    align-self: stretch;
+    height: clamp(420px, 62dvh, 720px);
+  }
+
+  .app-root .bottom-action-cluster {
+    grid-area: actions;
+    align-self: start;
+    max-width: 560px;
+  }
+
+  .app-root .privacy-link {
+    grid-area: privacy;
+    align-self: start;
+  }
+
+  .app-root .bottom-action-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

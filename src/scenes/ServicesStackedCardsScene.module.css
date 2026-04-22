@@ -4,9 +4,10 @@
   z-index: 24;
   overflow: hidden;
   background:
-    radial-gradient(circle at 76% 12%, rgba(56, 190, 255, 0.28), transparent 38%),
-    radial-gradient(circle at 18% 72%, rgba(216, 182, 255, 0.2), transparent 42%),
-    linear-gradient(120deg, #003dce 0%, #0048df 36%, #0b4fea 58%, #0038bc 100%);
+    radial-gradient(circle at 76% 12%, rgba(255, 245, 251, 0.16), transparent 28%),
+    radial-gradient(circle at 18% 72%, rgba(243, 189, 223, 0.22), transparent 36%),
+    radial-gradient(circle at 52% 90%, rgba(174, 141, 255, 0.16), transparent 42%),
+    linear-gradient(180deg, #241528 0%, #3a2344 36%, #5c4469 100%);
 }
 
 .scrollContainer {
@@ -28,7 +29,7 @@
 
 .eyebrow {
   margin: 0;
-  color: rgba(232, 244, 255, 0.82);
+  color: rgba(251, 236, 248, 0.82);
   font: 500 0.66rem/1 'Outfit', 'Segoe UI', sans-serif;
   letter-spacing: 0.24em;
   text-transform: uppercase;
@@ -36,12 +37,12 @@
 
 .title {
   margin: 8px 0 0;
-  color: rgba(247, 252, 255, 0.96);
+  color: rgba(255, 246, 252, 0.96);
   font: 500 clamp(24px, 7.6vw, 44px) / 1.04 'Cormorant Garamond', serif;
   letter-spacing: 0.01em;
   text-wrap: balance;
 }
 
 .cardsRoot {
-  border-top: 1px solid rgba(228, 240, 255, 0.22);
+  border-top: 1px solid rgba(255, 245, 251, 0.16);
 }

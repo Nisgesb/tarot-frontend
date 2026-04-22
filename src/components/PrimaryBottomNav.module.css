@@ -1,8 +1,8 @@
 .root {
   position: absolute;
-  left: max(14px, var(--safe-left));
-  right: max(14px, var(--safe-right));
-  bottom: calc(var(--safe-bottom) + 10px);
+  left: max(16px, var(--safe-left));
+  right: max(16px, var(--safe-right));
+  bottom: calc(var(--safe-bottom) + 12px);
   z-index: 18;
   display: flex;
   justify-content: center;
@@ -11,25 +11,55 @@
 
 .shell {
   --nav-padding: 7px;
-  width: min(100%, 420px);
+  width: min(100%, 408px);
   position: relative;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0;
   padding: var(--nav-padding);
   overflow: hidden;
-  border: 1px solid rgba(216, 199, 160, 0.16);
-  border-radius: 32px;
+  border: 1px solid var(--tarot-home-glass-border-strong);
+  border-radius: 30px;
   background:
-    linear-gradient(135deg, rgba(14, 16, 36, 0.82), rgba(8, 10, 25, 0.62)),
-    radial-gradient(circle at 50% 0%, rgba(233, 220, 188, 0.1), rgba(233, 220, 188, 0) 52%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03)),
+    radial-gradient(circle at 16% 0%, rgba(243, 189, 223, 0.22), rgba(243, 189, 223, 0) 48%),
+    radial-gradient(circle at 84% 0%, rgba(255, 245, 251, 0.18), rgba(255, 245, 251, 0) 52%),
+    linear-gradient(145deg, rgba(243, 189, 223, 0.14), rgba(174, 141, 255, 0.14) 48%, rgba(29, 18, 35, 0.32)),
+    rgba(39, 24, 47, 0.64);
   box-shadow:
-    0 18px 42px rgba(2, 4, 16, 0.42),
-    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
-    0 0 32px rgba(154, 195, 255, 0.05);
-  backdrop-filter: blur(18px) saturate(1.02);
+    0 14px 32px rgba(17, 10, 20, 0.28),
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    0 -12px 22px rgba(255, 255, 255, 0.03) inset,
+    0 0 24px rgba(174, 141, 255, 0.08);
+  backdrop-filter: blur(22px) saturate(1.12);
   pointer-events: auto;
   user-select: none;
+}
+
+.shell::before,
+.shell::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+}
+
+.shell::before {
+  inset: -42% -10% auto;
+  height: 128%;
+  background:
+    radial-gradient(34% 42% at 18% 0%, rgba(243, 189, 223, 0.2), rgba(243, 189, 223, 0)),
+    radial-gradient(38% 44% at 82% 0%, rgba(255, 245, 251, 0.18), rgba(255, 245, 251, 0));
+  filter: blur(10px);
+}
+
+.shell::after {
+  top: 1px;
+  left: 8%;
+  right: 8%;
+  height: 40%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0));
+  opacity: 0.24;
 }
 
 .activePill {
@@ -38,15 +68,17 @@
   bottom: var(--nav-padding);
   left: var(--nav-padding);
   width: calc((100% - (var(--nav-padding) * 2)) / 3);
-  border: 1px solid rgba(231, 214, 180, 0.18);
-  border-radius: 24px;
+  border: 1px solid var(--tarot-home-glass-border-strong);
+  border-radius: 22px;
   background:
-    linear-gradient(180deg, rgba(245, 246, 255, 0.18), rgba(204, 213, 255, 0.08)),
-    linear-gradient(135deg, rgba(116, 91, 152, 0.2), rgba(42, 49, 94, 0.22));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.05)),
+    radial-gradient(circle at 28% 28%, rgba(255, 255, 255, 0.2), transparent 24%),
+    linear-gradient(135deg, rgba(243, 189, 223, 0.24), rgba(174, 141, 255, 0.22), rgba(59, 34, 68, 0.12));
   box-shadow:
-    0 12px 24px rgba(6, 9, 26, 0.26),
-    0 1px 0 rgba(255, 255, 255, 0.14) inset,
-    0 0 0 1px rgba(255, 255, 255, 0.02);
+    0 8px 18px rgba(17, 10, 20, 0.24),
+    0 1px 0 rgba(255, 255, 255, 0.18) inset,
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 0 22px rgba(174, 141, 255, 0.1);
   transform: translateX(calc(var(--nav-progress) * 100%));
   transition:
     transform 220ms cubic-bezier(0.28, 0.94, 0.34, 1.14),
@@ -65,21 +97,22 @@
 .shell[data-dragging='true'] .activePill {
   transition: none;
   box-shadow:
-    0 14px 30px rgba(6, 9, 26, 0.3),
-    0 1px 0 rgba(255, 255, 255, 0.16) inset,
-    0 0 0 1px rgba(255, 255, 255, 0.03);
+    0 10px 22px rgba(6, 9, 26, 0.22),
+    0 1px 0 rgba(255, 255, 255, 0.18) inset,
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 0 24px rgba(243, 189, 223, 0.12);
 }
 
 .tab {
   position: relative;
   z-index: 1;
-  min-height: 52px;
+  min-height: 50px;
   border: 1px solid transparent;
-  border-radius: 24px;
+  border-radius: 22px;
   background: transparent;
-  color: rgba(230, 239, 255, 0.68);
-  font: 600 0.82rem/1 'Outfit', sans-serif;
-  letter-spacing: 0.08em;
+  color: rgba(251, 236, 248, 0.74);
+  font: 600 0.8rem/1 'Outfit', sans-serif;
+  letter-spacing: 0.05em;
   cursor: pointer;
   transition:
     color 160ms ease,
@@ -92,9 +125,48 @@
 }
 
 .tabCurrent {
-  color: rgba(247, 250, 255, 0.96);
+  color: rgba(255, 246, 252, 0.98);
+  text-shadow: 0 0 14px rgba(255, 245, 251, 0.16);
 }
 
 .tabDraggable {
   touch-action: pan-y;
+}
+
+@media (min-width: 768px) {
+  .root {
+    left: max(22px, var(--safe-left));
+    right: max(22px, var(--safe-right));
+    bottom: calc(var(--safe-bottom) + 16px);
+  }
+
+  .shell {
+    --nav-padding: 6px;
+    width: min(100%, 560px);
+    border-radius: 22px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.025)),
+      radial-gradient(circle at 50% 0%, rgba(255, 245, 251, 0.14), rgba(255, 245, 251, 0) 48%),
+      linear-gradient(145deg, rgba(243, 189, 223, 0.12), rgba(174, 141, 255, 0.12) 48%, rgba(29, 18, 35, 0.28)),
+      rgba(39, 24, 47, 0.56);
+    box-shadow:
+      0 12px 24px rgba(17, 10, 20, 0.2),
+      0 1px 0 rgba(255, 255, 255, 0.1) inset,
+      0 0 20px rgba(174, 141, 255, 0.08);
+  }
+
+  .activePill {
+    border-radius: 16px;
+    box-shadow:
+      0 8px 16px rgba(6, 9, 26, 0.16),
+      0 1px 0 rgba(255, 255, 255, 0.14) inset,
+      0 0 0 1px rgba(255, 255, 255, 0.03);
+  }
+
+  .tab {
+    min-height: 46px;
+    border-radius: 16px;
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
+  }
 }

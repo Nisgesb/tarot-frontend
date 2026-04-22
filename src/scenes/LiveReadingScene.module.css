@@ -1,18 +1,71 @@
 .liveReadingScene {
-  display: flex;
-  justify-content: center;
-  align-items: stretch;
+  position: relative;
+  overflow: auto;
+  isolation: isolate;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(10, 16, 31, 0.2) 0%,
+      rgba(10, 16, 31, 0.36) 46%,
+      rgba(10, 16, 31, 0.56) 100%
+    ),
+    radial-gradient(circle at 12% 14%, var(--tarot-home-fog-blue), transparent 34%),
+    radial-gradient(circle at 86% 16%, var(--tarot-home-fog-plum), transparent 36%),
+    radial-gradient(circle at 50% 90%, rgba(174, 141, 255, 0.16), transparent 40%),
+    linear-gradient(
+      180deg,
+      var(--tarot-home-sky-top) 0%,
+      var(--tarot-home-sky-mid) 22%,
+      var(--tarot-home-sky-bottom) 52%,
+      var(--tarot-home-base-deep) 74%,
+      var(--tarot-home-base-void) 100%
+    );
+}
+
+.liveReadingScene::before,
+.liveReadingScene::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.liveReadingScene::before {
+  z-index: 0;
+  background:
+    radial-gradient(circle at 52% 8%, rgba(255, 255, 255, 0.14), transparent 20%),
+    radial-gradient(circle at 24% 74%, rgba(243, 189, 223, 0.18), transparent 28%),
+    radial-gradient(circle at 80% 72%, rgba(174, 141, 255, 0.14), transparent 30%);
+  filter: blur(24px);
+}
+
+.liveReadingScene::after {
+  z-index: 0;
+  background:
+    radial-gradient(circle at 22% 26%, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px),
+    radial-gradient(circle at 76% 46%, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px),
+    radial-gradient(circle at 64% 18%, rgba(255, 255, 255, 0.02) 0 1px, transparent 1px);
+  background-size: 140px 140px, 180px 180px, 220px 220px;
+  opacity: 0.78;
 }
 
 .shell {
+  position: relative;
+  z-index: 1;
   pointer-events: auto;
-  width: min(100%, 440px);
+  width: min(100%, 1180px);
   min-height: var(--app-dvh);
   margin: 0 auto;
-  padding: calc(env(safe-area-inset-top, 0px) + 12px) 18px calc(env(safe-area-inset-bottom, 0px) + 124px);
-  color: rgba(240, 244, 255, 0.96);
-  overflow-y: auto;
+  padding:
+    calc(env(safe-area-inset-top, 0px) + 18px)
+    clamp(16px, 3.6vw, 34px)
+    calc(env(safe-area-inset-bottom, 0px) + var(--bottom-nav-reserved, 0px) + 30px);
+  color: var(--tarot-home-text-body);
+  overflow: visible;
   -webkit-overflow-scrolling: touch;
+  display: grid;
+  gap: 14px;
+  align-content: start;
 }
 
 .header {
@@ -20,38 +73,48 @@
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 10px;
-  margin-bottom: 14px;
 }
 
 .eyebrow {
   margin: 0;
   text-align: center;
-  letter-spacing: 0.26em;
-  font-size: 0.72rem;
-  color: rgba(210, 221, 248, 0.74);
+  letter-spacing: 0.22em;
+  font: 500 0.72rem/1 'Outfit', sans-serif;
+  color: var(--tarot-home-text-meta);
+  text-transform: uppercase;
 }
 
 .placeholderAction {
-  width: 70px;
+  width: 72px;
 }
 
 .authPanel,
 .setupPanel,
 .callPanel {
-  border-radius: 28px;
-  border: 1px solid rgba(212, 223, 248, 0.14);
-  background: linear-gradient(170deg, rgba(24, 31, 50, 0.86), rgba(18, 23, 40, 0.93));
+  border-radius: 26px;
+  border: 1px solid var(--tarot-home-glass-border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02)),
+    radial-gradient(circle at 14% 14%, rgba(243, 189, 223, 0.14), transparent 24%),
+    radial-gradient(circle at 84% 16%, rgba(174, 141, 255, 0.14), transparent 28%),
+    linear-gradient(
+      145deg,
+      rgba(243, 189, 223, 0.18),
+      rgba(174, 141, 255, 0.14) 48%,
+      rgba(31, 18, 38, 0.52)
+    ),
+    rgba(39, 24, 47, 0.52);
   box-shadow:
-    0 24px 60px rgba(3, 6, 12, 0.42),
-    0 1px 0 rgba(255, 255, 255, 0.05) inset;
-  backdrop-filter: blur(14px);
+    0 16px 34px var(--tarot-home-shadow),
+    0 1px 0 rgba(255, 255, 255, 0.08) inset;
+  backdrop-filter: blur(20px) saturate(1.08);
 }
 
 .authPanel,
 .setupPanel {
   display: grid;
   gap: 14px;
-  padding: 18px;
+  padding: clamp(16px, 2vw, 22px);
 }
 
 .authPanel h2,
@@ -59,31 +122,59 @@
 .callPanelTitle {
   margin: 0;
   font-family: 'Cormorant Garamond', serif;
-  font-weight: 600;
-  letter-spacing: 0.01em;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--tarot-home-text-title);
+}
+
+.authPanel h2 {
+  font-size: clamp(2rem, 7vw, 2.7rem);
+  line-height: 0.9;
+}
+
+.setupPanel h3,
+.callPanelTitle {
+  font-size: clamp(1.4rem, 4.4vw, 2rem);
+  line-height: 0.94;
 }
 
 .authPanel p {
   margin: 0;
-  color: rgba(224, 233, 255, 0.78);
+  color: var(--tarot-home-text-body);
+  line-height: 1.5;
 }
 
 .runtimeHint {
   margin: 0;
   padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(212, 223, 248, 0.16);
-  background: rgba(17, 24, 40, 0.56);
-  color: rgba(229, 237, 255, 0.84);
+  border-radius: 14px;
+  border: 1px solid var(--tarot-home-glass-border-soft);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.015)),
+    linear-gradient(
+      145deg,
+      rgba(243, 189, 223, 0.12),
+      rgba(174, 141, 255, 0.1) 56%,
+      rgba(31, 18, 38, 0.18)
+    ),
+    rgba(35, 21, 42, 0.44);
+  color: var(--tarot-home-text-body);
   font-size: 0.8rem;
 }
 
 .runtimeDiagnostics {
-  margin-top: 10px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(212, 223, 248, 0.16);
-  background: rgba(12, 18, 30, 0.5);
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid var(--tarot-home-glass-border-soft);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.015)),
+    linear-gradient(
+      145deg,
+      rgba(243, 189, 223, 0.14),
+      rgba(174, 141, 255, 0.12) 50%,
+      rgba(31, 18, 38, 0.2)
+    ),
+    rgba(35, 21, 42, 0.42);
   display: grid;
   gap: 6px;
 }
@@ -98,25 +189,26 @@
 .runtimeDiagnosticsHeader p {
   margin: 0;
   font-size: 0.82rem;
-  color: rgba(234, 241, 255, 0.9);
+  color: var(--tarot-home-text-title);
 }
 
 .runtimeDiagnostics p {
   margin: 0;
   font-size: 0.78rem;
-  color: rgba(220, 230, 250, 0.82);
+  color: var(--tarot-home-text-body);
 }
 
 .runtimeDiagnosticsButton {
   appearance: none;
-  border: 1px solid rgba(211, 223, 248, 0.2);
+  border: 1px solid var(--tarot-home-glass-border-soft);
   border-radius: 999px;
   min-height: 30px;
   padding: 0 12px;
-  background: rgba(22, 29, 48, 0.56);
-  color: rgba(229, 236, 252, 0.94);
-  font-size: 0.74rem;
-  font-family: 'Outfit', sans-serif;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+    rgba(39, 24, 47, 0.52);
+  color: var(--tarot-home-text-title);
+  font: 500 0.74rem/1 'Outfit', sans-serif;
   cursor: pointer;
 }
 
@@ -152,34 +244,48 @@
 .modeActive {
   min-height: 42px;
   border-radius: 999px;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
 }
 
 .modeButton {
-  border-color: rgba(219, 229, 250, 0.15);
-  background: rgba(22, 29, 48, 0.56);
-  color: rgba(224, 233, 255, 0.72);
+  border-color: var(--tarot-home-glass-border-soft);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+    rgba(39, 24, 47, 0.42);
+  color: rgba(251, 236, 248, 0.74);
 }
 
 .modeActive {
-  border-color: rgba(212, 223, 248, 0.24);
-  background: linear-gradient(145deg, rgba(101, 89, 130, 0.82), rgba(63, 95, 145, 0.9));
-  color: rgba(245, 248, 255, 0.96);
+  border-color: var(--tarot-home-glass-border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.05)),
+    linear-gradient(
+      145deg,
+      rgba(255, 245, 251, 0.18),
+      rgba(243, 189, 223, 0.2),
+      rgba(174, 141, 255, 0.18)
+    );
+  color: var(--tarot-home-text-title);
+  box-shadow:
+    0 8px 16px rgba(17, 10, 20, 0.18),
+    0 1px 0 rgba(255, 255, 255, 0.12) inset;
 }
 
 .fieldLabel {
   display: grid;
   gap: 8px;
-  font-size: 0.88rem;
-  color: rgba(220, 230, 252, 0.82);
+  font-size: 0.86rem;
+  color: var(--tarot-home-text-body);
 }
 
 .fieldLabel input {
   min-height: 46px;
   border-radius: 14px;
-  border: 1px solid rgba(211, 223, 248, 0.16);
-  background: rgba(14, 20, 34, 0.72);
-  color: rgba(240, 245, 255, 0.96);
+  border: 1px solid var(--tarot-home-glass-border-soft);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.015)),
+    rgba(35, 21, 42, 0.52);
+  color: var(--tarot-home-text-title);
   padding: 0 14px;
   font-family: 'Outfit', sans-serif;
   font-size: 16px;
@@ -195,43 +301,54 @@
   min-height: 46px;
   border-radius: 999px;
   padding: 0 18px;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   letter-spacing: 0.02em;
 }
 
 .primaryButton,
 .revealButton {
-  border-color: rgba(212, 223, 248, 0.3);
-  background: linear-gradient(146deg, rgba(93, 87, 130, 0.92), rgba(70, 103, 153, 0.92));
-  color: rgba(247, 249, 255, 0.96);
+  border-color: var(--tarot-home-glass-border-strong);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.06)),
+    linear-gradient(
+      145deg,
+      rgba(255, 245, 251, 0.22),
+      rgba(243, 189, 223, 0.24) 40%,
+      rgba(174, 141, 255, 0.22) 76%,
+      rgba(127, 82, 216, 0.18)
+    );
+  color: var(--tarot-home-text-title);
+  box-shadow:
+    0 10px 22px rgba(17, 10, 20, 0.18),
+    0 0 16px rgba(243, 189, 223, 0.14);
 }
 
 .outlineButton,
 .backButton {
-  border-color: rgba(211, 223, 248, 0.18);
-  background: rgba(22, 29, 48, 0.56);
-  color: rgba(229, 236, 252, 0.94);
+  border-color: var(--tarot-home-glass-border-soft);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02)),
+    rgba(39, 24, 47, 0.46);
+  color: var(--tarot-home-text-title);
 }
 
 .dangerButton {
-  border-color: rgba(255, 198, 198, 0.32);
-  background: rgba(128, 38, 47, 0.42);
-  color: rgba(255, 229, 229, 0.96);
+  border-color: rgba(255, 194, 214, 0.34);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+    rgba(122, 48, 88, 0.42);
+  color: rgba(255, 235, 246, 0.96);
 }
 
 .helperText {
   margin: 0;
   font-size: 0.8rem;
-  color: rgba(206, 218, 246, 0.68);
+  color: var(--tarot-home-text-meta);
 }
 
 .block {
   display: grid;
   gap: 10px;
-}
-
-.block h3 {
-  font-size: 1.48rem;
 }
 
 .readerGrid,
@@ -251,13 +368,24 @@
 }
 
 .readerCard {
-  border-color: rgba(211, 223, 248, 0.14);
-  background: rgba(21, 30, 52, 0.58);
+  border-color: var(--tarot-home-glass-border-soft);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.015)),
+    rgba(39, 24, 47, 0.46);
+  color: var(--tarot-home-text-body);
 }
 
 .readerCardActive {
-  border-color: rgba(224, 235, 252, 0.38);
-  background: linear-gradient(152deg, rgba(90, 80, 126, 0.78), rgba(54, 86, 133, 0.86));
+  border-color: var(--tarot-home-glass-border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04)),
+    linear-gradient(
+      148deg,
+      rgba(255, 245, 251, 0.18),
+      rgba(243, 189, 223, 0.2),
+      rgba(174, 141, 255, 0.18)
+    );
+  color: var(--tarot-home-text-title);
 }
 
 .readerAvatar {
@@ -265,20 +393,20 @@
   height: 56px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid rgba(230, 238, 255, 0.3);
+  border: 1px solid var(--tarot-home-glass-border);
 }
 
 .readerMeta p {
   margin: 0;
-  font-size: 1rem;
-  color: rgba(244, 247, 255, 0.96);
+  font-size: 0.98rem;
+  color: inherit;
 }
 
 .readerMeta span {
   display: block;
   margin-top: 4px;
   font-size: 0.78rem;
-  color: rgba(220, 230, 252, 0.72);
+  color: var(--tarot-home-text-meta);
 }
 
 .deckItem,
@@ -291,37 +419,49 @@
 }
 
 .deckItem {
-  border-color: rgba(212, 223, 248, 0.14);
-  background: rgba(18, 26, 42, 0.54);
-  color: rgba(228, 236, 252, 0.86);
+  border-color: var(--tarot-home-glass-border-soft);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.015)),
+    rgba(35, 21, 42, 0.52);
+  color: var(--tarot-home-text-body);
 }
 
 .deckItemActive {
-  border-color: rgba(224, 235, 252, 0.36);
-  background: linear-gradient(145deg, rgba(96, 86, 128, 0.78), rgba(53, 88, 138, 0.84));
-  color: rgba(246, 249, 255, 0.96);
+  border-color: var(--tarot-home-glass-border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04)),
+    linear-gradient(
+      145deg,
+      rgba(255, 245, 251, 0.18),
+      rgba(243, 189, 223, 0.2) 42%,
+      rgba(174, 141, 255, 0.2) 76%
+    );
+  color: var(--tarot-home-text-title);
 }
 
 .callPanel {
   display: grid;
   gap: 12px;
-  padding: 14px;
+  padding: clamp(14px, 2vw, 20px);
 }
 
 .callStatusBar {
   display: flex;
   justify-content: space-between;
   gap: 10px;
+  flex-wrap: wrap;
   padding: 10px 12px;
   border-radius: 14px;
-  background: rgba(14, 19, 33, 0.64);
-  border: 1px solid rgba(213, 225, 248, 0.12);
+  border: 1px solid var(--tarot-home-glass-border-soft);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.015)),
+    rgba(12, 18, 37, 0.48);
 }
 
 .callStatusBar p {
   margin: 0;
   font-size: 0.8rem;
-  color: rgba(221, 232, 252, 0.8);
+  color: var(--tarot-home-text-body);
 }
 
 .videoGrid {
@@ -334,8 +474,10 @@
   position: relative;
   border-radius: 18px;
   overflow: hidden;
-  border: 1px solid rgba(212, 223, 248, 0.2);
-  background: rgba(10, 14, 25, 0.8);
+  border: 1px solid var(--tarot-home-glass-border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015)),
+    rgba(10, 15, 30, 0.82);
   min-height: 184px;
 }
 
@@ -355,7 +497,7 @@
   min-height: 184px;
   display: grid;
   place-items: center;
-  color: rgba(220, 230, 252, 0.68);
+  color: var(--tarot-home-text-meta);
   font-size: 0.84rem;
 }
 
@@ -365,15 +507,18 @@
   bottom: 10px;
   padding: 4px 10px;
   border-radius: 999px;
-  background: rgba(10, 16, 29, 0.68);
-  color: rgba(241, 246, 255, 0.92);
+  border: 1px solid var(--tarot-home-glass-border-soft);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02)),
+    rgba(10, 16, 29, 0.62);
+  color: var(--tarot-home-text-title);
   font-size: 0.76rem;
 }
 
 .effectOverlay {
   border-radius: 16px;
   padding: 10px 12px;
-  border: 1px solid rgba(245, 247, 255, 0.2);
+  border: 1px solid var(--tarot-home-glass-border);
   text-align: center;
   animation: effectFade 0.28s ease-out;
 }
@@ -381,12 +526,13 @@
 .effectOverlay p {
   margin: 0;
   font-family: 'Cormorant Garamond', serif;
-  font-size: 1.3rem;
+  font-size: clamp(1.2rem, 3.8vw, 1.52rem);
   letter-spacing: 0.04em;
+  color: var(--tarot-home-text-title);
 }
 
 .effect_misty-dawn {
-  background: radial-gradient(circle at 20% 18%, rgba(176, 212, 246, 0.4), rgba(66, 99, 148, 0.3));
+  background: radial-gradient(circle at 20% 18%, rgba(255, 245, 251, 0.34), rgba(124, 82, 140, 0.28));
 }
 
 .effect_arcane-spark {
@@ -394,16 +540,16 @@
 }
 
 .effect_bloom-aura {
-  background: radial-gradient(circle at 26% 24%, rgba(199, 218, 152, 0.4), rgba(87, 119, 88, 0.3));
+  background: radial-gradient(circle at 26% 24%, rgba(243, 189, 223, 0.38), rgba(96, 61, 109, 0.3));
 }
 
 .effect_regal-gold {
-  background: radial-gradient(circle at 62% 18%, rgba(255, 210, 124, 0.42), rgba(122, 92, 45, 0.35));
+  background: radial-gradient(circle at 62% 18%, rgba(244, 210, 196, 0.3), rgba(105, 76, 92, 0.26));
 }
 
 .effect_cosmic-star,
 .effect_cosmic-moon {
-  background: radial-gradient(circle at 52% 14%, rgba(154, 188, 255, 0.42), rgba(63, 84, 153, 0.32));
+  background: radial-gradient(circle at 52% 14%, rgba(174, 141, 255, 0.4), rgba(72, 52, 118, 0.32));
 }
 
 .effect_echo-rise {
@@ -411,20 +557,18 @@
 }
 
 .effect_halo-world {
-  background: radial-gradient(circle at 52% 18%, rgba(192, 228, 255, 0.42), rgba(58, 104, 147, 0.34));
+  background: radial-gradient(circle at 52% 18%, rgba(243, 189, 223, 0.34), rgba(90, 63, 120, 0.32));
 }
 
 .cardPanel {
   border-radius: 16px;
-  border: 1px solid rgba(212, 223, 248, 0.16);
-  background: rgba(12, 18, 32, 0.58);
+  border: 1px solid var(--tarot-home-glass-border-soft);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.015)),
+    rgba(12, 18, 34, 0.46);
   padding: 12px;
   display: grid;
   gap: 10px;
-}
-
-.cardPanelTitle {
-  font-size: 1.34rem;
 }
 
 .cardMeta {
@@ -434,18 +578,18 @@
 
 .cardMeta strong {
   font-size: 1rem;
-  color: rgba(244, 247, 255, 0.98);
+  color: var(--tarot-home-text-title);
 }
 
 .cardMeta span {
   font-size: 0.84rem;
-  color: rgba(219, 230, 252, 0.8);
+  color: var(--tarot-home-text-body);
 }
 
 .revealHint {
   margin: 0;
   font-size: 0.78rem;
-  color: rgba(217, 228, 252, 0.76);
+  color: var(--tarot-home-text-meta);
 }
 
 .callActions {
@@ -455,21 +599,24 @@
 }
 
 .errorText {
-  margin: 12px 0 0;
+  margin: 0;
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(161, 34, 48, 0.32);
-  border: 1px solid rgba(255, 194, 201, 0.24);
+  border: 1px solid rgba(255, 194, 201, 0.3);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015)),
+    rgba(145, 44, 67, 0.36);
   color: rgba(255, 232, 236, 0.96);
   font-size: 0.84rem;
 }
 
 .failureDetailCard {
-  margin-top: 10px;
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(210, 223, 248, 0.2);
-  background: rgba(14, 20, 34, 0.66);
+  border: 1px solid var(--tarot-home-glass-border-soft);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.015)),
+    rgba(14, 20, 36, 0.58);
   display: grid;
   gap: 4px;
 }
@@ -477,14 +624,172 @@
 .failureDetailTitle {
   margin: 0;
   font-size: 0.82rem;
-  color: rgba(236, 242, 255, 0.96);
+  color: var(--tarot-home-text-title);
 }
 
 .failureDetailCard p {
   margin: 0;
   font-size: 0.76rem;
-  color: rgba(219, 230, 252, 0.84);
+  color: var(--tarot-home-text-body);
   word-break: break-word;
+}
+
+.modeButton:focus-visible,
+.modeActive:focus-visible,
+.primaryButton:focus-visible,
+.outlineButton:focus-visible,
+.backButton:focus-visible,
+.revealButton:focus-visible,
+.dangerButton:focus-visible,
+.deckItem:focus-visible,
+.deckItemActive:focus-visible,
+.readerCard:focus-visible,
+.readerCardActive:focus-visible,
+.runtimeDiagnosticsButton:focus-visible {
+  outline: 2px solid rgba(233, 240, 255, 0.38);
+  outline-offset: 2px;
+}
+
+@media (max-width: 420px) {
+  .shell {
+    padding-inline: 14px;
+    gap: 12px;
+  }
+
+  .header {
+    gap: 8px;
+  }
+
+  .placeholderAction {
+    width: 62px;
+  }
+
+  .authPanel,
+  .setupPanel,
+  .callPanel {
+    border-radius: 22px;
+  }
+}
+
+@media (min-width: 768px) {
+  .shell {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'header header'
+      'hint diagnostics'
+      'auth auth'
+      'setup setup'
+      'call call'
+      'error error'
+      'failure failure';
+    gap: 16px 18px;
+    padding-top: calc(env(safe-area-inset-top, 0px) + 22px);
+  }
+
+  .header {
+    grid-area: header;
+  }
+
+  .runtimeHint {
+    grid-area: hint;
+    min-height: 100%;
+  }
+
+  .runtimeDiagnostics {
+    grid-area: diagnostics;
+  }
+
+  .authPanel {
+    grid-area: auth;
+    width: min(100%, 720px);
+  }
+
+  .setupPanel {
+    grid-area: setup;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .setupPanel > .primaryButton {
+    grid-column: 1 / -1;
+    justify-self: start;
+    min-width: 176px;
+  }
+
+  .callPanel {
+    grid-area: call;
+  }
+
+  .videoGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .callActions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .errorText {
+    grid-area: error;
+  }
+
+  .failureDetailCard {
+    grid-area: failure;
+  }
+}
+
+@media (min-width: 1024px) {
+  .shell {
+    grid-template-columns: minmax(280px, 0.88fr) minmax(0, 1.12fr);
+    gap: 18px 24px;
+  }
+
+  .authPanel {
+    width: min(100%, 760px);
+  }
+
+  .callPanel {
+    grid-template-columns: minmax(260px, 0.82fr) minmax(0, 1.18fr);
+    align-items: start;
+    gap: 14px;
+  }
+
+  .callStatusBar,
+  .effectOverlay {
+    grid-column: 1 / -1;
+  }
+
+  .cardPanel {
+    align-self: start;
+  }
+
+  .videoGrid {
+    grid-column: 2;
+    grid-row: 2 / span 2;
+  }
+
+  .callActions {
+    grid-column: 1;
+    grid-template-columns: 1fr;
+  }
+
+  .videoTile,
+  .videoNode,
+  .videoPlaceholder {
+    min-height: 220px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .shell {
+    width: min(100%, 1240px);
+    padding-inline: clamp(22px, 3vw, 42px);
+  }
+
+  .videoTile,
+  .videoNode,
+  .videoPlaceholder {
+    min-height: 250px;
+  }
 }
 
 @keyframes effectFade {

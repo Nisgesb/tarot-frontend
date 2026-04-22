@@ -943,7 +943,7 @@ function DreamHeroApp() {
         motionRef={motion.motionRef}
         motionProfile={resultProfile}
         performanceTier={viewportProfile.performanceTier}
-        onGoHome={actions.goHome}
+        onGoHome={actions.goDreamEntry}
         onGoGallery={actions.goGallery}
         onGoMyDreams={actions.goMyDreams}
         onBackFromInspect={goBackFromInspect}
@@ -959,7 +959,7 @@ function DreamHeroApp() {
         motionProfile={galleryProfile}
         performanceTier={viewportProfile.performanceTier}
         pointerCoarse={viewportProfile.pointerCoarse}
-        onGoHome={actions.goHome}
+        onGoHome={actions.goDreamEntry}
         onGoMyDreams={actions.goMyDreams}
         onSelectDream={inspectFromGallery}
         onRandomDream={openRandomGalleryDream}
@@ -974,7 +974,7 @@ function DreamHeroApp() {
         motionProfile={galleryProfile}
         performanceTier={viewportProfile.performanceTier}
         pointerCoarse={viewportProfile.pointerCoarse}
-        onGoHome={actions.goHome}
+        onGoHome={actions.goDreamEntry}
         onGoGallery={actions.goGallery}
         onStartNew={startFreshDreamEntry}
         onSelectDream={inspectFromMyDreams}

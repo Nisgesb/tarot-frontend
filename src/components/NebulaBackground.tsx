@@ -102,18 +102,18 @@ void main() {
   float halo = exp(-pow(max(radius - 0.36, 0.0) * 3.2, 2.0));
   float centerMist = smoothstep(0.96, 0.14, radius);
 
-  vec3 deepBlue = vec3(0.01, 0.07, 0.34);
-  vec3 electricBlue = vec3(0.0, 0.33, 1.0);
-  vec3 cyanBlue = vec3(0.22, 0.74, 1.0);
-  vec3 lilac = vec3(0.89, 0.73, 1.0);
+  vec3 deepBlue = vec3(0.09, 0.06, 0.2);
+  vec3 electricBlue = vec3(0.36, 0.24, 0.58);
+  vec3 cyanBlue = vec3(0.58, 0.42, 0.72);
+  vec3 lilac = vec3(0.97, 0.88, 0.93);
 
   vec3 color = deepBlue;
   color += electricBlue * (nebula * 0.85 + centerMist * 0.2);
-  color += cyanBlue * stream * 0.45;
-  color = mix(color, lilac, smoothstep(0.5, 1.0, n3) * 0.24 + halo * 0.2);
+  color += cyanBlue * stream * 0.5;
+  color = mix(color, lilac, smoothstep(0.5, 1.0, n3) * 0.36 + halo * 0.3);
 
   float bloom = 0.18 / (0.27 + radius * radius * 2.8);
-  color += vec3(0.02, 0.12, 0.35) * bloom;
+  color += vec3(0.28, 0.2, 0.24) * bloom;
 
   float breathing = 0.95 + 0.05 * sin(t * 0.9);
   color *= breathing;

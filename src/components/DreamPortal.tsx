@@ -116,8 +116,8 @@ export function DreamPortal({
                 gradientUnits="userSpaceOnUse"
               >
                 <stop stopColor="rgba(255,255,255,0.86)" />
-                <stop offset="0.5" stopColor="rgba(241,213,255,0.84)" />
-                <stop offset="1" stopColor="rgba(176,216,255,0.62)" />
+                <stop offset="0.5" stopColor="rgba(245,219,255,0.86)" />
+                <stop offset="1" stopColor="rgba(206,186,245,0.68)" />
               </linearGradient>
               <filter
                 id="portalGlow"
@@ -137,7 +137,7 @@ export function DreamPortal({
               strokeWidth="2.4"
               strokeLinecap="round"
             />
-            <path d="M74 420H286" stroke="rgba(214, 228, 255, 0.8)" strokeWidth="2.4" />
+            <path d="M74 420H286" stroke="rgba(228, 215, 255, 0.76)" strokeWidth="2.4" />
             <path
               d="M74 420V214A106 106 0 0 1 286 214V420"
               stroke="rgba(250,239,255,0.52)"

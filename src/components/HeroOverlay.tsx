@@ -35,7 +35,7 @@ export function HeroOverlay({
 
   return (
     <section className={`hero-overlay ${entered ? 'is-entered' : ''} ${hidden ? 'is-hidden' : ''}`}>
-      <p className="hero-tag">AETHER STUDIO</p>
+      <p className="hero-tag">AETHER TAROT STUDIO</p>
       <h1 className={titleClassName}>
         <span className="hero-title-final">
           <span className="hero-title-line">Whispers of the</span>
@@ -49,9 +49,14 @@ export function HeroOverlay({
           />
         ) : null}
       </h1>
+      <p className="hero-sigil-row" aria-hidden>
+        <span>✦</span>
+        <span>☾</span>
+        <span>✦</span>
+      </p>
       <p className="hero-subtitle">
-        A speculative collaboration where imagination and intelligent systems
-        converge to turn impossible visions into luminous moments.
+        Step through the luminous gate, shuffle your question, and let the cards reveal
+        the gentle guidance written in your stars.
       </p>
       <button className="hero-enter" type="button" onClick={onEnter}>
         Enter
