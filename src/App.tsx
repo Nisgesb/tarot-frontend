@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { DreamPortal } from './components/DreamPortal'
+import { AuthGatePrompt } from './components/AuthGatePrompt'
 import { HeroOverlay } from './components/HeroOverlay'
 import { MotionDebugPanel } from './components/MotionDebugPanel'
 import { MotionPermissionPrompt } from './components/MotionPermissionPrompt'
@@ -25,19 +26,28 @@ import { exportCanvasResult } from './platform/exportShareAdapter'
 import { createDreamRecordFromRefined } from './services/dreamGenerationService'
 import { getGalleryDreams } from './services/galleryService'
 import {
+  loadStoredAuth,
+  loginWithEmail,
+  registerWithEmail,
+  saveStoredAuth,
+} from './services/liveReadingApi'
+import {
   loadDreamRecords,
   saveDreamRecords,
   upsertDreamRecord,
 } from './services/dreamStorageService'
+import { AuthScene } from './scenes/AuthScene'
 import { DreamEntryScene } from './scenes/DreamEntryScene'
 import { DreamGalleryScene } from './scenes/DreamGalleryScene'
 import { DreamInsightsLoader } from './scenes/DreamInsightsLoader'
 import { DreamResultScene } from './scenes/DreamResultScene'
+import { AiReadingScene } from './scenes/AiReadingScene'
 import { FeatureLandingScene } from './scenes/FeatureLandingScene'
 import { LiveReadingScene } from './scenes/LiveReadingScene'
 import { MyDreamsScene } from './scenes/MyDreamsScene'
 import { EMPTY_RAW_DREAM_INPUT } from './types/dream'
 import type { DreamRecord, RawDreamInput } from './types/dream'
+import type { AuthPayload } from './types/liveReading'
 
 const ORB_ZOOM_MS = 560
 const SHOW_HERO_ON_BOOT = import.meta.env.VITE_SHOW_HERO_ON_BOOT !== 'false'
@@ -56,6 +66,62 @@ const DEFAULT_SCENE_TUNING: MotionSceneTuning = {
 }
 
 type MotionLastPermissionChoice = 'unknown' | 'granted' | 'denied' | 'skipped' | 'unsupported'
+type ProtectedPath = '/archive' | '/gallery' | '/live-reading'
+
+const DEFAULT_AUTH_RETURN_PATH = '/dream/new'
+
+function extractPathname(path: string) {
+  if (!path.startsWith('/')) {
+    return DEFAULT_AUTH_RETURN_PATH
+  }
+
+  const queryStart = path.indexOf('?')
+  return queryStart >= 0 ? path.slice(0, queryStart) : path
+}
+
+function normalizeAuthReturnPath(path: string | null | undefined) {
+  if (!path || !path.startsWith('/')) {
+    return DEFAULT_AUTH_RETURN_PATH
+  }
+
+  const pathname = extractPathname(path)
+
+  if (pathname === '/login' || pathname === '/register') {
+    return DEFAULT_AUTH_RETURN_PATH
+  }
+
+  return path
+}
+
+function resolveProtectedPath(path: string): ProtectedPath | null {
+  const pathname = extractPathname(path)
+
+  if (pathname === '/archive' || pathname === '/my-dreams') {
+    return '/archive'
+  }
+
+  if (pathname === '/gallery') {
+    return '/gallery'
+  }
+
+  if (pathname === '/live-reading') {
+    return '/live-reading'
+  }
+
+  return null
+}
+
+function resolveProtectedLabel(path: ProtectedPath) {
+  if (path === '/archive') {
+    return '我的'
+  }
+
+  if (path === '/gallery') {
+    return '圈子'
+  }
+
+  return '真人连线'
+}
 
 function loadMotionTuning(): MotionTuning {
   if (typeof window === 'undefined') {
@@ -161,6 +227,7 @@ function resolveBackgroundSpeed(scene: string) {
       return 3.12
     case 'dreamEntry':
       return 0.88
+    case 'aiReading':
     case 'assistantRefine':
     case 'featureLanding':
       return 0.94
@@ -184,6 +251,7 @@ function resolveStarSpeed(scene: string) {
     case 'entering':
       return 2.64
     case 'dreamEntry':
+    case 'aiReading':
     case 'assistantRefine':
     case 'featureLanding':
       return 0.92
@@ -280,7 +348,10 @@ function DreamHeroApp() {
 
   const keyboardAware = useKeyboardAwareViewport(
     sceneState.scene === 'dreamEntry' ||
+      sceneState.scene === 'aiReading' ||
       sceneState.scene === 'assistantRefine' ||
+      sceneState.scene === 'authLogin' ||
+      sceneState.scene === 'authRegister' ||
       liveReadingActive,
   )
 
@@ -314,6 +385,18 @@ function DreamHeroApp() {
 
     return window.location.pathname === '/dream/new' || !SHOW_HERO_ON_BOOT
   })
+  const [auth, setAuth] = useState<AuthPayload | null>(() => loadStoredAuth())
+  const [authPending, setAuthPending] = useState(false)
+  const [authError, setAuthError] = useState<string | null>(null)
+  const [authGatePrompt, setAuthGatePrompt] = useState<{
+    visible: boolean
+    targetPath: ProtectedPath
+    targetLabel: string
+  }>({
+    visible: false,
+    targetPath: '/archive',
+    targetLabel: '我的',
+  })
   const [myDreams, setMyDreams] = useState<DreamRecord[]>([])
   const [draftInput, setDraftInput] = useState<RawDreamInput>(EMPTY_RAW_DREAM_INPUT)
   const [draftRefinedText, setDraftRefinedText] = useState('')
@@ -344,6 +427,121 @@ function DreamHeroApp() {
     () => findDreamById(sceneState.dreamId, myDreams, galleryDreams),
     [sceneState.dreamId, myDreams, galleryDreams],
   )
+  const authRouteMode =
+    sceneState.scene === 'authLogin'
+      ? 'login'
+      : sceneState.scene === 'authRegister'
+        ? 'register'
+        : null
+  const authReturnPath = useMemo(() => {
+    if (!authRouteMode) {
+      return DEFAULT_AUTH_RETURN_PATH
+    }
+
+    const queryStart = sceneState.path.indexOf('?')
+    const search = queryStart >= 0 ? sceneState.path.slice(queryStart + 1) : ''
+    const query = new URLSearchParams(search)
+    return normalizeAuthReturnPath(query.get('from'))
+  }, [authRouteMode, sceneState.path])
+
+  const syncAuthState = useCallback((nextAuth: AuthPayload | null) => {
+    setAuth(nextAuth)
+    saveStoredAuth(nextAuth)
+  }, [])
+
+  const openAuthGatePrompt = useCallback((targetPath: ProtectedPath) => {
+    setAuthGatePrompt({
+      visible: true,
+      targetPath,
+      targetLabel: resolveProtectedLabel(targetPath),
+    })
+    setAuthError(null)
+  }, [])
+
+  const navigateWithAuthGate = useCallback(
+    (targetPath: ProtectedPath, navigateAction: () => void) => {
+      if (auth) {
+        setAuthGatePrompt((previous) => ({
+          ...previous,
+          visible: false,
+        }))
+        navigateAction()
+        return
+      }
+
+      openAuthGatePrompt(targetPath)
+    },
+    [auth, openAuthGatePrompt],
+  )
+
+  const openMyWithAuthGate = useCallback(() => {
+    navigateWithAuthGate('/archive', actions.goArchive)
+  }, [actions, navigateWithAuthGate])
+
+  const openCircleWithAuthGate = useCallback(() => {
+    navigateWithAuthGate('/gallery', actions.goGallery)
+  }, [actions, navigateWithAuthGate])
+
+  const openLiveReadingWithAuthGate = useCallback(() => {
+    navigateWithAuthGate('/live-reading', () => actions.goFeature('live-reading'))
+  }, [actions, navigateWithAuthGate])
+
+  const handleSubmitAuth = useCallback(
+    async (payload: { email: string; password: string }) => {
+      if (!authRouteMode) {
+        return
+      }
+
+      setAuthPending(true)
+      setAuthError(null)
+
+      try {
+        const authPayload =
+          authRouteMode === 'register'
+            ? await registerWithEmail(payload.email, payload.password)
+            : await loginWithEmail(payload.email, payload.password)
+
+        syncAuthState(authPayload)
+        setAuthGatePrompt((previous) => ({
+          ...previous,
+          visible: false,
+        }))
+        actions.goPath(authReturnPath, true)
+      } catch (exception) {
+        const message =
+          exception instanceof Error && exception.message.trim().length > 0
+            ? exception.message
+            : authRouteMode === 'register'
+              ? '注册失败，请稍后重试。'
+              : '登录失败，请稍后重试。'
+        setAuthError(message)
+      } finally {
+        setAuthPending(false)
+      }
+    },
+    [actions, authReturnPath, authRouteMode, syncAuthState],
+  )
+
+  const handleSwitchAuthMode = useCallback(() => {
+    if (authRouteMode === 'login') {
+      actions.goRegister(authReturnPath, true)
+      setAuthError(null)
+      return
+    }
+
+    if (authRouteMode === 'register') {
+      actions.goLogin(authReturnPath, true)
+      setAuthError(null)
+    }
+  }, [actions, authReturnPath, authRouteMode])
+
+  const handleGoLoginFromPrompt = useCallback(() => {
+    actions.goLogin(authGatePrompt.targetPath)
+    setAuthGatePrompt((previous) => ({
+      ...previous,
+      visible: false,
+    }))
+  }, [actions, authGatePrompt.targetPath])
 
   useEffect(() => {
     try {
@@ -456,6 +654,48 @@ function DreamHeroApp() {
       actions.goDreamEntry(true)
     }
   }, [actions, sceneState.scene])
+
+  useEffect(() => {
+    if (!authGatePrompt.visible || !auth) {
+      return
+    }
+
+    setAuthGatePrompt((previous) => ({
+      ...previous,
+      visible: false,
+    }))
+  }, [auth, authGatePrompt.visible])
+
+  useEffect(() => {
+    if (auth) {
+      return
+    }
+
+    let blockedPath: ProtectedPath | null = null
+
+    if (sceneState.scene === 'myDreams') {
+      blockedPath = '/archive'
+    } else if (sceneState.scene === 'gallery') {
+      blockedPath = '/gallery'
+    } else if (sceneState.scene === 'featureLanding' && sceneState.featureSlug === 'live-reading') {
+      blockedPath = '/live-reading'
+    }
+
+    if (!blockedPath) {
+      return
+    }
+
+    openAuthGatePrompt(blockedPath)
+    actions.goDreamEntry(true)
+  }, [actions, auth, openAuthGatePrompt, sceneState.featureSlug, sceneState.scene])
+
+  useEffect(() => {
+    if (!auth || !authRouteMode) {
+      return
+    }
+
+    actions.goPath(authReturnPath, true)
+  }, [actions, auth, authReturnPath, authRouteMode])
 
   useEffect(() => {
     if (sceneState.scene !== 'dreamEntry') {
@@ -681,11 +921,11 @@ function DreamHeroApp() {
 
   const goBackFromInspect = () => {
     if (sceneState.inspectSource === 'myDreams') {
-      actions.goMyDreams()
+      openMyWithAuthGate()
       return
     }
 
-    actions.goGallery()
+    openCircleWithAuthGate()
   }
 
   const rootClassName = [
@@ -780,11 +1020,17 @@ function DreamHeroApp() {
     !enterTransitionState.active
   const showPrimaryBottomNav =
     sceneState.scene === 'dreamEntry' ||
-    (sceneState.scene === 'featureLanding' && !liveReadingActive) ||
+    (sceneState.scene === 'featureLanding' &&
+      !liveReadingActive &&
+      sceneState.featureSlug !== 'daily-fortune') ||
     sceneState.scene === 'gallery' ||
     sceneState.scene === 'myDreams'
   const allowTextInputFocus =
-    sceneState.scene === 'assistantRefine' || liveReadingActive
+    sceneState.scene === 'assistantRefine' ||
+    sceneState.scene === 'aiReading' ||
+    sceneState.scene === 'authLogin' ||
+    sceneState.scene === 'authRegister' ||
+    liveReadingActive
   const useSceneOwnedBackground =
     sceneState.scene === 'dreamEntry' ||
     sceneState.scene === 'gallery' ||
@@ -906,9 +1152,29 @@ function DreamHeroApp() {
           homeIntroPhase={shouldHoldHomeForIntro ? 'fadeOut' : enterTransitionState.phase}
           onPhaseChange={handleDreamEntryPhaseChange}
           onVisualize={handleVisualize}
-          onOpenLiveReadingDebug={() => actions.goFeature('live-reading')}
+          onOpenAiReading={actions.goAiReading}
+          onOpenLiveReadingDebug={openLiveReadingWithAuthGate}
+          onOpenDailyFortune={() => actions.goFeature('daily-fortune')}
         />
       ) : null}
+
+      {authRouteMode ? (
+        <AuthScene
+          active
+          mode={authRouteMode}
+          pending={authPending}
+          sourcePath={resolveProtectedPath(authReturnPath)}
+          error={authError}
+          onSubmit={handleSubmitAuth}
+          onSwitchMode={handleSwitchAuthMode}
+          onGoHome={actions.goDreamEntry}
+        />
+      ) : null}
+
+      <AiReadingScene
+        active={sceneState.scene === 'aiReading'}
+        onGoHome={actions.goDreamEntry}
+      />
 
       <DreamInsightsLoader
         key={`loader-${generationToken}`}
@@ -921,6 +1187,7 @@ function DreamHeroApp() {
         <LiveReadingScene
           active
           onGoHome={actions.goDreamEntry}
+          onAuthStateChange={syncAuthState}
         />
       ) : null}
 
@@ -944,8 +1211,8 @@ function DreamHeroApp() {
         motionProfile={resultProfile}
         performanceTier={viewportProfile.performanceTier}
         onGoHome={actions.goDreamEntry}
-        onGoGallery={actions.goGallery}
-        onGoMyDreams={actions.goMyDreams}
+        onGoGallery={openCircleWithAuthGate}
+        onGoMyDreams={openMyWithAuthGate}
         onBackFromInspect={goBackFromInspect}
         onDreamAgain={handleDreamAgain}
         onDownload={handleResultDownload}
@@ -960,7 +1227,7 @@ function DreamHeroApp() {
         performanceTier={viewportProfile.performanceTier}
         pointerCoarse={viewportProfile.pointerCoarse}
         onGoHome={actions.goDreamEntry}
-        onGoMyDreams={actions.goMyDreams}
+        onGoMyDreams={openMyWithAuthGate}
         onSelectDream={inspectFromGallery}
         onRandomDream={openRandomGalleryDream}
       />
@@ -975,7 +1242,7 @@ function DreamHeroApp() {
         performanceTier={viewportProfile.performanceTier}
         pointerCoarse={viewportProfile.pointerCoarse}
         onGoHome={actions.goDreamEntry}
-        onGoGallery={actions.goGallery}
+        onGoGallery={openCircleWithAuthGate}
         onStartNew={startFreshDreamEntry}
         onSelectDream={inspectFromMyDreams}
       />
@@ -983,11 +1250,23 @@ function DreamHeroApp() {
       {showPrimaryBottomNav ? (
         <PrimaryBottomNav
           activeTab={activePrimaryTab}
-          onGoMy={actions.goArchive}
+          onGoMy={openMyWithAuthGate}
           onGoHome={actions.goDreamEntry}
-          onGoCircle={actions.goGallery}
+          onGoCircle={openCircleWithAuthGate}
         />
       ) : null}
+
+      <AuthGatePrompt
+        visible={authGatePrompt.visible}
+        targetLabel={authGatePrompt.targetLabel}
+        onGoLogin={handleGoLoginFromPrompt}
+        onDismiss={() => {
+          setAuthGatePrompt((previous) => ({
+            ...previous,
+            visible: false,
+          }))
+        }}
+      />
 
       <PortalTransition active={orbTransition.active} origin={orbTransition.origin} />
 

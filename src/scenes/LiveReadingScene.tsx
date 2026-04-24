@@ -35,6 +35,7 @@ import styles from './LiveReadingScene.module.css'
 interface LiveReadingSceneProps {
   active: boolean
   onGoHome: () => void
+  onAuthStateChange?: (auth: AuthPayload | null) => void
 }
 
 interface VideoTileData {
@@ -465,7 +466,11 @@ function VideoTile({ tile }: { tile: VideoTileData }) {
   )
 }
 
-export function LiveReadingScene({ active, onGoHome }: LiveReadingSceneProps) {
+export function LiveReadingScene({
+  active,
+  onGoHome,
+  onAuthStateChange,
+}: LiveReadingSceneProps) {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -799,6 +804,10 @@ export function LiveReadingScene({ active, onGoHome }: LiveReadingSceneProps) {
       setError(`[${detail.stageLabel}] ${detail.message}`)
     })
   }, [active, auth, bootstrapLiveReading, captureFailure])
+
+  useEffect(() => {
+    onAuthStateChange?.(auth)
+  }, [auth, onAuthStateChange])
 
   useEffect(() => {
     if (active) {

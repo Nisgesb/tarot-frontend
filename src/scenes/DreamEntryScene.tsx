@@ -14,7 +14,9 @@ interface DreamEntrySceneProps {
   homeIntroPhase: EnterTransitionPhase
   onPhaseChange: (phase: 'dreamEntry' | 'assistantRefine') => void
   onVisualize: (payload: { rawInput: RawDreamInput; refinedText: string }) => void
+  onOpenAiReading?: () => void
   onOpenLiveReadingDebug?: () => void
+  onOpenDailyFortune?: () => void
 }
 
 export function DreamEntryScene({
@@ -27,7 +29,9 @@ export function DreamEntryScene({
   homeIntroPhase,
   onPhaseChange,
   onVisualize,
+  onOpenAiReading,
   onOpenLiveReadingDebug,
+  onOpenDailyFortune,
 }: DreamEntrySceneProps) {
   const [input, setInput] = useState(initialInput)
   const [questionIndex, setQuestionIndex] = useState(0)
@@ -102,7 +106,12 @@ export function DreamEntryScene({
   return (
     <section className={panelClassName}>
       {phase === 'dreamEntry' ? (
-        <HomePage key={stageKey} onOpenLiveReadingDebug={onOpenLiveReadingDebug} />
+        <HomePage
+          key={stageKey}
+          onOpenAiReading={onOpenAiReading}
+          onOpenLiveReadingDebug={onOpenLiveReadingDebug}
+          onOpenDailyFortune={onOpenDailyFortune}
+        />
       ) : (
         <div className="entry-shell" key={stageKey}>
           <div className="entry-shell-glow entry-shell-glow-a" aria-hidden />

@@ -21,16 +21,16 @@
   border: 1px solid var(--tarot-home-glass-border-strong);
   border-radius: 30px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03)),
-    radial-gradient(circle at 16% 0%, rgba(243, 189, 223, 0.22), rgba(243, 189, 223, 0) 48%),
-    radial-gradient(circle at 84% 0%, rgba(255, 245, 251, 0.18), rgba(255, 245, 251, 0) 52%),
-    linear-gradient(145deg, rgba(243, 189, 223, 0.14), rgba(174, 141, 255, 0.14) 48%, rgba(29, 18, 35, 0.32)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.03)),
+    radial-gradient(circle at 16% 0%, rgba(245, 204, 230, 0.22), rgba(245, 204, 230, 0) 48%),
+    radial-gradient(circle at 84% 0%, rgba(255, 248, 252, 0.18), rgba(255, 248, 252, 0) 52%),
+    linear-gradient(145deg, rgba(245, 204, 230, 0.14), rgba(191, 163, 255, 0.14) 48%, rgba(48, 34, 58, 0.32)),
     rgba(39, 24, 47, 0.64);
   box-shadow:
-    0 14px 32px rgba(17, 10, 20, 0.28),
-    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    0 14px 32px rgba(30, 20, 36, 0.28),
+    0 1px 0 rgba(255, 255, 255, 0.18) inset,
     0 -12px 22px rgba(255, 255, 255, 0.03) inset,
-    0 0 24px rgba(174, 141, 255, 0.08);
+    0 0 24px rgba(191, 163, 255, 0.08);
   backdrop-filter: blur(22px) saturate(1.12);
   pointer-events: auto;
   user-select: none;
@@ -47,8 +47,8 @@
   inset: -42% -10% auto;
   height: 128%;
   background:
-    radial-gradient(34% 42% at 18% 0%, rgba(243, 189, 223, 0.2), rgba(243, 189, 223, 0)),
-    radial-gradient(38% 44% at 82% 0%, rgba(255, 245, 251, 0.18), rgba(255, 245, 251, 0));
+    radial-gradient(34% 42% at 18% 0%, rgba(245, 204, 230, 0.2), rgba(245, 204, 230, 0)),
+    radial-gradient(38% 44% at 82% 0%, rgba(255, 248, 252, 0.18), rgba(255, 248, 252, 0));
   filter: blur(10px);
 }
 
@@ -73,12 +73,12 @@
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.05)),
     radial-gradient(circle at 28% 28%, rgba(255, 255, 255, 0.2), transparent 24%),
-    linear-gradient(135deg, rgba(243, 189, 223, 0.24), rgba(174, 141, 255, 0.22), rgba(59, 34, 68, 0.12));
+    linear-gradient(135deg, rgba(245, 204, 230, 0.24), rgba(191, 163, 255, 0.22), rgba(59, 34, 68, 0.12));
   box-shadow:
-    0 8px 18px rgba(17, 10, 20, 0.24),
+    0 8px 18px rgba(30, 20, 36, 0.24),
     0 1px 0 rgba(255, 255, 255, 0.18) inset,
     0 0 0 1px rgba(255, 255, 255, 0.03),
-    0 0 22px rgba(174, 141, 255, 0.1);
+    0 0 22px rgba(191, 163, 255, 0.1);
   transform: translateX(calc(var(--nav-progress) * 100%));
   transition:
     transform 220ms cubic-bezier(0.28, 0.94, 0.34, 1.14),
@@ -100,7 +100,7 @@
     0 10px 22px rgba(6, 9, 26, 0.22),
     0 1px 0 rgba(255, 255, 255, 0.18) inset,
     0 0 0 1px rgba(255, 255, 255, 0.03),
-    0 0 24px rgba(243, 189, 223, 0.12);
+    0 0 24px rgba(245, 204, 230, 0.12);
 }
 
 .tab {
@@ -110,7 +110,7 @@
   border: 1px solid transparent;
   border-radius: 22px;
   background: transparent;
-  color: rgba(251, 236, 248, 0.74);
+  color: rgba(253, 244, 251, 0.74);
   font: 600 0.8rem/1 'Outfit', sans-serif;
   letter-spacing: 0.05em;
   cursor: pointer;
@@ -125,8 +125,8 @@
 }
 
 .tabCurrent {
-  color: rgba(255, 246, 252, 0.98);
-  text-shadow: 0 0 14px rgba(255, 245, 251, 0.16);
+  color: rgba(255, 250, 254, 0.98);
+  text-shadow: 0 0 14px rgba(255, 248, 252, 0.16);
 }
 
 .tabDraggable {
@@ -145,21 +145,21 @@
     width: min(100%, 560px);
     border-radius: 22px;
     background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.025)),
-      radial-gradient(circle at 50% 0%, rgba(255, 245, 251, 0.14), rgba(255, 245, 251, 0) 48%),
-      linear-gradient(145deg, rgba(243, 189, 223, 0.12), rgba(174, 141, 255, 0.12) 48%, rgba(29, 18, 35, 0.28)),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.025)),
+      radial-gradient(circle at 50% 0%, rgba(255, 248, 252, 0.14), rgba(255, 248, 252, 0) 48%),
+      linear-gradient(145deg, rgba(245, 204, 230, 0.12), rgba(191, 163, 255, 0.12) 48%, rgba(48, 34, 58, 0.28)),
       rgba(39, 24, 47, 0.56);
     box-shadow:
-      0 12px 24px rgba(17, 10, 20, 0.2),
-      0 1px 0 rgba(255, 255, 255, 0.1) inset,
-      0 0 20px rgba(174, 141, 255, 0.08);
+      0 12px 24px rgba(30, 20, 36, 0.2),
+      0 1px 0 rgba(255, 255, 255, 0.16) inset,
+      0 0 20px rgba(191, 163, 255, 0.08);
   }
 
   .activePill {
     border-radius: 16px;
     box-shadow:
       0 8px 16px rgba(6, 9, 26, 0.16),
-      0 1px 0 rgba(255, 255, 255, 0.14) inset,
+      0 1px 0 rgba(255, 255, 255, 0.2) inset,
       0 0 0 1px rgba(255, 255, 255, 0.03);
   }
 

@@ -1,0 +1,309 @@
+.dailyFortuneScene {
+  display: grid;
+  align-content: start;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.shell {
+  position: relative;
+  z-index: 2;
+  width: min(100%, 1140px);
+  min-height: var(--app-dvh);
+  margin: 0 auto;
+  padding:
+    calc(env(safe-area-inset-top, 0px) + 16px)
+    clamp(16px, 3.8vw, 36px)
+    calc(env(safe-area-inset-bottom, 0px) + 24px);
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.titleWrap {
+  text-align: center;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--tarot-home-text-meta);
+  letter-spacing: 0.2em;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 6px 0 0;
+  color: var(--tarot-home-text-title);
+  font: 500 clamp(2.1rem, 7.8vw, 3.2rem) / 0.9 'Cormorant Garamond', serif;
+  letter-spacing: -0.04em;
+}
+
+.spacer {
+  width: 88px;
+}
+
+.surface {
+  border: 1px solid var(--tarot-home-glass-border);
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02)),
+    radial-gradient(circle at 14% 14%, rgba(182, 227, 255, 0.14), transparent 24%),
+    radial-gradient(circle at 84% 16%, rgba(210, 196, 255, 0.14), transparent 28%),
+    linear-gradient(
+      145deg,
+      rgba(91, 136, 255, 0.2),
+      rgba(210, 196, 255, 0.14) 48%,
+      rgba(17, 26, 52, 0.52)
+    ),
+    rgba(18, 28, 54, 0.52);
+  box-shadow:
+    0 16px 36px var(--tarot-home-shadow),
+    0 1px 0 rgba(255, 255, 255, 0.1) inset;
+  backdrop-filter: blur(22px) saturate(1.08);
+}
+
+.hero {
+  padding: clamp(18px, 2.6vw, 28px);
+  display: grid;
+  gap: 12px;
+}
+
+.heroMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.metaPill {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  border: 1px solid var(--tarot-home-glass-border-soft);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.03)),
+    rgba(16, 25, 49, 0.44);
+  color: var(--tarot-home-text-body);
+  font-size: 0.75rem;
+}
+
+.headline {
+  margin: 0;
+  color: var(--tarot-home-text-title);
+  font: 500 clamp(2rem, 6.4vw, 3rem) / 0.92 'Cormorant Garamond', serif;
+  letter-spacing: -0.04em;
+}
+
+.summary {
+  margin: 0;
+  color: var(--tarot-home-text-body);
+  font-size: 0.96rem;
+  line-height: 1.58;
+  max-width: 64ch;
+}
+
+.selectorWrap {
+  display: grid;
+  gap: 8px;
+}
+
+.selectorTitle {
+  margin: 0;
+  color: var(--tarot-home-text-meta);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.selectorList {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.selectorButton {
+  appearance: none;
+  min-height: 38px;
+  border: 1px solid var(--tarot-home-glass-border-soft);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02)),
+    rgba(16, 25, 49, 0.38);
+  color: var(--tarot-home-text-body);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.selectorButtonActive {
+  border-color: var(--tarot-home-glass-border-strong);
+  color: var(--tarot-home-text-title);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.05)),
+    linear-gradient(
+      145deg,
+      rgba(210, 196, 255, 0.22),
+      rgba(109, 184, 255, 0.22) 54%,
+      rgba(72, 90, 160, 0.24)
+    );
+}
+
+.grid {
+  display: grid;
+  gap: 14px;
+}
+
+.card {
+  padding: 16px;
+}
+
+.cardTitle {
+  margin: 0;
+  color: var(--tarot-home-text-meta);
+  letter-spacing: 0.12em;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+
+.cardCopy {
+  margin: 10px 0 0;
+  color: var(--tarot-home-text-body);
+  line-height: 1.58;
+  font-size: 0.9rem;
+}
+
+.cardName {
+  margin: 8px 0 0;
+  color: var(--tarot-home-text-title);
+  font: 500 1.5rem/1 'Cormorant Garamond', serif;
+}
+
+.keywords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.keyword {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--tarot-home-glass-border-soft);
+  color: var(--tarot-home-text-body);
+  font-size: 0.74rem;
+  background: rgba(16, 25, 49, 0.34);
+}
+
+.reflection {
+  margin: 0;
+  color: var(--tarot-home-text-title);
+  font-size: 0.98rem;
+  line-height: 1.52;
+}
+
+.hintRow {
+  display: grid;
+  gap: 10px;
+}
+
+.hintPill {
+  margin: 0;
+  padding: 11px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--tarot-home-glass-border-soft);
+  color: var(--tarot-home-text-body);
+  background: rgba(15, 23, 44, 0.38);
+  line-height: 1.5;
+}
+
+.hintPill strong {
+  color: var(--tarot-home-text-title);
+  font-weight: 500;
+}
+
+.status {
+  margin: 0;
+  color: var(--tarot-home-text-meta);
+  font-size: 0.8rem;
+}
+
+.error {
+  margin: 0;
+  color: rgba(255, 224, 236, 0.94);
+  background: rgba(132, 46, 84, 0.36);
+  border: 1px solid rgba(255, 195, 221, 0.28);
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.retry {
+  justify-self: start;
+}
+
+@media (max-width: 560px) {
+  .spacer {
+    width: 74px;
+  }
+
+  .selectorList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 768px) {
+  .shell {
+    gap: 18px;
+    padding-top: calc(env(safe-area-inset-top, 0px) + 22px);
+  }
+
+  .hero {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    gap: 16px 20px;
+  }
+
+  .heroMeta {
+    grid-column: 1 / -1;
+  }
+
+  .summary {
+    max-width: 44ch;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .wide {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 1024px) {
+  .shell {
+    width: min(100%, 1240px);
+    gap: 20px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .wide {
+    grid-column: span 2;
+  }
+}

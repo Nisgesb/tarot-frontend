@@ -9,6 +9,9 @@ export type SceneKey =
   | 'hero'
   | 'entering'
   | 'dreamEntry'
+  | 'authLogin'
+  | 'authRegister'
+  | 'aiReading'
   | 'assistantRefine'
   | 'generating'
   | 'featureLanding'
@@ -77,9 +80,29 @@ function parseLocation(pathname: string, search: string): ParsedLocation {
     }
   }
 
+  if (normalizedPath === '/login') {
+    return {
+      scene: 'authLogin',
+      path: `${normalizedPath}${search}`,
+      dreamId: null,
+      inspectSource: null,
+      featureSlug: null,
+    }
+  }
+
+  if (normalizedPath === '/register') {
+    return {
+      scene: 'authRegister',
+      path: `${normalizedPath}${search}`,
+      dreamId: null,
+      inspectSource: null,
+      featureSlug: null,
+    }
+  }
+
   if (normalizedPath === '/ai-reading') {
     return {
-      scene: 'assistantRefine',
+      scene: 'aiReading',
       path: normalizedPath,
       dreamId: null,
       inspectSource: null,
@@ -192,6 +215,30 @@ function navigate(path: string, replace = false) {
   }
 }
 
+function normalizeAuthReturnPath(path: string | null | undefined) {
+  if (!path || !path.startsWith('/')) {
+    return null
+  }
+
+  if (path.startsWith('/login') || path.startsWith('/register')) {
+    return null
+  }
+
+  return path
+}
+
+function buildAuthPath(basePath: '/login' | '/register', fromPath?: string) {
+  const from = normalizeAuthReturnPath(fromPath)
+
+  if (!from) {
+    return basePath
+  }
+
+  const query = new URLSearchParams()
+  query.set('from', from)
+  return `${basePath}?${query.toString()}`
+}
+
 export function useSceneMachine() {
   const [state, dispatch] = useReducer(
     reducer,
@@ -226,7 +273,18 @@ export function useSceneMachine() {
     () => ({
       goHome: () => applyNavigation('/'),
       startEntering: () => dispatch({ type: 'SET_SCENE', scene: 'entering' }),
+      goPath: (path: string, replace = false) => {
+        if (!path.startsWith('/')) {
+          return
+        }
+
+        applyNavigation(path, replace)
+      },
       goDreamEntry: (replace = false) => applyNavigation('/dream/new', replace),
+      goLogin: (fromPath?: string, replace = false) =>
+        applyNavigation(buildAuthPath('/login', fromPath), replace),
+      goRegister: (fromPath?: string, replace = false) =>
+        applyNavigation(buildAuthPath('/register', fromPath), replace),
       goAiReading: () => applyNavigation('/ai-reading'),
       goAssistantRefine: () => applyNavigation('/dream/new?phase=assistant'),
       goGenerating: () => applyNavigation('/dream/new?phase=generating'),
@@ -237,7 +295,7 @@ export function useSceneMachine() {
         applyNavigation(feature?.path ?? '/dream/new')
       },
       goGallery: () => applyNavigation('/gallery'),
-      goMyDreams: () => applyNavigation('/my-dreams'),
+      goMyDreams: () => applyNavigation('/archive'),
       openResult: (dreamId: string) =>
         applyNavigation(`/dream/${encodeURIComponent(dreamId)}?view=result`),
       inspectDream: (

@@ -3,9 +3,9 @@
   --portal-h: clamp(304px, 52dvh, 414px);
   --portal-top: 49%;
   --hero-overlay-top: 50%;
-  --text-main: rgba(255, 246, 252, 0.97);
-  --text-subtle: rgba(251, 236, 248, 0.82);
-  --glass-border: rgba(255, 245, 251, 0.26);
+  --text-main: rgba(255, 250, 254, 0.97);
+  --text-subtle: rgba(253, 244, 251, 0.82);
+  --glass-border: rgba(255, 248, 252, 0.26);
   --glass-bg: rgba(62, 43, 72, 0.44);
   --focus: rgba(229, 204, 255, 0.76);
   --button-shadow: 0 12px 30px rgba(38, 20, 46, 0.32);
@@ -39,8 +39,8 @@ body,
 
 body {
   background:
-    radial-gradient(circle at 18% 14%, rgba(243, 189, 223, 0.26), transparent 28%), radial-gradient(circle at 82% 18%, rgba(174, 141, 255, 0.18), transparent 30%),
-    radial-gradient(circle at 50% 100%, rgba(198, 154, 209, 0.22), transparent 34%), linear-gradient(180deg, #26172e 0%, #3b2447 36%, #5c4469 100%);
+    radial-gradient(circle at 18% 14%, rgba(245, 204, 230, 0.26), transparent 28%), radial-gradient(circle at 82% 18%, rgba(191, 163, 255, 0.18), transparent 30%),
+    radial-gradient(circle at 50% 100%, rgba(198, 154, 209, 0.28), transparent 34%), linear-gradient(180deg, #5A4470 0%, #7B6394 36%, #9A84A8 100%);
   color: var(--text-main);
 }
 
@@ -53,9 +53,9 @@ body {
   overflow: hidden;
   isolation: isolate;
   background:
-    radial-gradient(circle at 78% 12%, rgba(255, 245, 251, 0.16), transparent 22%), radial-gradient(circle at 16% 14%, rgba(243, 189, 223, 0.24), transparent 30%),
-    radial-gradient(circle at 84% 72%, rgba(174, 141, 255, 0.18), transparent 34%), radial-gradient(circle at 48% 100%, rgba(198, 154, 209, 0.18), transparent 40%),
-    linear-gradient(180deg, #26172e 0%, #3d2448 32%, #5c4469 100%);
+    radial-gradient(circle at 78% 12%, rgba(255, 248, 252, 0.22), transparent 22%), radial-gradient(circle at 16% 14%, rgba(245, 204, 230, 0.3), transparent 30%),
+    radial-gradient(circle at 84% 72%, rgba(191, 163, 255, 0.24), transparent 34%), radial-gradient(circle at 48% 100%, rgba(198, 154, 209, 0.24), transparent 40%),
+    linear-gradient(180deg, #5A4470 0%, #7B6394 32%, #9A84A8 100%);
 }
 
 .app-root::before,
@@ -69,8 +69,8 @@ body {
 .app-root::before {
   z-index: 0;
   background:
-    radial-gradient(circle at 52% 42%, rgba(255, 255, 255, 0.09), transparent 52%), radial-gradient(circle at 28% 72%, rgba(243, 189, 223, 0.12), transparent 48%),
-    radial-gradient(circle at 74% 24%, rgba(174, 141, 255, 0.12), transparent 44%);
+    radial-gradient(circle at 52% 42%, rgba(255, 255, 255, 0.09), transparent 52%), radial-gradient(circle at 28% 72%, rgba(245, 204, 230, 0.12), transparent 48%),
+    radial-gradient(circle at 74% 24%, rgba(191, 163, 255, 0.12), transparent 44%);
   mix-blend-mode: screen;
 }
 
@@ -82,15 +82,15 @@ body {
 }
 
 .app-root.scene-entering {
-  --text-main: rgba(255, 246, 252, 0.97);
+  --text-main: rgba(255, 250, 254, 0.97);
   --text-subtle: rgba(255, 234, 248, 0.86);
   --glass-border: rgba(243, 222, 255, 0.34);
-  --glass-bg: rgba(67, 42, 99, 0.44);
-  --button-shadow: 0 10px 28px rgba(103, 64, 152, 0.32);
+  --glass-bg: rgba(86, 62, 118, 0.38);
+  --button-shadow: 0 10px 28px rgba(120, 82, 168, 0.28);
   background:
-    radial-gradient(circle at 74% 14%, rgba(255, 214, 240, 0.3), transparent 38%), radial-gradient(circle at 16% 74%, rgba(204, 174, 255, 0.26), transparent 44%),
-    radial-gradient(circle at 52% 94%, rgba(255, 236, 248, 0.2), transparent 40%),
-    linear-gradient(124deg, #4d2d73 0%, #68439a 34%, #7b58b6 62%, #8a6ac7 100%);
+    radial-gradient(circle at 74% 14%, rgba(255, 214, 240, 0.36), transparent 38%), radial-gradient(circle at 16% 74%, rgba(204, 174, 255, 0.32), transparent 44%),
+    radial-gradient(circle at 52% 94%, rgba(255, 236, 248, 0.26), transparent 40%),
+    linear-gradient(124deg, #7B5AA0 0%, #9470BC 34%, #A882CE 62%, #B894D8 100%);
 }
 
 .app-root.scene-entering::before {
@@ -103,17 +103,17 @@ body {
 .app-root.scene-gallery,
 .app-root.scene-myDreams {
   background:
-    radial-gradient(circle at 18% 14%, rgba(243, 189, 223, 0.16), transparent 28%), radial-gradient(circle at 82% 16%, rgba(255, 245, 251, 0.12), transparent 24%),
-    radial-gradient(circle at 50% 76%, rgba(174, 141, 255, 0.18), transparent 42%), linear-gradient(180deg, #1a0f1f 0%, #291731 34%, #493055 68%, #23142a 100%);
+    radial-gradient(circle at 18% 14%, rgba(245, 204, 230, 0.24), transparent 28%), radial-gradient(circle at 82% 16%, rgba(255, 248, 252, 0.2), transparent 24%),
+    radial-gradient(circle at 50% 76%, rgba(191, 163, 255, 0.26), transparent 42%), linear-gradient(180deg, #4A3660 0%, #5E4478 34%, #7D6090 68%, #52386A 100%);
 }
 
 .app-root.scene-dreamEntry::before,
 .app-root.scene-gallery::before,
 .app-root.scene-myDreams::before {
   background:
-    radial-gradient(circle at 50% 76%, rgba(255, 245, 251, 0.12), rgba(255, 245, 251, 0.04) 10%, rgba(255, 245, 251, 0) 28%),
-    radial-gradient(circle at 50% 78%, rgba(174, 141, 255, 0.18), rgba(174, 141, 255, 0.08) 24%, rgba(174, 141, 255, 0) 52%),
-    radial-gradient(circle at 18% 10%, rgba(243, 189, 223, 0.14), transparent 32%), radial-gradient(circle at 82% 14%, rgba(198, 154, 209, 0.12), transparent 30%);
+    radial-gradient(circle at 50% 76%, rgba(255, 248, 252, 0.12), rgba(255, 248, 252, 0.04) 10%, rgba(255, 248, 252, 0) 28%),
+    radial-gradient(circle at 50% 78%, rgba(191, 163, 255, 0.18), rgba(191, 163, 255, 0.08) 24%, rgba(191, 163, 255, 0) 52%),
+    radial-gradient(circle at 18% 10%, rgba(245, 204, 230, 0.14), transparent 32%), radial-gradient(circle at 82% 14%, rgba(198, 154, 209, 0.12), transparent 30%);
   opacity: 0.92;
   mix-blend-mode: screen;
 }
@@ -122,9 +122,9 @@ body {
 .app-root.scene-gallery::after,
 .app-root.scene-myDreams::after {
   background:
-    radial-gradient(circle at 20% 22%, rgba(255, 245, 251, 0.08) 0 1px, transparent 1.8px), radial-gradient(circle at 74% 34%, rgba(255, 245, 251, 0.06) 0 1px, transparent 1.8px),
-    radial-gradient(circle at 58% 64%, rgba(255, 245, 251, 0.05) 0 1px, transparent 1.8px),
-    repeating-linear-gradient(-22deg, rgba(243, 189, 223, 0.018), rgba(243, 189, 223, 0.018) 1px, rgba(243, 189, 223, 0) 1px, rgba(243, 189, 223, 0) 18px);
+    radial-gradient(circle at 20% 22%, rgba(255, 248, 252, 0.08) 0 1px, transparent 1.8px), radial-gradient(circle at 74% 34%, rgba(255, 248, 252, 0.06) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 58% 64%, rgba(255, 248, 252, 0.05) 0 1px, transparent 1.8px),
+    repeating-linear-gradient(-22deg, rgba(245, 204, 230, 0.018), rgba(245, 204, 230, 0.018) 1px, rgba(245, 204, 230, 0) 1px, rgba(245, 204, 230, 0) 18px);
   opacity: 0.2;
   mix-blend-mode: soft-light;
 }
@@ -159,8 +159,8 @@ body {
 
 .nebula-fallback {
   background:
-    radial-gradient(circle at 32% 64%, rgba(193, 138, 211, 0.44), rgba(193, 138, 211, 0) 42%), radial-gradient(circle at 68% 22%, rgba(255, 223, 236, 0.26), transparent 45%),
-    radial-gradient(circle at 55% 62%, rgba(130, 153, 229, 0.24), transparent 40%), linear-gradient(120deg, #211238, #332056 52%, #4b3273 100%);
+    radial-gradient(circle at 32% 64%, rgba(193, 138, 211, 0.5), rgba(193, 138, 211, 0) 42%), radial-gradient(circle at 68% 22%, rgba(255, 223, 236, 0.32), transparent 45%),
+    radial-gradient(circle at 55% 62%, rgba(130, 153, 229, 0.3), transparent 40%), linear-gradient(120deg, #4E3668, #6A4E82 52%, #8268A0 100%);
   filter: saturate(1.16) brightness(1.05);
 }
 
@@ -627,7 +627,7 @@ body {
 .topbar-link {
   border: 1px solid transparent;
   border-radius: 999px;
-  color: rgba(255, 246, 252, 0.94);
+  color: rgba(255, 250, 254, 0.94);
   font:
     500 0.74rem/1 'Outfit',
     sans-serif;
@@ -652,7 +652,7 @@ body {
     linear-gradient(155deg, rgba(255, 224, 242, 0.18), rgba(197, 163, 244, 0.2));
   border-color: rgba(250, 225, 255, 0.56);
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+    0 0 0 1px rgba(255, 255, 255, 0.16) inset,
     0 10px 26px rgba(118, 79, 177, 0.34),
     0 0 34px rgba(236, 184, 240, 0.28);
   backdrop-filter: blur(7px);
@@ -687,7 +687,7 @@ body {
 .hero-enter:hover {
   filter: saturate(1.08) brightness(1.04);
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.12) inset,
+    0 0 0 1px rgba(255, 255, 255, 0.18) inset,
     0 12px 28px rgba(123, 84, 183, 0.38),
     0 0 40px rgba(245, 192, 244, 0.32);
 }
@@ -1072,7 +1072,7 @@ body {
   inset: 0;
   background:
     radial-gradient(circle at center, rgba(8, 20, 72, 0.7) 56%, rgba(8, 20, 72, 0) 57%),
-    conic-gradient(from -88deg, rgba(255, 255, 255, 0.2), rgba(164, 218, 255, 0.72) var(--progress-angle), rgba(255, 255, 255, 0.1) var(--progress-angle));
+    conic-gradient(from -88deg, rgba(255, 255, 255, 0.2), rgba(164, 218, 255, 0.72) var(--progress-angle), rgba(255, 255, 255, 0.16) var(--progress-angle));
   box-shadow:
     0 0 26px rgba(179, 214, 255, 0.36),
     0 0 56px rgba(185, 155, 255, 0.24),
@@ -1135,7 +1135,7 @@ body {
   height: 9px;
   border-radius: 50%;
   border: 1px solid rgba(208, 223, 255, 0.38);
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.14);
   transition: transform 320ms ease, background 320ms ease, box-shadow 320ms ease;
 }
 
@@ -1272,7 +1272,7 @@ body {
   border: 1px solid rgba(218, 229, 255, 0.34);
   box-shadow:
     0 26px 96px rgba(8, 16, 64, 0.54),
-    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+    0 0 0 1px rgba(255, 255, 255, 0.14) inset,
     0 0 82px rgba(181, 204, 255, 0.22);
   background: rgba(16, 23, 76, 0.4);
   backdrop-filter: blur(8px);
@@ -1698,7 +1698,7 @@ body {
 }
 
 .portal-transition-vignette {
-  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.14), rgba(0, 6, 32, 0.66) 58%, rgba(0, 5, 30, 0.9) 100%);
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.2), rgba(0, 6, 32, 0.66) 58%, rgba(0, 5, 30, 0.9) 100%);
   mix-blend-mode: screen;
   opacity: 0;
   animation: transitionVignette 1.1s ease forwards;
@@ -1738,6 +1738,7 @@ body {
 }
 
 .scene-dreamEntry .portal-scene,
+.scene-aiReading .portal-scene,
 .scene-assistantRefine .portal-scene,
 .scene-featureLanding .portal-scene,
 .scene-generating .portal-scene,
@@ -1749,7 +1750,8 @@ body {
   transform: translate3d(-50%, -56%, 0) scale(0.88);
 }
 
-.scene-dreamEntry .portal-scene {
+.scene-dreamEntry .portal-scene,
+.scene-aiReading .portal-scene {
   opacity: 0;
   pointer-events: none;
 }
@@ -1772,6 +1774,7 @@ body {
 .scene-result .hero-overlay,
 .scene-inspectDream .hero-overlay,
 .scene-dreamEntry .hero-overlay,
+.scene-aiReading .hero-overlay,
 .scene-assistantRefine .hero-overlay,
 .scene-generating .hero-overlay {
   opacity: 0;

@@ -1,4 +1,5 @@
 import { getFeatureLandingConfigBySlug, type FeatureLandingSlug } from '../config/homeMenu'
+import { DailyFortuneScene } from './DailyFortuneScene'
 
 interface FeatureLandingSceneProps {
   active: boolean
@@ -11,6 +12,15 @@ export function FeatureLandingScene({
   featureSlug,
   onGoHome,
 }: FeatureLandingSceneProps) {
+  if (featureSlug === 'daily-fortune') {
+    return (
+      <DailyFortuneScene
+        active={active}
+        onGoHome={onGoHome}
+      />
+    )
+  }
+
   const className = [
     'scene-panel',
     'scene-template-form',

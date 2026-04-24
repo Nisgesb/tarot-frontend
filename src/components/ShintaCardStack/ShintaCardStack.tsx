@@ -111,7 +111,7 @@ function StackCard({
 }) {
   return (
     <div className={joinClassNames(styles.stackCard, compactShadow && styles.stackCardBack)}>
-      {children}
+      <div className={styles.stackCardBody}>{children}</div>
     </div>
   )
 }

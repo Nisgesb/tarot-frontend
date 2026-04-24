@@ -44,8 +44,8 @@ export const FEATURE_LANDING_CONFIGS: Record<FeatureLandingSlug, FeatureLandingC
     path: '/daily-fortune',
     label: '今日运势',
     subtitle: '查看今日能量与塔罗提示',
-    status: '今日运势入口筹备中',
-    description: '这里会承接每日运势、今日建议和轻量化的塔罗提示。',
+    status: '今日运势已上线',
+    description: '这里展示今日运势摘要、三维度解读、宜忌建议与反思问题。',
   },
 }
 

@@ -1,0 +1,85 @@
+.authScene {
+  display: grid;
+  place-items: center;
+}
+
+.authShell {
+  max-width: min(100%, 980px);
+  min-height: auto;
+}
+
+.authHeader h2 {
+  margin: 0;
+}
+
+.authStage {
+  margin-top: 0;
+  padding: 18px;
+  border: 1px solid var(--tarot-home-glass-border-soft);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.015)),
+    linear-gradient(145deg, rgba(245, 204, 230, 0.14), rgba(191, 163, 255, 0.12) 52%, rgba(50, 34, 56, 0.22)),
+    rgba(46, 32, 52, 0.42);
+  box-shadow:
+    0 14px 26px rgba(30, 20, 36, 0.18),
+    0 1px 0 rgba(255, 255, 255, 0.05) inset;
+  display: grid;
+  gap: 12px;
+}
+
+.fieldLabel {
+  display: grid;
+  gap: 8px;
+  color: var(--tarot-home-text-body);
+  font: 500 0.86rem/1.2 'Outfit', sans-serif;
+}
+
+.fieldInput {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--tarot-home-glass-border-soft);
+  border-radius: 14px;
+  padding: 0 12px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.02)),
+    rgba(39, 24, 47, 0.42);
+  color: var(--tarot-home-text-title);
+  font: 500 0.95rem/1 'Outfit', sans-serif;
+}
+
+.fieldInput:focus-visible {
+  outline: 2px solid rgba(245, 204, 230, 0.6);
+  outline-offset: 1px;
+}
+
+.errorText {
+  margin: 0;
+  color: #ffd5df;
+  font-size: 0.84rem;
+}
+
+.actionRow {
+  margin-top: 2px;
+}
+
+.backButton {
+  width: fit-content;
+  min-height: 38px;
+  border: 1px solid var(--tarot-home-glass-border-soft);
+  border-radius: 999px;
+  padding: 0 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.02)),
+    rgba(39, 24, 47, 0.36);
+  color: rgba(253, 244, 251, 0.86);
+  font: 500 0.74rem/1 'Outfit', sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (min-width: 860px) {
+  .authShell {
+    padding: 34px;
+  }
+}

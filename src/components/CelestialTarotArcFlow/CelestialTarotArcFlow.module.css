@@ -1,0 +1,1410 @@
+.root {
+  position: relative;
+  min-height: 100%;
+  height: 100%;
+  overflow: hidden;
+  color: #f2e6ca;
+  font-family: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  --ctaf-ink: #f2e6ca;
+  --ctaf-muted: rgba(242, 230, 202, 0.74);
+  --ctaf-gold-bright: #f0dea9;
+  --ctaf-gold-line: rgba(216, 182, 113, 0.48);
+}
+
+.root::before,
+.root::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.root::before {
+  background:
+    radial-gradient(circle at 20% 26%, rgba(255, 255, 255, 0.08) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 72% 18%, rgba(255, 255, 255, 0.07) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 76% 72%, rgba(255, 255, 255, 0.06) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 28% 78%, rgba(255, 255, 255, 0.05) 0 1px, transparent 1.4px);
+  background-size: 240px 240px, 210px 210px, 280px 280px, 190px 190px;
+  opacity: 0.42;
+}
+
+.root::after {
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.045) 0.7px, transparent 0.9px),
+    radial-gradient(rgba(255, 255, 255, 0.025) 0.6px, transparent 0.8px);
+  background-position: 0 0, 16px 18px;
+  background-size: 18px 18px, 24px 24px;
+  mix-blend-mode: screen;
+  opacity: 0.22;
+}
+
+.stage {
+  position: relative;
+  width: min(100%, 1480px);
+  height: 100%;
+  min-height: 760px;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.stage::before,
+.stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.stage::before {
+  background:
+    radial-gradient(circle at 50% 18%, rgba(188, 149, 255, 0.38), transparent 18%),
+    radial-gradient(circle at 50% 86%, rgba(188, 149, 255, 0.3), transparent 18%),
+    radial-gradient(circle at 50% 50%, rgba(101, 57, 200, 0.22), transparent 34%),
+    linear-gradient(180deg, rgba(46, 18, 90, 0.96), rgba(22, 8, 46, 0.98));
+  box-shadow:
+    inset 0 0 120px rgba(255, 255, 255, 0.02),
+    inset 0 -20px 80px rgba(0, 0, 0, 0.26),
+    0 24px 90px rgba(2, 0, 11, 0.5);
+}
+
+.stage::after {
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.05) 0.75px, transparent 0.9px),
+    radial-gradient(rgba(255, 255, 255, 0.025) 0.55px, transparent 0.8px);
+  background-position: 0 0, 14px 16px;
+  background-size: 18px 18px, 24px 24px;
+  mix-blend-mode: screen;
+  opacity: 0.26;
+}
+
+.stageAurora {
+  position: absolute;
+  inset: auto 50%;
+  width: 48%;
+  height: 32%;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  filter: blur(36px);
+  pointer-events: none;
+}
+
+.stageAuroraViolet {
+  top: 8%;
+  width: 58%;
+  background: radial-gradient(circle, rgba(174, 132, 255, 0.42), rgba(147, 110, 255, 0));
+}
+
+.stageAuroraIndigo {
+  bottom: 6%;
+  width: 54%;
+  background: radial-gradient(circle, rgba(174, 132, 255, 0.34), rgba(70, 112, 238, 0));
+}
+
+.stageDiagram {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.88;
+}
+
+.stageLineSoft,
+.stageLineFaint {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.stageLineSoft {
+  stroke: var(--ctaf-gold-line);
+  stroke-width: 1.25;
+}
+
+.stageLineFaint {
+  stroke: rgba(216, 182, 113, 0.18);
+  stroke-width: 1;
+}
+
+.stageStar {
+  fill: rgba(240, 222, 169, 0.88);
+  filter: drop-shadow(0 0 10px rgba(240, 222, 169, 0.55));
+}
+
+.stageDivider {
+  position: absolute;
+  top: 47.2%;
+  left: 6%;
+  right: 0;
+  z-index: 1;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(86, 173, 255, 0),
+    rgba(86, 173, 255, 0.9) 20%,
+    rgba(86, 173, 255, 0.35) 100%
+  );
+  box-shadow:
+    0 0 10px rgba(87, 161, 255, 0.35),
+    0 0 30px rgba(87, 161, 255, 0.12);
+  pointer-events: none;
+}
+
+.stageChamber {
+  position: absolute;
+  left: 6%;
+  right: 8%;
+  bottom: 5%;
+  top: 47.2%;
+  z-index: 1;
+  border: 1px solid rgba(95, 163, 255, 0.2);
+  box-shadow:
+    inset 0 0 0 1px rgba(95, 163, 255, 0.08),
+    0 0 30px rgba(95, 163, 255, 0.08);
+  pointer-events: none;
+}
+
+.stageCopy {
+  position: absolute;
+  inset: clamp(18px, 2vw, 28px) 0 auto;
+  z-index: 2;
+  text-align: center;
+  pointer-events: none;
+}
+
+.stageEyebrow,
+.stageStatus {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+  font-size: clamp(0.66rem, 1vw, 0.8rem);
+  color: rgba(240, 222, 169, 0.72);
+}
+
+.stageTitle {
+  margin: 0.15rem 0 0;
+  font-size: clamp(2.8rem, 5.8vw, 5rem);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 0.9;
+  text-shadow: 0 0 24px rgba(170, 123, 255, 0.18);
+}
+
+.stageSubtitle {
+  margin: 0.12rem 0 0;
+  font-size: clamp(1.1rem, 1.9vw, 1.65rem);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(246, 240, 255, 0.84);
+}
+
+.stageSigil {
+  position: absolute;
+  top: 15.3%;
+  left: 50%;
+  z-index: 2;
+  width: 72px;
+  height: 72px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 68%);
+  box-shadow: 0 0 28px rgba(173, 129, 255, 0.22);
+  pointer-events: none;
+}
+
+.stageSigil::before,
+.stageSigil::after,
+.stageSigilCore {
+  content: '';
+  position: absolute;
+  inset: 50%;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+}
+
+.stageSigil::before {
+  width: 36px;
+  height: 36px;
+  border: 2px solid rgba(246, 240, 255, 0.88);
+}
+
+.stageSigil::after {
+  width: 8px;
+  height: 8px;
+  background: rgba(246, 240, 255, 0.94);
+  box-shadow:
+    -18px -10px 0 -2px rgba(246, 240, 255, 0.82),
+    18px -10px 0 -2px rgba(246, 240, 255, 0.82),
+    -18px 10px 0 -2px rgba(246, 240, 255, 0.82),
+    18px 10px 0 -2px rgba(246, 240, 255, 0.82);
+}
+
+.stageSigilCore {
+  width: 18px;
+  height: 44px;
+  border-left: 2px solid rgba(246, 240, 255, 0.88);
+  border-right: 2px solid rgba(246, 240, 255, 0.88);
+}
+
+.stageStatusbar {
+  position: absolute;
+  left: 50%;
+  bottom: 2.3%;
+  z-index: 2;
+  width: min(540px, calc(100vw - 48px));
+  padding: 0.75rem 1.15rem 0.9rem;
+  text-align: center;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(12, 8, 30, 0.68), rgba(12, 8, 30, 0.34));
+  box-shadow:
+    inset 0 0 0 1px rgba(216, 182, 113, 0.08),
+    0 0 24px rgba(108, 78, 218, 0.14);
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+}
+
+.stageSelection {
+  margin: 0.28rem 0 0;
+  font-size: clamp(1.1rem, 2vw, 1.4rem);
+  font-weight: 400;
+  letter-spacing: 0.12em;
+}
+
+.stageHint {
+  margin: 0.35rem auto 0;
+  width: min(420px, 100%);
+  color: rgba(242, 230, 202, 0.72);
+  font-size: clamp(0.78rem, 1.1vw, 0.88rem);
+}
+
+.stageScene,
+.arcFan {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.stageScene {
+  z-index: 3;
+}
+
+.stageSceneContent {
+  position: absolute;
+  inset: 0;
+  transition:
+    opacity 420ms ease,
+    filter 420ms ease,
+    transform 420ms ease;
+}
+
+.stageSceneContentHidden {
+  opacity: 0;
+  filter: blur(2px);
+  transform: scale(0.992);
+  pointer-events: none;
+}
+
+.shuffleIntroLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(160, 118, 255, 0.22), rgba(160, 118, 255, 0) 46%),
+    radial-gradient(circle at 50% 48%, rgba(8, 4, 24, 0), rgba(8, 4, 24, 0.44));
+}
+
+.shuffleIntroPile {
+  position: relative;
+  width: min(74vw, 760px);
+  height: min(58vh, 520px);
+  min-width: 340px;
+  min-height: 280px;
+  filter: drop-shadow(0 28px 42px rgba(3, 2, 12, 0.42));
+}
+
+.shuffleIntroGlyph {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(46vw, 360px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid rgba(240, 222, 169, 0.28);
+  box-shadow:
+    inset 0 0 0 1px rgba(240, 222, 169, 0.1),
+    0 0 34px rgba(163, 118, 255, 0.2);
+  background:
+    radial-gradient(circle at 50% 50%, rgba(180, 138, 255, 0.2), rgba(180, 138, 255, 0) 64%),
+    radial-gradient(circle at 50% 50%, rgba(242, 226, 178, 0.12), rgba(242, 226, 178, 0) 72%);
+  pointer-events: none;
+}
+
+.shuffleIntroGlyph::before,
+.shuffleIntroGlyph::after {
+  content: '';
+  position: absolute;
+  inset: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.shuffleIntroGlyph::before {
+  width: 66%;
+  height: 66%;
+  border: 1px solid rgba(240, 222, 169, 0.22);
+}
+
+.shuffleIntroGlyph::after {
+  width: 38%;
+  height: 38%;
+  border: 1px solid rgba(240, 222, 169, 0.3);
+}
+
+.shuffleIntroCard {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--ctaf-card-width);
+  height: calc(var(--ctaf-card-width) * 1.62);
+  transform: translate(-50%, -50%);
+  transform-origin: 50% 86%;
+  pointer-events: none;
+}
+
+.dealIntroLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 38;
+  pointer-events: none;
+}
+
+.dealIntroDeckAura {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(34vw, 300px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(182, 141, 255, 0.34), rgba(182, 141, 255, 0.08) 36%, rgba(182, 141, 255, 0) 68%),
+    radial-gradient(circle, rgba(252, 232, 184, 0.18), rgba(252, 232, 184, 0));
+  filter: blur(8px);
+}
+
+.dealIntroCard {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--ctaf-card-width);
+  height: calc(var(--ctaf-card-width) * 1.62);
+  transform: translate(-50%, -50%);
+  transform-origin: 50% 86%;
+  pointer-events: none;
+}
+
+.arcFan {
+  pointer-events: none;
+}
+
+.arcFanWindowed {
+  pointer-events: auto;
+}
+
+.cardAnchor {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  overflow: visible;
+}
+
+.arcCard {
+  --ctaf-card-height: calc(var(--ctaf-card-width) * 1.62);
+  position: relative;
+  width: var(--ctaf-card-width);
+  height: var(--ctaf-card-height);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ctaf-gold-bright);
+  cursor: pointer;
+  transform-origin: 50% 86%;
+  appearance: none;
+}
+
+.arcCard:focus-visible {
+  outline: none;
+}
+
+.arcCardFrame,
+.arcCardSurface {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 18px;
+  pointer-events: none;
+}
+
+.arcCardFrame {
+  position: relative;
+  padding: 2px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 241, 204, 0.84),
+    rgba(216, 182, 113, 0.28) 30%,
+    rgba(255, 238, 184, 0.58) 55%,
+    rgba(102, 72, 24, 0.3) 100%
+  );
+  box-shadow:
+    0 14px 28px rgba(5, 3, 18, 0.58),
+    0 0 0 1px rgba(216, 182, 113, 0.12);
+  transition: box-shadow 220ms ease, filter 220ms ease;
+  transform: translateZ(0);
+}
+
+.arcCardSurface {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 246, 218, 0.1);
+  background: linear-gradient(180deg, rgba(245, 237, 222, 0.94), rgba(228, 212, 184, 0.96));
+}
+
+.arcCardSurfaceRevealed {
+  border-color: rgba(247, 225, 170, 0.72);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 242, 208, 0.24),
+    0 0 0 1px rgba(255, 236, 180, 0.12),
+    0 0 34px rgba(169, 118, 255, 0.2);
+}
+
+.cardFlip {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  transform-origin: 50% 50%;
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cardFlipFaceUp {
+  transform: perspective(940px) rotateY(180deg);
+}
+
+.cardFlipFlippingUp {
+  animation: cardFaceFlipUp 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cardFlipFlippingDown {
+  animation: cardFaceFlipDown 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cardFace {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+  transition: opacity 160ms linear;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+.cardFaceBack {
+  opacity: 1;
+  transform: rotateY(0deg);
+}
+
+.cardFaceFront {
+  opacity: 1;
+  transform: rotateY(180deg);
+}
+
+.cardFaceHidden {
+  opacity: 0;
+}
+
+.cardFaceVisible {
+  opacity: 1;
+}
+
+.cardFaceFrontShimmer {
+  animation: cardFaceFrontShimmer 620ms ease-out;
+}
+
+.cardFrontImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+}
+
+.cardFlipFlash,
+.cardMagicRing {
+  position: absolute;
+  inset: 50%;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.cardFlipFlash {
+  width: 180%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0.58);
+  opacity: 0;
+  background:
+    radial-gradient(circle, rgba(255, 244, 214, 0.72) 0%, rgba(255, 244, 214, 0.22) 32%, rgba(255, 244, 214, 0) 72%),
+    conic-gradient(
+      from 0deg,
+      rgba(255, 221, 150, 0.16),
+      rgba(171, 126, 255, 0.2),
+      rgba(255, 221, 150, 0.16),
+      rgba(171, 126, 255, 0.2),
+      rgba(255, 221, 150, 0.16)
+    );
+  mix-blend-mode: screen;
+  filter: blur(0.2px);
+}
+
+.cardFlipFlashActive {
+  animation: cardFlipFlashBurst 520ms cubic-bezier(0.2, 0.88, 0.34, 1);
+}
+
+.cardFlipFlashRevealed {
+  opacity: 0.34;
+  transform: translate(-50%, -50%) scale(1.03);
+  transition:
+    opacity 360ms ease,
+    transform 360ms ease;
+}
+
+.cardMagicRing {
+  width: 68%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid rgba(240, 222, 169, 0.14);
+  box-shadow:
+    inset 0 0 0 1px rgba(240, 222, 169, 0.08),
+    0 0 16px rgba(168, 124, 255, 0.18);
+  transform: translate(-50%, -50%) scale(0.72);
+  opacity: 0;
+}
+
+.cardMagicRingBurst {
+  animation: cardMagicRingBurst 560ms cubic-bezier(0.2, 0.88, 0.34, 1);
+}
+
+.cardMagicRingActive {
+  opacity: 0.82;
+  transform: translate(-50%, -50%) scale(1);
+  transition:
+    opacity 300ms ease,
+    transform 300ms ease;
+}
+
+@keyframes cardFaceFlipUp {
+  0% {
+    transform: perspective(940px) rotateY(0deg) rotateX(0deg) scale(1);
+  }
+
+  24% {
+    transform: perspective(940px) rotateY(56deg) rotateX(8deg) scale(0.95) translateY(-3%);
+  }
+
+  50% {
+    transform: perspective(940px) rotateY(96deg) rotateX(14deg) scale(0.86) translateY(-7%);
+  }
+
+  56% {
+    transform: perspective(940px) rotateY(-84deg) rotateX(-11deg) scale(0.9) translateY(-5%);
+  }
+
+  76% {
+    transform: perspective(940px) rotateY(16deg) rotateX(3deg) scale(1.03) translateY(-2%);
+  }
+
+  100% {
+    transform: perspective(940px) rotateY(0deg) rotateX(0deg) scale(1);
+  }
+}
+
+@keyframes cardFaceFlipDown {
+  0% {
+    transform: perspective(940px) rotateY(0deg) rotateX(0deg) scale(1);
+  }
+
+  24% {
+    transform: perspective(940px) rotateY(-56deg) rotateX(-8deg) scale(0.95) translateY(-3%);
+  }
+
+  50% {
+    transform: perspective(940px) rotateY(-96deg) rotateX(-14deg) scale(0.86) translateY(-7%);
+  }
+
+  56% {
+    transform: perspective(940px) rotateY(84deg) rotateX(11deg) scale(0.9) translateY(-5%);
+  }
+
+  76% {
+    transform: perspective(940px) rotateY(-16deg) rotateX(-3deg) scale(1.03) translateY(-2%);
+  }
+
+  100% {
+    transform: perspective(940px) rotateY(0deg) rotateX(0deg) scale(1);
+  }
+}
+
+@keyframes cardFlipFlashBurst {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.48);
+    filter: blur(2px);
+  }
+
+  36% {
+    opacity: 0.96;
+    transform: translate(-50%, -50%) scale(1.08);
+    filter: blur(0.3px);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.52);
+    filter: blur(1.8px);
+  }
+}
+
+@keyframes cardMagicRingBurst {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.62);
+  }
+
+  42% {
+    opacity: 0.94;
+    transform: translate(-50%, -50%) scale(1.14);
+  }
+
+  100% {
+    opacity: 0.36;
+    transform: translate(-50%, -50%) scale(1.28);
+  }
+}
+
+@keyframes cardFaceFrontShimmer {
+  0% {
+    filter: saturate(0.9) brightness(0.9) contrast(0.94);
+  }
+
+  42% {
+    filter: saturate(1.22) brightness(1.14) contrast(1.05);
+  }
+
+  100% {
+    filter: saturate(1) brightness(1) contrast(1);
+  }
+}
+
+.arcCardSurface::before,
+.arcCardSurface::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.arcCardSurface::before {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.03));
+  mix-blend-mode: screen;
+  z-index: 2;
+}
+
+.arcCardSurface::after {
+  background: radial-gradient(circle at 50% 120%, rgba(25, 10, 40, 0.22), transparent 44%);
+  z-index: 2;
+}
+
+.arcCardArt {
+  position: absolute;
+  inset: 0;
+  background-image: var(--ctaf-card-back-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.arcCardGlow,
+.arcCardShine {
+  position: absolute;
+  pointer-events: none;
+}
+
+.arcCardGlow {
+  inset: -24%;
+  background: radial-gradient(circle, rgba(168, 124, 255, 0.28), rgba(168, 124, 255, 0));
+  opacity: 0.55;
+  filter: blur(18px);
+  z-index: 3;
+}
+
+.arcCardShine {
+  top: -18%;
+  left: -40%;
+  width: 70%;
+  height: 140%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+  transform: rotate(22deg);
+  opacity: 0.46;
+  z-index: 3;
+}
+
+.arcCard[data-tone='sol'] .arcCardSurface {
+  background: linear-gradient(180deg, rgba(245, 237, 222, 0.94), rgba(228, 212, 184, 0.96));
+}
+
+.arcCard[data-tone='sol'] .arcCardGlow {
+  background: radial-gradient(circle, rgba(253, 198, 103, 0.22), rgba(253, 198, 103, 0));
+}
+
+.arcCardHovered .arcCardFrame,
+.arcCardSelected .arcCardFrame {
+  box-shadow:
+    0 24px 45px rgba(5, 3, 18, 0.68),
+    0 0 0 1px rgba(240, 222, 169, 0.26),
+    0 0 36px rgba(134, 98, 255, 0.22);
+}
+
+.arcCardHovered .arcCardSurface,
+.arcCardSelected .arcCardSurface {
+  border-color: rgba(240, 222, 169, 0.26);
+}
+
+.arcCardRevealed .arcCardFrame {
+  box-shadow:
+    0 20px 38px rgba(5, 3, 18, 0.62),
+    0 0 0 1px rgba(240, 222, 169, 0.28),
+    0 0 32px rgba(122, 88, 240, 0.16);
+}
+
+.arcCardRevealed .arcCardSurface {
+  border-color: rgba(240, 222, 169, 0.24);
+}
+
+.arcCardRevealed .arcCardGlow {
+  opacity: 0.52;
+}
+
+.arcCardHovered .arcCardGlow,
+.arcCardSelected .arcCardGlow {
+  opacity: 0.9;
+}
+
+.arcCardSelected .arcCardFrame {
+  box-shadow:
+    0 30px 55px rgba(4, 2, 16, 0.74),
+    0 0 0 1px rgba(240, 222, 169, 0.3),
+    0 0 42px rgba(245, 198, 98, 0.18),
+    0 0 70px rgba(122, 88, 240, 0.24);
+}
+
+.arcCardGhost .arcCardFrame {
+  box-shadow:
+    0 8px 18px rgba(5, 3, 18, 0.28),
+    0 0 0 1px rgba(240, 222, 169, 0.15);
+}
+
+.arcCardGhost .arcCardArt {
+  opacity: 0.22;
+  filter: saturate(0.65) brightness(0.82);
+}
+
+.arcCardGhost .arcCardGlow,
+.arcCardGhost .arcCardShine {
+  opacity: 0;
+}
+
+.arcCardBlocked .arcCardFrame {
+  box-shadow:
+    0 8px 18px rgba(5, 3, 18, 0.34),
+    0 0 0 1px rgba(240, 222, 169, 0.2);
+}
+
+.arcCardBlocked .arcCardArt {
+  opacity: 0.4;
+  filter: saturate(0.78) brightness(0.88);
+}
+
+.arcCardBlocked .arcCardGlow,
+.arcCardBlocked .arcCardShine {
+  opacity: 0.1;
+}
+
+.arcCardEmpty {
+  cursor: default;
+}
+
+.arcCardEmpty .arcCardFrame {
+  background: transparent;
+  box-shadow: none;
+}
+
+.arcCardEmpty .arcCardSurface {
+  border-color: transparent;
+  background: transparent;
+}
+
+.arcCardEmpty .arcCardArt,
+.arcCardEmpty .arcCardGlow,
+.arcCardEmpty .arcCardShine,
+.arcCardEmpty .arcCardVoid {
+  display: none;
+}
+
+.arcCardEmpty .arcCardSurface::before,
+.arcCardEmpty .arcCardSurface::after {
+  display: none;
+}
+
+.arcCardVoid {
+  display: none;
+}
+
+.railMask,
+.mobileFocusZone,
+.mobileFocusLayer,
+.drawFocusZone,
+.drawFocusLayer {
+  display: none;
+}
+
+.drawFocusZone {
+  display: block;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 10;
+  width: min(22vw, 260px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.drawFocusZoneHalo,
+.drawFocusZoneGlyph {
+  position: absolute;
+  inset: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+}
+
+.drawFocusZoneHalo {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    circle,
+    rgba(171, 125, 255, 0.32),
+    rgba(171, 125, 255, 0.12) 34%,
+    rgba(171, 125, 255, 0) 68%
+  );
+  filter: blur(16px);
+}
+
+.drawFocusZoneGlyph {
+  width: 74%;
+  height: 74%;
+  border: 1px solid rgba(240, 222, 169, 0.26);
+  box-shadow:
+    inset 0 0 0 1px rgba(240, 222, 169, 0.12),
+    0 0 32px rgba(140, 98, 255, 0.22);
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0) 64%);
+}
+
+.drawFocusLayer {
+  display: block;
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+}
+
+.drawFocusLayerOrigin {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.focusCard {
+  --ctaf-card-height: calc(var(--ctaf-card-width) * 1.62);
+  position: relative;
+  width: var(--ctaf-card-width);
+  height: var(--ctaf-card-height);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+  appearance: none;
+  isolation: isolate;
+  transform-style: preserve-3d;
+}
+
+.focusCard::before,
+.focusCard::after {
+  content: '';
+  position: absolute;
+  inset: 50%;
+  pointer-events: none;
+  border-radius: 50%;
+}
+
+.focusCard::before {
+  width: 180%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background:
+    radial-gradient(circle, rgba(255, 240, 204, 0.34) 0%, rgba(255, 240, 204, 0.08) 36%, rgba(255, 240, 204, 0) 72%);
+  mix-blend-mode: screen;
+  filter: blur(0.2px);
+  animation: focusHaloPulse 2200ms ease-in-out infinite;
+  z-index: -2;
+}
+
+.focusCard::after {
+  width: 150%;
+  aspect-ratio: 1;
+  border: 1px solid rgba(240, 222, 169, 0.36);
+  box-shadow:
+    inset 0 0 0 1px rgba(240, 222, 169, 0.18),
+    0 0 26px rgba(142, 102, 255, 0.26);
+  transform: translate(-50%, -50%);
+  animation: focusRuneSpin 2600ms linear infinite;
+  z-index: -1;
+}
+
+.focusCard .arcCardFrame,
+.focusCard .arcCardSurface {
+  border-radius: 16px;
+}
+
+.focusCard .arcCardFrame {
+  box-shadow:
+    0 26px 48px rgba(3, 2, 12, 0.56),
+    0 0 0 1px rgba(240, 222, 169, 0.36),
+    0 0 40px rgba(142, 102, 255, 0.3),
+    0 0 70px rgba(245, 204, 136, 0.16);
+}
+
+.focusCard .arcCardGlow {
+  opacity: 1;
+  filter: blur(24px);
+}
+
+@keyframes focusHaloPulse {
+  0% {
+    opacity: 0.46;
+    transform: translate(-50%, -50%) scale(0.92);
+  }
+
+  50% {
+    opacity: 0.92;
+    transform: translate(-50%, -50%) scale(1.16);
+  }
+
+  100% {
+    opacity: 0.46;
+    transform: translate(-50%, -50%) scale(0.92);
+  }
+}
+
+@keyframes focusRuneSpin {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg) scale(0.94);
+    opacity: 0.38;
+  }
+
+  50% {
+    transform: translate(-50%, -50%) rotate(180deg) scale(1.03);
+    opacity: 0.76;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg) scale(0.94);
+    opacity: 0.38;
+  }
+}
+
+@media (max-width: 920px) {
+  .stage {
+    min-height: 700px;
+  }
+
+  .stageCopy {
+    inset: 14px 0 auto;
+    padding-inline: 12px;
+  }
+
+  .stageSigil {
+    top: 16.2%;
+  }
+
+  .stageStatusbar {
+    width: min(460px, calc(100vw - 20px));
+    padding: 0.65rem 0.9rem 0.74rem;
+  }
+
+  .stageTitle {
+    font-size: clamp(1.9rem, 8.2vw, 3.1rem);
+  }
+
+  .stageSubtitle {
+    font-size: clamp(0.78rem, 2vw, 1rem);
+    letter-spacing: 0.14em;
+  }
+
+  .stageHint {
+    width: min(460px, calc(100vw - 26px));
+    font-size: 0.8rem;
+    line-height: 1.32;
+  }
+}
+
+@media (max-width: 768px) {
+  .stage {
+    width: 100%;
+    height: 100svh;
+    min-height: 680px;
+    overflow: hidden;
+  }
+
+  .stageScene {
+    overflow: hidden;
+  }
+
+  .stageSceneContentHidden {
+    filter: blur(1.5px);
+    transform: scale(0.996);
+    pointer-events: none;
+  }
+
+  .shuffleIntroPile {
+    width: min(92vw, 460px);
+    height: min(44vh, 350px);
+    min-width: 280px;
+    min-height: 220px;
+  }
+
+  .shuffleIntroGlyph {
+    width: min(76vw, 290px);
+  }
+
+  .dealIntroDeckAura {
+    width: min(64vw, 250px);
+  }
+
+  .stage::before {
+    background:
+      radial-gradient(circle at 50% 12%, rgba(197, 160, 255, 0.35), transparent 24%),
+      radial-gradient(circle at 50% 86%, rgba(151, 117, 238, 0.26), transparent 24%),
+      linear-gradient(180deg, rgba(32, 14, 72, 0.9), rgba(15, 8, 38, 0.96));
+    box-shadow:
+      inset 0 0 120px rgba(255, 255, 255, 0.03),
+      inset 0 -26px 70px rgba(0, 0, 0, 0.3);
+  }
+
+  .stage::after {
+    background-image:
+      radial-gradient(rgba(255, 255, 255, 0.045) 0.6px, transparent 0.85px),
+      radial-gradient(rgba(255, 255, 255, 0.028) 0.5px, transparent 0.75px);
+    background-size: 14px 14px, 20px 20px;
+    background-position: 0 0, 10px 10px;
+    opacity: 0.2;
+  }
+
+  .stageAurora {
+    width: 80%;
+    height: 32%;
+    filter: blur(26px);
+  }
+
+  .stageAuroraViolet {
+    top: 5%;
+  }
+
+  .stageAuroraIndigo {
+    bottom: 10%;
+  }
+
+  .stageDiagram {
+    inset: -10% -12% 0;
+    opacity: 0.34;
+  }
+
+  .stageDivider,
+  .stageChamber {
+    display: none;
+  }
+
+  .stageCopy {
+    inset: max(10px, env(safe-area-inset-top)) 0 auto;
+    padding-inline: 14px;
+  }
+
+  .stageEyebrow {
+    font-size: 0.58rem;
+    letter-spacing: 0.2em;
+  }
+
+  .stageTitle {
+    margin-top: 0.12rem;
+    font-size: clamp(2rem, 10vw, 2.8rem);
+    line-height: 0.92;
+    text-shadow:
+      0 0 24px rgba(189, 140, 255, 0.35),
+      0 0 46px rgba(120, 94, 220, 0.26);
+  }
+
+  .stageSubtitle {
+    margin-top: 0.22rem;
+    font-size: 0.74rem;
+    letter-spacing: 0.14em;
+    color: rgba(246, 240, 255, 0.9);
+  }
+
+  .stageSigil {
+    top: 12.4%;
+    width: 44px;
+    height: 44px;
+  }
+
+  .stageStatusbar {
+    bottom: max(10px, env(safe-area-inset-bottom));
+    width: calc(100vw - 16px);
+    padding: 0.64rem 0.72rem 0.74rem;
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(22, 13, 56, 0.82), rgba(11, 8, 30, 0.56));
+    box-shadow:
+      inset 0 0 0 1px rgba(216, 182, 113, 0.22),
+      0 8px 30px rgba(0, 0, 0, 0.35),
+      0 0 30px rgba(132, 94, 238, 0.2);
+    backdrop-filter: blur(14px);
+  }
+
+  .stageStatus {
+    font-size: 0.58rem;
+    letter-spacing: 0.18em;
+  }
+
+  .stageSelection {
+    margin-top: 0.22rem;
+    font-size: 0.96rem;
+    letter-spacing: 0.08em;
+  }
+
+  .stageHint {
+    margin-top: 0.2rem;
+    width: calc(100vw - 34px);
+    font-size: 0.72rem;
+    line-height: 1.3;
+  }
+
+  .arcFanWindowed {
+    touch-action: pan-y;
+    will-change: transform;
+  }
+
+  .arcFanWindowed .cardAnchor {
+    will-change: transform;
+  }
+
+  .arcFanWindowed .arcCardFrame {
+    box-shadow:
+      0 9px 16px rgba(5, 3, 18, 0.42),
+      0 0 0 1px rgba(216, 182, 113, 0.18);
+  }
+
+  .arcFanWindowed .arcCardGlow {
+    opacity: 0.38;
+    filter: blur(10px);
+  }
+
+  .arcFanWindowed .arcCardShine {
+    opacity: 0.34;
+  }
+
+  .arcFanWindowed .arcCardHovered .arcCardFrame,
+  .arcFanWindowed .arcCardSelected .arcCardFrame {
+    box-shadow:
+      0 14px 26px rgba(5, 3, 18, 0.56),
+      0 0 0 1px rgba(240, 222, 169, 0.26),
+      0 0 24px rgba(134, 98, 255, 0.2);
+  }
+
+  .arcFanUpper {
+    z-index: 6;
+    clip-path: inset(0 0 44% 0);
+  }
+
+  .arcFanLower {
+    z-index: 5;
+    clip-path: inset(44% 0 0 0);
+  }
+
+  .railMask {
+    display: block;
+    position: absolute;
+    left: -6%;
+    width: 112%;
+    z-index: 7;
+    pointer-events: none;
+  }
+
+  .railMaskTop {
+    top: 18%;
+    height: 20%;
+    background:
+      linear-gradient(
+        90deg,
+        rgba(10, 5, 24, 0.72),
+        rgba(10, 5, 24, 0) 24%,
+        rgba(10, 5, 24, 0) 76%,
+        rgba(10, 5, 24, 0.72)
+      ),
+      linear-gradient(180deg, rgba(10, 5, 24, 0), rgba(10, 5, 24, 0.26) 70%, rgba(10, 5, 24, 0.52));
+  }
+
+  .railMaskBottom {
+    bottom: 18%;
+    height: 20%;
+    background:
+      linear-gradient(
+        90deg,
+        rgba(10, 5, 24, 0.72),
+        rgba(10, 5, 24, 0) 24%,
+        rgba(10, 5, 24, 0) 76%,
+        rgba(10, 5, 24, 0.72)
+      ),
+      linear-gradient(180deg, rgba(10, 5, 24, 0.52), rgba(10, 5, 24, 0.26) 30%, rgba(10, 5, 24, 0));
+  }
+
+  .mobileFocusZone {
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 10;
+    width: min(64vw, 300px);
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  .mobileFocusZoneHalo,
+  .mobileFocusZoneGlyph {
+    position: absolute;
+    inset: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 999px;
+  }
+
+  .mobileFocusZoneHalo {
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+      circle,
+      rgba(171, 125, 255, 0.38),
+      rgba(171, 125, 255, 0.16) 32%,
+      rgba(171, 125, 255, 0) 66%
+    );
+    filter: blur(14px);
+  }
+
+  .mobileFocusZoneGlyph {
+    width: 74%;
+    height: 74%;
+    border: 1px solid rgba(240, 222, 169, 0.3);
+    box-shadow:
+      inset 0 0 0 1px rgba(240, 222, 169, 0.12),
+      0 0 24px rgba(140, 98, 255, 0.22);
+    background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 64%);
+  }
+
+  .mobileFocusLayer {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 12;
+    pointer-events: none;
+  }
+
+  .mobileFocusLayerOrigin {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .drawFocusZone {
+    width: min(72vw, 320px);
+  }
+
+  .arcCardFrame,
+  .arcCardSurface {
+    border-radius: 12px;
+  }
+
+  .arcCardFrame {
+    padding: 1px;
+  }
+}
+
+@media (max-width: 768px) and (max-height: 740px) {
+  .arcFanUpper {
+    clip-path: inset(0 0 40% 0);
+  }
+
+  .arcFanLower {
+    clip-path: inset(40% 0 0 0);
+  }
+
+  .railMask {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .stageTitle {
+    font-size: clamp(1.72rem, 9vw, 2.2rem);
+  }
+
+  .stageSubtitle {
+    font-size: 0.66rem;
+    letter-spacing: 0.12em;
+  }
+
+  .stageStatusbar {
+    width: calc(100vw - 10px);
+    padding-inline: 0.62rem;
+  }
+
+  .stageHint {
+    width: calc(100vw - 24px);
+    font-size: 0.68rem;
+  }
+}

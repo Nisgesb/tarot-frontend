@@ -470,44 +470,69 @@
 }
 
 .stackCardContent {
+  position: relative;
+  isolation: isolate;
   width: 100%;
   height: 100%;
-  padding: clamp(16px, 3vw, 24px);
+  padding: clamp(18px, 3.2vw, 26px);
   display: grid;
   align-content: start;
-  gap: 12px;
+  gap: 14px;
   color: var(--tarot-home-text-body);
+}
+
+.stackCardContent::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 243, 208, 0.12), transparent 30%),
+    radial-gradient(circle at 50% 100%, rgba(191, 163, 255, 0.08), transparent 36%);
+}
+
+.stackCardContent > * {
+  position: relative;
+  z-index: 1;
 }
 
 .dailyStackCard {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.03)),
-    radial-gradient(circle at 16% 16%, rgba(245, 204, 230, 0.18), transparent 24%),
-    radial-gradient(circle at 86% 16%, rgba(191, 163, 255, 0.16), transparent 30%),
-    linear-gradient(145deg, rgba(245, 204, 230, 0.2), rgba(191, 163, 255, 0.16) 50%, rgba(44, 30, 56, 0.54)),
-    rgba(62, 44, 72, 0.78);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02)),
+    radial-gradient(circle at 18% 16%, rgba(245, 204, 230, 0.18), transparent 24%),
+    radial-gradient(circle at 82% 18%, rgba(109, 184, 255, 0.16), transparent 26%),
+    radial-gradient(circle at 50% 0%, rgba(255, 233, 192, 0.16), transparent 32%),
+    linear-gradient(160deg, rgba(72, 50, 96, 0.92), rgba(31, 33, 64, 0.94) 52%, rgba(17, 18, 36, 0.98));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -24px 48px rgba(7, 8, 18, 0.2);
 }
 
 .actionStackCard,
 .liveStackCard {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -24px 44px rgba(7, 8, 18, 0.18);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.02)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02)),
     radial-gradient(circle at 18% 14%, rgba(109, 184, 255, 0.16), transparent 24%),
-    linear-gradient(145deg, rgba(51, 77, 132, 0.58), rgba(92, 71, 138, 0.44) 48%, rgba(20, 28, 54, 0.84));
+    radial-gradient(circle at 78% 18%, rgba(255, 233, 192, 0.12), transparent 26%),
+    linear-gradient(155deg, rgba(52, 78, 134, 0.76), rgba(86, 64, 132, 0.58) 48%, rgba(15, 22, 46, 0.94));
 }
 
 .liveStackCard {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.02)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02)),
     radial-gradient(circle at 78% 18%, rgba(245, 204, 230, 0.18), transparent 28%),
-    linear-gradient(145deg, rgba(86, 54, 112, 0.64), rgba(34, 49, 92, 0.44) 52%, rgba(17, 23, 48, 0.86));
+    radial-gradient(circle at 18% 82%, rgba(109, 184, 255, 0.12), transparent 24%),
+    linear-gradient(155deg, rgba(84, 50, 112, 0.82), rgba(33, 48, 88, 0.52) 50%, rgba(12, 18, 40, 0.96));
 }
 
 .stackEyebrow {
   margin: 0;
-  color: var(--tarot-home-text-meta);
+  color: rgba(241, 224, 191, 0.76);
   font: 500 0.72rem/1.2 'Outfit', sans-serif;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
 }
 
@@ -516,6 +541,7 @@
   color: var(--tarot-home-text-title);
   font: 500 clamp(2.2rem, 7vw, 3.2rem) / 0.92 'Cormorant Garamond', serif;
   letter-spacing: -0.04em;
+  max-width: 12ch;
 }
 
 .stackCopy {
@@ -543,7 +569,7 @@
 .moduleMeta {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
@@ -554,10 +580,13 @@
   justify-content: center;
   padding: 0 10px;
   border-radius: 999px;
-  border: 1px solid var(--tarot-home-glass-border-soft);
-  color: var(--tarot-home-text-body);
-  background: rgba(24, 36, 66, 0.34);
+  border: 1px solid rgba(225, 208, 171, 0.24);
+  color: rgba(250, 242, 229, 0.78);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+    rgba(24, 36, 66, 0.24);
   font-size: 0.72rem;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
 }
 
 .moduleHook {
@@ -574,22 +603,43 @@
 }
 
 .luckyCard {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   min-height: 84px;
-  padding: 10px 12px;
-  border: 1px solid var(--tarot-home-glass-border-soft);
-  border-radius: 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(225, 208, 171, 0.22);
+  border-radius: 18px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02)),
+    radial-gradient(circle at 50% 0%, rgba(255, 233, 192, 0.12), transparent 30%),
     linear-gradient(
-      150deg,
-      rgba(112, 168, 255, 0.14),
-      rgba(210, 196, 255, 0.1) 52%,
-      rgba(21, 30, 58, 0.42)
+      155deg,
+      rgba(112, 168, 255, 0.16),
+      rgba(210, 196, 255, 0.12) 52%,
+      rgba(21, 30, 58, 0.5)
     ),
-    rgba(20, 30, 56, 0.44);
+    rgba(18, 28, 52, 0.52);
   display: grid;
   align-content: space-between;
   gap: 8px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 12px 20px rgba(10, 10, 22, 0.12);
+}
+
+.luckyCard::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 248, 234, 0.08);
+  pointer-events: none;
+}
+
+.luckyCard > * {
+  position: relative;
+  z-index: 1;
 }
 
 .luckyLabel {
@@ -614,6 +664,8 @@
   justify-content: space-between;
   gap: 14px;
   flex-wrap: wrap;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 248, 252, 0.08);
 }
 
 .footerCopy {
