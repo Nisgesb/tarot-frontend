@@ -1,8 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
 import {
-  ShintaCardStack,
-  type ShintaCardStackItem,
-} from './ShintaCardStack'
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type AnimationEvent as ReactAnimationEvent,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from 'react'
 import {
   fetchDailyFortune,
   loadStoredZodiacSign,
@@ -15,6 +19,7 @@ import {
   type DailyFortunePayload,
   type ZodiacSign,
 } from '../types/dailyFortune'
+import { GlassPanel } from './GlassPanel'
 import styles from './HomePage.module.css'
 
 interface HomePageProps {
@@ -23,6 +28,28 @@ interface HomePageProps {
   onOpenLiveReadingDebug?: () => void
   onOpenDailyFortune?: () => void
 }
+
+interface HomeEntryCard {
+  id: string
+  render: () => ReactNode
+}
+
+const LIQUID_GLASS_CARD_PRESET = {
+  borderRadius: 20,
+  distortionScale: -62,
+  blur: 0.076,
+  displace: 0.23,
+  saturation: 1.16,
+  redOffset: 0,
+  greenOffset: 6,
+  blueOffset: 12,
+  opacity: 0.92,
+  backgroundOpacity: 0.16,
+} as const
+
+const NETWORK_ERROR_COPY = '星讯暂时未连接，请稍后再试。'
+const SERVICE_ERROR_COPY = '星盘通道正在校准，请稍后刷新。'
+const UNKNOWN_ERROR_COPY = '星轨轻微波动，请稍后再试。'
 
 function formatZhDate(dateIso: string) {
   const [year, month, day] = dateIso.split('-').map((item) => Number(item))
@@ -34,12 +61,47 @@ function formatZhDate(dateIso: string) {
   return `${year}年${month}月${day}日`
 }
 
+function resolveFortuneErrorCopy(error: unknown) {
+  if (!(error instanceof Error)) {
+    return UNKNOWN_ERROR_COPY
+  }
+
+  const message = error.message.trim()
+
+  if (!message) {
+    return UNKNOWN_ERROR_COPY
+  }
+
+  const normalized = message.toLowerCase()
+
+  if (
+    normalized.includes('failed to fetch') ||
+    normalized.includes('network') ||
+    normalized.includes('load failed') ||
+    normalized.includes('timeout') ||
+    normalized.includes('err_network')
+  ) {
+    return NETWORK_ERROR_COPY
+  }
+
+  if (
+    normalized.includes('request failed') ||
+    normalized.includes('http') ||
+    normalized.includes('status')
+  ) {
+    return SERVICE_ERROR_COPY
+  }
+
+  return UNKNOWN_ERROR_COPY
+}
+
 export function HomePage({
   embedded = false,
   onOpenAiReading,
   onOpenLiveReadingDebug,
   onOpenDailyFortune,
 }: HomePageProps) {
+  const [menuOpen, setMenuOpen] = useState(false)
   const [selectedSign, setSelectedSign] = useState<ZodiacSign>(resolveDefaultZodiacSign())
   const [signHydrated, setSignHydrated] = useState(false)
   const [fortune, setFortune] = useState<DailyFortunePayload | null>(null)
@@ -91,13 +153,8 @@ export function HomePage({
           setFortune(payload)
         }
       } catch (exception) {
-        const message =
-          exception instanceof Error && exception.message.trim().length > 0
-            ? exception.message
-            : '今日运势加载失败，请稍后重试。'
-
         if (!cancelled) {
-          setError(message)
+          setError(resolveFortuneErrorCopy(exception))
         }
       } finally {
         if (!cancelled) {
@@ -158,105 +215,172 @@ export function HomePage({
   const detailHint = fortune?.cardName
     ? `代表牌「${fortune.cardName}」与完整解读已收进详情页。`
     : '四格先看今日幸运线索，完整解读收进详情页。'
-  const stackItems = useMemo<ShintaCardStackItem[]>(
+  const statusCopy =
+    !signHydrated || loading
+      ? `星盘正在对齐 ${ZODIAC_SIGN_LABELS[selectedSign]} 的今日频率...`
+      : null
+  const handleCardPointerDown = useCallback((event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) {
+      return
+    }
+
+    const target = event.currentTarget
+    const rect = target.getBoundingClientRect()
+    const x = event.clientX - rect.left
+    const y = event.clientY - rect.top
+
+    target.style.setProperty('--ripple-x', `${x}px`)
+    target.style.setProperty('--ripple-y', `${y}px`)
+    target.classList.remove(styles.rippleActive)
+    void target.offsetWidth
+    target.classList.add(styles.rippleActive)
+  }, [])
+  const handleCardRippleEnd = useCallback((event: ReactAnimationEvent<HTMLButtonElement>) => {
+    if (event.animationName !== 'cardRippleWave') {
+      return
+    }
+
+    event.currentTarget.classList.remove(styles.rippleActive)
+  }, [])
+  const dailyFortuneCard = useMemo(
+    () => (
+      <button
+        type="button"
+        className={`${styles.dailyCardButton} ${styles.rippleButton} ${styles.rippleLight}`}
+        onClick={onOpenDailyFortune}
+        onPointerDown={handleCardPointerDown}
+        onAnimationEnd={handleCardRippleEnd}
+        disabled={!onOpenDailyFortune}
+        aria-label="进入今日运势详情"
+      >
+        <GlassPanel
+          fill
+          {...LIQUID_GLASS_CARD_PRESET}
+          className={`${styles.dailyShowcaseSurface} ${styles.glassCardSurface}`}
+          contentClassName={`${styles.dailyShowcaseCard} ${styles.dailyStackCard}`}
+        >
+            <div className={styles.dailyShowcaseVisual} aria-hidden="true">
+              <div className={styles.dailyShowcaseVisualOrb} />
+              <div className={styles.dailyShowcaseVisualArc} />
+              <div className={styles.dailyShowcaseVisualSpark} />
+            </div>
+
+            <div className={styles.dailyShowcaseBody}>
+              <div className={styles.dailyShowcaseLead}>
+                <p className={styles.dailyShowcaseEyebrow}>Today Fortune</p>
+                <div className={styles.moduleMeta}>
+                  <span className={styles.metaPill}>{formatZhDate(dateIso)}</span>
+                  <span className={styles.metaPill}>{ZODIAC_SIGN_LABELS[selectedSign]}</span>
+                </div>
+              </div>
+
+              <h2 className={styles.dailyShowcaseTitle}>今日运势</h2>
+              <p className={styles.dailyShowcaseHook}>四格先看今天的幸运线索</p>
+
+              <div className={`${styles.luckyGrid} ${styles.dailyShowcaseGrid}`}>
+                {luckyGridItems.map((item) => (
+                  <div key={item.id} className={styles.luckyCardSurface}>
+                    <div className={`${styles.luckyCard} ${styles.dailyShowcaseLuckyCard}`}>
+                      <p className={styles.luckyLabel}>{item.label}</p>
+                      <p className={styles.luckyValue}>{item.value}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className={styles.dailyShowcaseFooter}>
+                <div className={styles.footerCopy}>
+                  <p className={styles.footerLabel}>详情页承接</p>
+                  <p className={styles.dailyShowcaseHint}>{detailHint}</p>
+                </div>
+
+                <div className={styles.dailyShowcaseActions}>
+                  {statusCopy ? (
+                    <p className={styles.status}>
+                      {statusCopy}
+                    </p>
+                  ) : null}
+                  {error ? <p className={styles.error}>{error}</p> : null}
+                </div>
+              </div>
+            </div>
+        </GlassPanel>
+      </button>
+    ),
+    [
+      dateIso,
+      detailHint,
+      error,
+      handleCardPointerDown,
+      handleCardRippleEnd,
+      luckyGridItems,
+      onOpenDailyFortune,
+      selectedSign,
+      statusCopy,
+    ],
+  )
+  const entryCards = useMemo<HomeEntryCard[]>(
     () => [
-      {
-        id: 'daily-fortune',
-        render: () => (
-          <section className={`${styles.stackCardContent} ${styles.dailyStackCard}`}>
-            <div className={styles.moduleHeader}>
-              <p className={styles.moduleTitle}>今日运势</p>
-              <div className={styles.moduleMeta}>
-                <span className={styles.metaPill}>{formatZhDate(dateIso)}</span>
-                <span className={styles.metaPill}>{ZODIAC_SIGN_LABELS[selectedSign]}</span>
-              </div>
-            </div>
-
-            <p className={styles.moduleHook}>四格先看今天的幸运线索</p>
-
-            <div className={styles.luckyGrid}>
-              {luckyGridItems.map((item) => (
-                <article key={item.id} className={styles.luckyCard}>
-                  <p className={styles.luckyLabel}>{item.label}</p>
-                  <p className={styles.luckyValue}>{item.value}</p>
-                </article>
-              ))}
-            </div>
-
-            <div className={styles.moduleFooter}>
-              <div className={styles.footerCopy}>
-                <p className={styles.footerLabel}>详情页承接</p>
-                <p className={styles.footerHint}>{detailHint}</p>
-              </div>
-              <button
-                type="button"
-                className="primary-pill"
-                onClick={onOpenDailyFortune}
-                disabled={!onOpenDailyFortune}
-              >
-                查看完整今日运势
-              </button>
-            </div>
-
-            {loading || !signHydrated ? (
-              <p className={styles.status}>正在同步 {ZODIAC_SIGN_LABELS[selectedSign]} 的结果...</p>
-            ) : null}
-            {error ? <p className={styles.error}>{error}</p> : null}
-          </section>
-        ),
-      },
       {
         id: 'ai-reading',
         render: () => (
-          <section className={`${styles.stackCardContent} ${styles.actionStackCard}`}>
-            <p className={styles.stackEyebrow}>AI Tarot</p>
-            <h3 className={styles.stackTitle}>问一个问题，抽三张牌</h3>
-            <p className={styles.stackCopy}>
-              输入你最想确认的问题，进入星弧抽卡过程，再由 AI 原文流式解读牌面。
-            </p>
-            <button
-              type="button"
-              className="primary-pill"
-              onClick={onOpenAiReading}
-              disabled={!onOpenAiReading}
+          <button
+            type="button"
+            className={`${styles.entryCardButton} ${styles.rippleButton} ${styles.rippleDark}`}
+            onClick={onOpenAiReading}
+            onPointerDown={handleCardPointerDown}
+            onAnimationEnd={handleCardRippleEnd}
+            disabled={!onOpenAiReading}
+            aria-label="进入 AI 占卜"
+          >
+            <GlassPanel
+              fill
+              {...LIQUID_GLASS_CARD_PRESET}
+              className={`${styles.entryFeatureCardSurface} ${styles.glassCardSurface} ${styles.actionStackCardSurface}`}
+              contentClassName={`${styles.entryFeatureCard} ${styles.actionStackCard}`}
             >
-              开始 AI 占卜
-            </button>
-          </section>
+                <p className={styles.entryFeatureBadge}>AI Tarot</p>
+                <h3 className={styles.entryFeatureTitle}>问一个问题，抽三张牌</h3>
+                <p className={styles.entryFeatureCopy}>
+                  输入你最想确认的问题，进入星弧抽卡过程，再由 AI 原文流式解读牌面。
+                </p>
+            </GlassPanel>
+          </button>
         ),
       },
       {
         id: 'live-reading',
         render: () => (
-          <section className={`${styles.stackCardContent} ${styles.liveStackCard}`}>
-            <p className={styles.stackEyebrow}>Live Reading</p>
-            <h3 className={styles.stackTitle}>真人连线</h3>
-            <p className={styles.stackCopy}>
-              保留 1v1 即时通话入口，适合需要实时互动、抽牌同步与解释陪伴的场景。
-            </p>
-            <button
-              type="button"
-              className="secondary-pill"
-              onClick={onOpenLiveReadingDebug}
-              disabled={!onOpenLiveReadingDebug}
+          <button
+            type="button"
+            className={`${styles.entryCardButton} ${styles.rippleButton} ${styles.rippleDark}`}
+            onClick={onOpenLiveReadingDebug}
+            onPointerDown={handleCardPointerDown}
+            onAnimationEnd={handleCardRippleEnd}
+            disabled={!onOpenLiveReadingDebug}
+            aria-label="进入真人连线"
+          >
+            <GlassPanel
+              fill
+              {...LIQUID_GLASS_CARD_PRESET}
+              className={`${styles.entryFeatureCardSurface} ${styles.glassCardSurface} ${styles.liveStackCardSurface}`}
+              contentClassName={`${styles.entryFeatureCard} ${styles.liveStackCard}`}
             >
-              进入真人连线
-            </button>
-          </section>
+                <p className={styles.entryFeatureBadge}>Live Reading</p>
+                <h3 className={styles.entryFeatureTitle}>真人连线</h3>
+                <p className={styles.entryFeatureCopy}>
+                  保留 1v1 即时通话入口，适合需要实时互动、抽牌同步与解释陪伴的场景。
+                </p>
+            </GlassPanel>
+          </button>
         ),
       },
     ],
     [
-      dateIso,
-      detailHint,
-      error,
-      loading,
-      luckyGridItems,
+      handleCardPointerDown,
+      handleCardRippleEnd,
       onOpenAiReading,
-      onOpenDailyFortune,
       onOpenLiveReadingDebug,
-      selectedSign,
-      signHydrated,
     ],
   )
 
@@ -264,37 +388,51 @@ export function HomePage({
     <main className={pageClassName} aria-label="Dream entry home">
       <div className={styles.shell}>
         <header className={styles.dailyTopBar}>
-          <p className={styles.eyebrow}>Dreamkeeper Home</p>
-          <div className={styles.topActions}>
-            {onOpenAiReading ? (
-              <button
-                type="button"
-                className={`${styles.topPill} ${styles.topPillPrimary}`}
-                onClick={onOpenAiReading}
-              >
-                AI占卜
-              </button>
-            ) : null}
-            {onOpenLiveReadingDebug ? (
-              <button
-                type="button"
-                className={styles.topPill}
-                onClick={onOpenLiveReadingDebug}
-              >
-                真人连线
-              </button>
-            ) : null}
-          </div>
+          <button
+            type="button"
+            className={styles.menuToggleButton}
+            onClick={() => {
+              setMenuOpen((prevState) => !prevState)
+            }}
+            aria-expanded={menuOpen}
+            aria-label={menuOpen ? '关闭菜单' : '打开菜单'}
+          >
+            <svg
+              className={styles.menuToggleIcon}
+              width={16}
+              height={16}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden
+            >
+              <path d="M4 12L20 12" className={`${styles.menuLine} ${styles.menuLineTop}`} />
+              <path d="M4 12H20" className={`${styles.menuLine} ${styles.menuLineMiddle}`} />
+              <path d="M4 12H20" className={`${styles.menuLine} ${styles.menuLineBottom}`} />
+            </svg>
+          </button>
         </header>
 
-        <section className={styles.cardStackSection} aria-label="首页功能卡片">
-          <ShintaCardStack
-            className={styles.homeCardStack}
-            items={stackItems}
-            cardWidth={420}
-            cardHeight={560}
-            swipeThreshold={88}
-          />
+        <section className={styles.dailyShowcaseSection} aria-label="首页今日运势">
+          {dailyFortuneCard}
+        </section>
+
+        <section className={styles.entrySectionHeader} aria-label="占卜服务入口">
+          <div className={styles.entrySectionLine} aria-hidden />
+          <h2 className={styles.entrySectionTitle}>探索你的答案</h2>
+          <div className={styles.entrySectionLine} aria-hidden />
+        </section>
+
+        <section className={styles.entryGridSection} aria-label="首页功能卡片入口">
+          <div className={styles.entryGrid}>
+            {entryCards.map((item) => (
+              <div key={item.id}>{item.render()}</div>
+            ))}
+          </div>
         </section>
       </div>
     </main>
