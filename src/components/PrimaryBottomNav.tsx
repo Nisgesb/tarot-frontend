@@ -135,7 +135,7 @@ export function PrimaryBottomNav({
   }, [])
 
   const curveTranslateX = useMemo(
-    () => calculateTabPosition(activeIndex, TAB_COUNT, viewportWidth),
+    () => Math.round(calculateTabPosition(activeIndex, TAB_COUNT, viewportWidth)),
     [activeIndex, viewportWidth],
   )
   const curveGeometry = useMemo(
@@ -153,6 +153,8 @@ export function PrimaryBottomNav({
               width={curveGeometry.totalWidth}
               height={CURVE_HEIGHT}
               viewBox={`0 0 ${curveGeometry.totalWidth} ${CURVE_HEIGHT}`}
+              preserveAspectRatio="none"
+              fill="none"
               style={{
                 transform: `translate3d(${curveTranslateX}px, 0, 0)`,
               }}
@@ -170,7 +172,7 @@ export function PrimaryBottomNav({
                   <stop offset="90.3846%" stopColor={gradient[1]} />
                 </linearGradient>
               </defs>
-              <path d={curveGeometry.path} fill={`url(#${gradientId})`} />
+              <path d={curveGeometry.path} fill={`url(#${gradientId})`} shapeRendering="geometricPrecision" />
             </svg>
           </div>
         </div>
