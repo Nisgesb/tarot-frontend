@@ -2,171 +2,122 @@
   position: absolute;
   left: max(16px, var(--safe-left));
   right: max(16px, var(--safe-right));
-  bottom: calc(var(--safe-bottom) + 12px);
+  bottom: calc(var(--safe-bottom) + 10px);
   z-index: 18;
   display: flex;
   justify-content: center;
   pointer-events: none;
 }
 
-.shell {
-  --nav-padding: 7px;
-  width: min(100%, 408px);
+.shellWrap {
   position: relative;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0;
-  padding: var(--nav-padding);
-  overflow: hidden;
-  border: 1px solid var(--tarot-home-glass-border-strong);
-  border-radius: 30px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.03)),
-    radial-gradient(circle at 16% 0%, rgba(245, 204, 230, 0.22), rgba(245, 204, 230, 0) 48%),
-    radial-gradient(circle at 84% 0%, rgba(255, 248, 252, 0.18), rgba(255, 248, 252, 0) 52%),
-    linear-gradient(145deg, rgba(245, 204, 230, 0.14), rgba(191, 163, 255, 0.14) 48%, rgba(48, 34, 58, 0.32)),
-    rgba(39, 24, 47, 0.64);
-  box-shadow:
-    0 14px 32px rgba(30, 20, 36, 0.28),
-    0 1px 0 rgba(255, 255, 255, 0.18) inset,
-    0 -12px 22px rgba(255, 255, 255, 0.03) inset,
-    0 0 24px rgba(191, 163, 255, 0.08);
-  backdrop-filter: blur(22px) saturate(1.12);
+  width: 100%;
+  height: 60px;
   pointer-events: auto;
-  user-select: none;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  overflow: visible;
 }
 
-.shell::before,
-.shell::after {
-  content: '';
+.backgroundContainer {
   position: absolute;
-  pointer-events: none;
+  inset: 0;
+  width: 100%;
+  z-index: 20;
 }
 
-.shell::before {
-  inset: -42% -10% auto;
-  height: 128%;
-  background:
-    radial-gradient(34% 42% at 18% 0%, rgba(245, 204, 230, 0.2), rgba(245, 204, 230, 0)),
-    radial-gradient(38% 44% at 82% 0%, rgba(255, 248, 252, 0.18), rgba(255, 248, 252, 0));
-  filter: blur(10px);
-}
-
-.shell::after {
-  top: 1px;
-  left: 8%;
-  right: 8%;
-  height: 40%;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0));
-  opacity: 0.24;
-}
-
-.activePill {
-  position: absolute;
-  top: var(--nav-padding);
-  bottom: var(--nav-padding);
-  left: var(--nav-padding);
-  width: calc((100% - (var(--nav-padding) * 2)) / 3);
-  border: 1px solid var(--tarot-home-glass-border-strong);
-  border-radius: 22px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.05)),
-    radial-gradient(circle at 28% 28%, rgba(255, 255, 255, 0.2), transparent 24%),
-    linear-gradient(135deg, rgba(245, 204, 230, 0.24), rgba(191, 163, 255, 0.22), rgba(59, 34, 68, 0.12));
-  box-shadow:
-    0 8px 18px rgba(30, 20, 36, 0.24),
-    0 1px 0 rgba(255, 255, 255, 0.18) inset,
-    0 0 0 1px rgba(255, 255, 255, 0.03),
-    0 0 22px rgba(191, 163, 255, 0.1);
-  transform: translateX(calc(var(--nav-progress) * 100%));
-  transition:
-    transform 220ms cubic-bezier(0.28, 0.94, 0.34, 1.14),
-    box-shadow 240ms ease,
-    background 240ms ease;
-  pointer-events: none;
-}
-
-.shell[data-snap-mode='drag'] .activePill {
-  transition:
-    transform 320ms cubic-bezier(0.24, 0.96, 0.3, 1.16),
-    box-shadow 240ms ease,
-    background 240ms ease;
-}
-
-.shell[data-dragging='true'] .activePill {
-  transition: none;
-  box-shadow:
-    0 10px 22px rgba(6, 9, 26, 0.22),
-    0 1px 0 rgba(255, 255, 255, 0.18) inset,
-    0 0 0 1px rgba(255, 255, 255, 0.03),
-    0 0 24px rgba(245, 204, 230, 0.12);
-}
-
-.tab {
-  position: relative;
-  z-index: 1;
-  min-height: 50px;
-  border: 1px solid transparent;
-  border-radius: 22px;
+.curveViewport {
+  width: 100%;
+  height: 60px;
   background: transparent;
-  color: rgba(253, 244, 251, 0.74);
-  font: 600 0.8rem/1 'Outfit', sans-serif;
-  letter-spacing: 0.05em;
+  overflow: hidden;
+  border-radius: 30px;
+}
+
+.curveSvg {
+  display: block;
+  filter: none;
+  transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tabWrapper {
+  flex: 1;
+  z-index: 30;
+  transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tabButton {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  color: rgba(220, 226, 235, 0.78);
   cursor: pointer;
-  transition:
-    color 160ms ease,
-    transform 140ms ease,
-    opacity 160ms ease;
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
 }
 
-.tab:active {
-  transform: scale(0.975);
+.tabButton:focus,
+.tabButton:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
-.tabCurrent {
-  color: rgba(255, 250, 254, 0.98);
-  text-shadow: 0 0 14px rgba(255, 248, 252, 0.16);
+.tabInner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 7px;
 }
 
-.tabDraggable {
-  touch-action: pan-y;
+.tabLabel {
+  font: 700 0.88rem/1 'Outfit', sans-serif;
+  letter-spacing: 0.012em;
+  color: rgba(204, 206, 214, 0.92);
+}
+
+.tabButtonActive .tabLabel {
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.floatingButton {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(-1px);
+  background: linear-gradient(145deg, #121212 0%, #1a1a1a 48%, #121212 100%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow:
+    0 0 0 3px #f5f6f8,
+    0 10px 20px rgba(0, 0, 0, 0.28),
+    0 2px 6px rgba(0, 0, 0, 0.16);
+}
+
+.floatingButtonLabel {
+  color: rgba(255, 255, 255, 0.98);
+  font: 700 0.75rem/1 'Outfit', sans-serif;
+  letter-spacing: 0.03em;
 }
 
 @media (min-width: 768px) {
   .root {
-    left: max(22px, var(--safe-left));
-    right: max(22px, var(--safe-right));
-    bottom: calc(var(--safe-bottom) + 16px);
-  }
-
-  .shell {
-    --nav-padding: 6px;
-    width: min(100%, 560px);
-    border-radius: 22px;
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.025)),
-      radial-gradient(circle at 50% 0%, rgba(255, 248, 252, 0.14), rgba(255, 248, 252, 0) 48%),
-      linear-gradient(145deg, rgba(245, 204, 230, 0.12), rgba(191, 163, 255, 0.12) 48%, rgba(48, 34, 58, 0.28)),
-      rgba(39, 24, 47, 0.56);
-    box-shadow:
-      0 12px 24px rgba(30, 20, 36, 0.2),
-      0 1px 0 rgba(255, 255, 255, 0.16) inset,
-      0 0 20px rgba(191, 163, 255, 0.08);
-  }
-
-  .activePill {
-    border-radius: 16px;
-    box-shadow:
-      0 8px 16px rgba(6, 9, 26, 0.16),
-      0 1px 0 rgba(255, 255, 255, 0.2) inset,
-      0 0 0 1px rgba(255, 255, 255, 0.03);
-  }
-
-  .tab {
-    min-height: 46px;
-    border-radius: 16px;
-    font-size: 0.82rem;
-    letter-spacing: 0.04em;
+    left: max(16px, var(--safe-left));
+    right: max(16px, var(--safe-right));
+    bottom: calc(var(--safe-bottom) + 10px);
   }
 }

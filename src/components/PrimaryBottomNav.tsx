@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import styles from './PrimaryBottomNav.module.css'
 
 export type PrimaryBottomNavTab = 'my' | 'home' | 'circle'
@@ -11,15 +10,74 @@ interface PrimaryBottomNavProps {
   onGoCircle: () => void
 }
 
-type SnapMode = 'idle' | 'click' | 'drag'
+interface CurveGeometry {
+  path: string
+  totalWidth: number
+}
 
-const TAB_ORDER: PrimaryBottomNavTab[] = ['my', 'home', 'circle']
-const DRAG_THRESHOLD_PX = 6
-const CLICK_SETTLE_MS = 220
-const DRAG_SETTLE_MS = 320
+interface TabConfig {
+  id: PrimaryBottomNavTab
+  label: string
+  onPress: () => void
+}
 
-function clampProgress(value: number) {
-  return Math.max(0, Math.min(2, value))
+const TAB_COUNT = 3
+const CURVE_HEIGHT = 60
+const CURVE_REFERENCE_WIDTH = 394
+const CURVE_REFERENCE_HEIGHT = 86
+const FLOATING_RISE = 19
+
+function processGradient(colors?: string[]) {
+  if (!colors || colors.length === 0) {
+    return ['#6366f1', '#8b5cf6'] as const
+  }
+
+  if (colors.length === 1) {
+    return [colors[0], colors[0]] as const
+  }
+
+  return [colors[0], colors[1]] as const
+}
+
+function calculateTabPosition(index: number, totalTabs: number, viewportWidth: number): number {
+  const tabWidth = viewportWidth / totalTabs
+  const tabCenter = index * tabWidth + tabWidth / 2
+  const screenCenter = viewportWidth / 2
+
+  return -viewportWidth + (tabCenter - screenCenter)
+}
+
+function buildCurveGeometry(viewportWidth: number, height: number): CurveGeometry {
+  const totalWidth = viewportWidth * 3
+  const centerOffset = viewportWidth
+  const curveWidth = viewportWidth
+
+  const leftEdge = (133 / CURVE_REFERENCE_WIDTH) * curveWidth
+  const rightEdge = (258 / CURVE_REFERENCE_WIDTH) * curveWidth
+  const center = (197 / CURVE_REFERENCE_WIDTH) * curveWidth
+  const notchHeight = (43.5 / CURVE_REFERENCE_HEIGHT) * height
+  const leftControl1 = (159.724 / CURVE_REFERENCE_WIDTH) * curveWidth
+  const leftControl2 = (172.684 / CURVE_REFERENCE_WIDTH) * curveWidth
+  const rightControl1 = (220.932 / CURVE_REFERENCE_WIDTH) * curveWidth
+  const rightControl2 = (235.992 / CURVE_REFERENCE_WIDTH) * curveWidth
+
+  const path = `
+    M0 0
+    L${centerOffset} 0
+    C${centerOffset} 0 ${centerOffset + leftEdge * 0.8} 0 ${centerOffset + leftEdge} 0
+    C${centerOffset + leftControl1} 0 ${centerOffset + leftControl2} ${notchHeight} ${centerOffset + center} ${notchHeight}
+    C${centerOffset + rightControl1} ${notchHeight * 0.99} ${centerOffset + rightControl2} 0 ${centerOffset + rightEdge} 0
+    C${centerOffset + rightEdge + (curveWidth - rightEdge) * 0.1} 0 ${centerOffset + curveWidth} 0 ${centerOffset + curveWidth} 0
+    L${totalWidth} 0
+    V${height}
+    H0
+    Z
+  `
+
+  return {
+    path,
+    totalWidth,
+  }
 }
 
 export function PrimaryBottomNav({
@@ -30,274 +88,123 @@ export function PrimaryBottomNav({
 }: PrimaryBottomNavProps) {
   const activeIndex = activeTab === 'my' ? 0 : activeTab === 'home' ? 1 : 2
   const shellRef = useRef<HTMLDivElement>(null)
-  const clearSnapTimerRef = useRef<number | null>(null)
-  const dragRef = useRef({
-    pointerId: -1,
-    originX: 0,
-    startProgress: activeIndex,
-    lastX: 0,
-    lastTime: 0,
-    velocityPxPerMs: 0,
-    dragging: false,
-  })
-  const clickSuppressedRef = useRef(false)
-  const [progress, setProgress] = useState(activeIndex)
-  const [visualIndex, setVisualIndex] = useState(activeIndex)
-  const [snapMode, setSnapMode] = useState<SnapMode>('idle')
-  const [isDragging, setIsDragging] = useState(false)
+  const [viewportWidth, setViewportWidth] = useState(360)
+  const gradientId = `primary-nav-gradient-${useId().replaceAll(':', '-')}`
+  const gradient = processGradient(['#121212', '#1a1a1a'])
 
-  const tabActions = useMemo(
-    () => ({
-      my: onGoMy,
-      home: onGoHome,
-      circle: onGoCircle,
-    }),
+  const tabs = useMemo<TabConfig[]>(
+    () => [
+      { id: 'my', label: '我的', onPress: onGoMy },
+      { id: 'home', label: '首页', onPress: onGoHome },
+      { id: 'circle', label: '圈子', onPress: onGoCircle },
+    ],
     [onGoCircle, onGoHome, onGoMy],
   )
 
-  const clearSnapModeLater = (delay: number) => {
-    if (clearSnapTimerRef.current !== null) {
-      window.clearTimeout(clearSnapTimerRef.current)
-    }
-
-    clearSnapTimerRef.current = window.setTimeout(() => {
-      setSnapMode('idle')
-      clearSnapTimerRef.current = null
-    }, delay)
-  }
-
   useEffect(() => {
-    if (dragRef.current.dragging) {
-      return
-    }
-
-    const frameId = window.requestAnimationFrame(() => {
-      setProgress(activeIndex)
-      setVisualIndex(activeIndex)
-    })
-
-    return () => {
-      window.cancelAnimationFrame(frameId)
-    }
-  }, [activeIndex])
-
-  useEffect(() => {
-    return () => {
-      if (clearSnapTimerRef.current !== null) {
-        window.clearTimeout(clearSnapTimerRef.current)
-      }
-    }
-  }, [])
-
-  const navigateToIndex = (targetIndex: number, mode: Exclude<SnapMode, 'idle'>) => {
-    const clampedTarget = clampProgress(targetIndex)
-    const targetTab = TAB_ORDER[clampedTarget]
-
-    setVisualIndex(clampedTarget)
-    setProgress(clampedTarget)
-    setSnapMode(mode)
-    clearSnapModeLater(mode === 'click' ? CLICK_SETTLE_MS : DRAG_SETTLE_MS)
-
-    window.requestAnimationFrame(() => {
-      tabActions[targetTab]()
-    })
-  }
-
-  const resolveProgressFromClientX = (clientX: number) => {
     const shell = shellRef.current
 
     if (!shell) {
-      return activeIndex
-    }
-
-    const rect = shell.getBoundingClientRect()
-    const stylesMap = window.getComputedStyle(shell)
-    const paddingInline =
-      Number.parseFloat(stylesMap.paddingLeft) + Number.parseFloat(stylesMap.paddingRight)
-    const trackWidth = Math.max(rect.width - paddingInline, 1)
-    const tabWidth = trackWidth / 3
-    const deltaX = clientX - dragRef.current.originX
-    const rawProgress = dragRef.current.startProgress + deltaX / tabWidth
-
-    if (rawProgress < 0) {
-      return Math.max(-0.14, rawProgress * 0.18)
-    }
-
-    if (rawProgress > 2) {
-      return Math.min(2.14, 2 + (rawProgress - 2) * 0.18)
-    }
-
-    return rawProgress
-  }
-
-  const handlePointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    if (event.button !== 0) {
       return
     }
 
-    event.currentTarget.setPointerCapture(event.pointerId)
-    setIsDragging(false)
-    dragRef.current = {
-      pointerId: event.pointerId,
-      originX: event.clientX,
-      startProgress: progress,
-      lastX: event.clientX,
-      lastTime: performance.now(),
-      velocityPxPerMs: 0,
-      dragging: false,
-    }
-    clickSuppressedRef.current = false
-  }
-
-  const handlePointerMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    if (event.pointerId !== dragRef.current.pointerId) {
-      return
+    const updateWidth = () => {
+      const rect = shell.getBoundingClientRect()
+      setViewportWidth(Math.max(1, Math.ceil(rect.width)))
     }
 
-    const deltaX = event.clientX - dragRef.current.originX
-    const now = performance.now()
-    const elapsed = Math.max(now - dragRef.current.lastTime, 1)
-    const velocityPxPerMs = (event.clientX - dragRef.current.lastX) / elapsed
+    updateWidth()
 
-    dragRef.current.lastX = event.clientX
-    dragRef.current.lastTime = now
-    dragRef.current.velocityPxPerMs = velocityPxPerMs
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', updateWidth)
 
-    if (!dragRef.current.dragging && Math.abs(deltaX) > DRAG_THRESHOLD_PX) {
-      dragRef.current.dragging = true
-      clickSuppressedRef.current = true
-      setIsDragging(true)
-      setSnapMode('idle')
+      return () => {
+        window.removeEventListener('resize', updateWidth)
+      }
     }
 
-    if (!dragRef.current.dragging) {
-      return
+    const observer = new ResizeObserver(() => {
+      updateWidth()
+    })
+
+    observer.observe(shell)
+
+    return () => {
+      observer.disconnect()
     }
+  }, [])
 
-    event.preventDefault()
-    setProgress(resolveProgressFromClientX(event.clientX))
-    setVisualIndex(Math.round(clampProgress(resolveProgressFromClientX(event.clientX))))
-  }
-
-  const handlePointerUp = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    if (event.pointerId !== dragRef.current.pointerId) {
-      return
-    }
-
-    const shell = shellRef.current
-
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId)
-    }
-
-    if (!dragRef.current.dragging) {
-      dragRef.current.pointerId = -1
-      return
-    }
-
-    event.preventDefault()
-
-    const rect = shell?.getBoundingClientRect()
-    const stylesMap = shell ? window.getComputedStyle(shell) : null
-    const paddingInline =
-      stylesMap
-        ? Number.parseFloat(stylesMap.paddingLeft) + Number.parseFloat(stylesMap.paddingRight)
-        : 0
-    const trackWidth = rect ? Math.max(rect.width - paddingInline, 1) : 1
-    const tabWidth = trackWidth / 3
-    const currentProgress = clampProgress(resolveProgressFromClientX(event.clientX))
-    const projectedProgress = clampProgress(
-      currentProgress + (dragRef.current.velocityPxPerMs * 190) / tabWidth,
-    )
-    const targetIndex = Math.round(projectedProgress)
-
-    dragRef.current.dragging = false
-    dragRef.current.pointerId = -1
-    setIsDragging(false)
-    navigateToIndex(targetIndex, 'drag')
-
-    window.setTimeout(() => {
-      clickSuppressedRef.current = false
-    }, 40)
-  }
-
-  const handlePointerCancel = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    if (event.pointerId !== dragRef.current.pointerId) {
-      return
-    }
-
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId)
-    }
-
-    dragRef.current.dragging = false
-    dragRef.current.pointerId = -1
-    setIsDragging(false)
-    setProgress(activeIndex)
-    setVisualIndex(activeIndex)
-    setSnapMode('drag')
-    clearSnapModeLater(DRAG_SETTLE_MS)
-    window.setTimeout(() => {
-      clickSuppressedRef.current = false
-    }, 40)
-  }
-
-  const handleClick = (targetIndex: number) => {
-    if (clickSuppressedRef.current) {
-      return
-    }
-
-    navigateToIndex(targetIndex, 'click')
-  }
-
-  const dragHandlers = {
-    onPointerDown: handlePointerDown,
-    onPointerMove: handlePointerMove,
-    onPointerUp: handlePointerUp,
-    onPointerCancel: handlePointerCancel,
-  } as const
+  const curveTranslateX = useMemo(
+    () => calculateTabPosition(activeIndex, TAB_COUNT, viewportWidth),
+    [activeIndex, viewportWidth],
+  )
+  const curveGeometry = useMemo(
+    () => buildCurveGeometry(viewportWidth, CURVE_HEIGHT),
+    [viewportWidth],
+  )
 
   return (
     <nav className={styles.root} aria-label="Primary navigation">
-      <div
-        ref={shellRef}
-        className={styles.shell}
-        data-snap-mode={snapMode}
-        data-dragging={isDragging ? 'true' : 'false'}
-        style={
-          {
-            '--nav-progress': progress.toString(),
-          } as CSSProperties
-        }
-      >
-        <span className={styles.activePill} aria-hidden />
-        <button
-          type="button"
-          className={`${styles.tab} ${visualIndex === 0 ? styles.tabCurrent : ''} ${activeIndex === 0 ? styles.tabDraggable : ''}`}
-          aria-current={activeTab === 'my' ? 'page' : undefined}
-          onClick={() => handleClick(0)}
-          {...(activeIndex === 0 ? dragHandlers : {})}
-        >
-          我的
-        </button>
-        <button
-          type="button"
-          className={`${styles.tab} ${visualIndex === 1 ? styles.tabCurrent : ''} ${activeIndex === 1 ? styles.tabDraggable : ''}`}
-          aria-current={activeTab === 'home' ? 'page' : undefined}
-          onClick={() => handleClick(1)}
-          {...(activeIndex === 1 ? dragHandlers : {})}
-        >
-          首页
-        </button>
-        <button
-          type="button"
-          className={`${styles.tab} ${visualIndex === 2 ? styles.tabCurrent : ''} ${activeIndex === 2 ? styles.tabDraggable : ''}`}
-          aria-current={activeTab === 'circle' ? 'page' : undefined}
-          onClick={() => handleClick(2)}
-          {...(activeIndex === 2 ? dragHandlers : {})}
-        >
-          圈子
-        </button>
+      <div ref={shellRef} className={styles.shellWrap}>
+        <div className={styles.backgroundContainer} aria-hidden>
+          <div className={styles.curveViewport}>
+            <svg
+              className={styles.curveSvg}
+              width={curveGeometry.totalWidth}
+              height={CURVE_HEIGHT}
+              viewBox={`0 0 ${curveGeometry.totalWidth} ${CURVE_HEIGHT}`}
+              style={{
+                transform: `translate3d(${curveTranslateX}px, 0, 0)`,
+              }}
+            >
+              <defs>
+                <linearGradient
+                  id={gradientId}
+                  x1="0"
+                  y1={(CURVE_HEIGHT * 0.8).toString()}
+                  x2={curveGeometry.totalWidth.toString()}
+                  y2={(CURVE_HEIGHT * 0.8).toString()}
+                  gradientUnits="userSpaceOnUse"
+                >
+                  <stop offset="5.76923%" stopColor={gradient[0]} />
+                  <stop offset="90.3846%" stopColor={gradient[1]} />
+                </linearGradient>
+              </defs>
+              <path d={curveGeometry.path} fill={`url(#${gradientId})`} />
+            </svg>
+          </div>
+        </div>
+
+        {tabs.map((tab, index) => {
+          const isActive = index === activeIndex
+
+          return (
+            <div
+              key={tab.id}
+              className={styles.tabWrapper}
+              style={{
+                transform: `translate3d(0, ${isActive ? -FLOATING_RISE : 0}px, 0)`,
+              }}
+            >
+              <button
+                type="button"
+                className={`${styles.tabButton} ${isActive ? styles.tabButtonActive : ''}`}
+                onClick={tab.onPress}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                <span className={styles.tabInner}>
+                  {isActive ? (
+                    <span className={styles.floatingButton}>
+                      <span className={styles.floatingButtonLabel}>{tab.label}</span>
+                    </span>
+                  ) : (
+                    <span className={styles.tabLabel}>{tab.label}</span>
+                  )}
+                </span>
+              </button>
+            </div>
+          )
+        })}
       </div>
     </nav>
   )
