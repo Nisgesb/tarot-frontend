@@ -105,8 +105,8 @@ export function HomePage({
   const [selectedSign, setSelectedSign] = useState<ZodiacSign>(resolveDefaultZodiacSign())
   const [signHydrated, setSignHydrated] = useState(false)
   const [fortune, setFortune] = useState<DailyFortunePayload | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [, setLoading] = useState(false)
+  const [, setError] = useState<string | null>(null)
   const dateIso = useMemo(() => resolveTodayDateIso(), [])
 
   useEffect(() => {
@@ -212,13 +212,6 @@ export function HomePage({
       luckyFallbackNumber,
     ],
   )
-  const detailHint = fortune?.cardName
-    ? `代表牌「${fortune.cardName}」与完整解读已收进详情页。`
-    : '四格先看今日幸运线索，完整解读收进详情页。'
-  const statusCopy =
-    !signHydrated || loading
-      ? `星盘正在对齐 ${ZODIAC_SIGN_LABELS[selectedSign]} 的今日频率...`
-      : null
   const handleCardPointerDown = useCallback((event: ReactPointerEvent<HTMLButtonElement>) => {
     if (event.pointerType === 'mouse' && event.button !== 0) {
       return
@@ -288,35 +281,17 @@ export function HomePage({
                 ))}
               </div>
 
-              <div className={styles.dailyShowcaseFooter}>
-                <div className={styles.footerCopy}>
-                  <p className={styles.footerLabel}>详情页承接</p>
-                  <p className={styles.dailyShowcaseHint}>{detailHint}</p>
-                </div>
-
-                <div className={styles.dailyShowcaseActions}>
-                  {statusCopy ? (
-                    <p className={styles.status}>
-                      {statusCopy}
-                    </p>
-                  ) : null}
-                  {error ? <p className={styles.error}>{error}</p> : null}
-                </div>
-              </div>
             </div>
         </GlassPanel>
       </button>
     ),
     [
       dateIso,
-      detailHint,
-      error,
       handleCardPointerDown,
       handleCardRippleEnd,
       luckyGridItems,
       onOpenDailyFortune,
       selectedSign,
-      statusCopy,
     ],
   )
   const entryCards = useMemo<HomeEntryCard[]>(

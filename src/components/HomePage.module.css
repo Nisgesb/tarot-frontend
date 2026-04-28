@@ -197,10 +197,34 @@
 }
 
 .dailyCardButton {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  display: block;
   border-radius: var(--home-radius-xl);
 }
 
 .entryCardButton {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  display: block;
   border-radius: var(--home-radius-lg);
 }
 
@@ -514,65 +538,6 @@
   text-overflow: ellipsis;
 }
 
-.dailyShowcaseFooter {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 0;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.footerCopy {
-  display: grid;
-  gap: 4px;
-}
-
-.footerLabel {
-  margin: 0;
-  color: rgba(236, 242, 255, 0.78);
-  font: 500 0.6rem/1 'Outfit', sans-serif;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-}
-
-.dailyShowcaseHint {
-  margin: 0;
-  max-width: 20ch;
-  color: rgba(247, 249, 255, 0.92);
-  font: 400 0.68rem/1.35 'Outfit', sans-serif;
-}
-
-.dailyShowcaseActions {
-  display: grid;
-  justify-items: stretch;
-  gap: 6px;
-  min-width: min(100%, 156px);
-}
-
-.status,
-.error {
-  margin: 0;
-  width: 100%;
-  border-radius: 12px;
-  padding: 6px 8px;
-  font: 400 0.68rem/1.3 'Outfit', sans-serif;
-}
-
-.status {
-  color: rgba(250, 251, 255, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.26);
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.error {
-  color: rgba(255, 244, 249, 0.98);
-  border: 1px solid rgba(255, 215, 236, 0.44);
-  background: rgba(255, 201, 232, 0.12);
-}
-
 .entryGridSection {
   padding-top: 2px;
 }
@@ -621,7 +586,7 @@
 
 .entryFeatureCardSurface {
   width: 100%;
-  min-height: 250px;
+  min-height: 200px;
   border-radius: var(--home-radius-lg);
   overflow: hidden;
   background: none;
@@ -839,21 +804,12 @@
     line-height: 1.18;
   }
 
-  .dailyShowcaseActions {
-    width: 100%;
-    justify-items: stretch;
-  }
-
-  .dailyShowcaseHint {
-    max-width: none;
-  }
-
   .entryGrid {
     gap: 10px;
   }
 
   .entryFeatureCardSurface {
-    min-height: 236px;
+    min-height: 189px;
   }
 
   .entryFeatureCard {
@@ -922,7 +878,7 @@
   }
 
   .entryFeatureCardSurface {
-    min-height: 278px;
+    min-height: 222px;
   }
 
   .entryFeatureCard {
