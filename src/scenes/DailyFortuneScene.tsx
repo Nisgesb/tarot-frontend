@@ -15,6 +15,7 @@ import {
   type DailyFortunePayload,
   type ZodiacSign,
 } from '../types/dailyFortune'
+import { Toast } from '../components/toast'
 import styles from './DailyFortuneScene.module.css'
 
 interface DailyFortuneSceneProps {
@@ -62,7 +63,7 @@ export function DailyFortuneScene({ active, onGoHome }: DailyFortuneSceneProps) 
   const [signHydrated, setSignHydrated] = useState(false)
   const [fortune, setFortune] = useState<DailyFortunePayload | null>(null)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [loadFailed, setLoadFailed] = useState(false)
   const dateIso = useMemo(() => resolveTodayDateIso(), [])
   const [refreshToken, setRefreshToken] = useState(0)
 
@@ -110,7 +111,7 @@ export function DailyFortuneScene({ active, onGoHome }: DailyFortuneSceneProps) 
 
     const loadFortune = async () => {
       setLoading(true)
-      setError(null)
+      setLoadFailed(false)
       syncSignToQuery(selectedSign)
       await saveStoredZodiacSign(selectedSign)
 
@@ -130,7 +131,11 @@ export function DailyFortuneScene({ active, onGoHome }: DailyFortuneSceneProps) 
             : '今日运势加载失败，请稍后重试。'
 
         if (!cancelled) {
-          setError(message)
+          setLoadFailed(true)
+          Toast.show(message, {
+            type: 'error',
+            position: 'top',
+          })
         }
       } finally {
         if (!cancelled) {
@@ -298,9 +303,7 @@ export function DailyFortuneScene({ active, onGoHome }: DailyFortuneSceneProps) 
         </section>
 
         {loading ? <p className={styles.status}>正在同步 {ZODIAC_SIGN_LABELS[selectedSign]} 的今日运势...</p> : null}
-        {error ? (
-          <>
-            <p className={styles.error}>{error}</p>
+        {loadFailed ? (
             <button
               type="button"
               className={`secondary-pill ${styles.retry}`}
@@ -308,7 +311,6 @@ export function DailyFortuneScene({ active, onGoHome }: DailyFortuneSceneProps) 
             >
               重新加载
             </button>
-          </>
         ) : null}
       </div>
     </section>

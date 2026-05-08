@@ -22,6 +22,7 @@ import { useViewportProfile } from './hooks/useViewportProfile'
 import type { DeviceClass } from './hooks/useViewportProfile'
 import { MobileAppShell } from './layout/MobileAppShell'
 import type { MotionProfile, MotionSceneTuning, MotionTuning } from './motion/types'
+import { Toast } from './components/toast'
 import { exportCanvasResult } from './platform/exportShareAdapter'
 import { createDreamRecordFromRefined } from './services/dreamGenerationService'
 import { getGalleryDreams } from './services/galleryService'
@@ -535,7 +536,11 @@ function DreamHeroApp() {
             : authRouteMode === 'register'
               ? '注册失败，请稍后重试。'
               : '登录失败，请稍后重试。'
-        setAuthError(message)
+        setAuthError(null)
+        Toast.show(message, {
+          type: 'error',
+          position: 'top',
+        })
       } finally {
         setAuthPending(false)
       }

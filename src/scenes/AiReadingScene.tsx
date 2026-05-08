@@ -15,6 +15,7 @@ import type {
   CreateAiReadingSessionResponse,
   SpreadCardItem,
 } from '../types/aiReading'
+import { Toast } from '../components/toast'
 import styles from './AiReadingScene.module.css'
 
 interface AiReadingSceneProps {
@@ -48,7 +49,7 @@ export function AiReadingScene({ active }: AiReadingSceneProps) {
   const [anonymousSessionId, setAnonymousSessionId] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [streaming, setStreaming] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [, setError] = useState<string | null>(null)
   const [sessionResult, setSessionResult] = useState<CreateAiReadingSessionResponse | null>(null)
   const [readingText, setReadingText] = useState('')
   const [drawnCardIds, setDrawnCardIds] = useState<string[]>([])
@@ -124,7 +125,14 @@ export function AiReadingScene({ active }: AiReadingSceneProps) {
       const message =
         exception instanceof Error ? exception.message : '本次解读暂时失败，请稍后再试。'
 
-      setError(asDisplayError(message))
+      const displayMessage = asDisplayError(message)
+      setError(displayMessage)
+      if (displayMessage) {
+        Toast.show(displayMessage, {
+          type: 'error',
+          position: 'top',
+        })
+      }
       setPhase('question')
     } finally {
       setSubmitting(false)
@@ -152,7 +160,14 @@ export function AiReadingScene({ active }: AiReadingSceneProps) {
       const message =
         exception instanceof Error ? exception.message : '本次解读暂时失败，请稍后再试。'
 
-      setError(asDisplayError(message))
+      const displayMessage = asDisplayError(message)
+      setError(displayMessage)
+      if (displayMessage) {
+        Toast.show(displayMessage, {
+          type: 'error',
+          position: 'top',
+        })
+      }
     } finally {
       setSubmitting(false)
       setStreaming(false)
@@ -311,8 +326,6 @@ export function AiReadingScene({ active }: AiReadingSceneProps) {
             })}
           </section>
 
-          {error ? <p className={styles.error}>{error}</p> : null}
-
           <div className={styles.actions}>
             <button
               type="button"
@@ -391,7 +404,6 @@ export function AiReadingScene({ active }: AiReadingSceneProps) {
                 </button>
               </div>
 
-              {error ? <p className={styles.error}>{error}</p> : null}
             </>
           ) : sessionResult ? (
             <>
@@ -439,8 +451,6 @@ export function AiReadingScene({ active }: AiReadingSceneProps) {
                 {readingText || (streaming ? 'AI 正在整理这组三张牌…' : '暂无解读文本')}
               </p>
             </GlassPanel>
-
-            {error ? <p className={styles.error}>{error}</p> : null}
 
             <div className={styles.actions}>
               <button type="button" className="primary-pill" onClick={startAnother} disabled={submitting}>

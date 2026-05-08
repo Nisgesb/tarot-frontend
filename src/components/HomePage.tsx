@@ -22,6 +22,7 @@ import {
   type ZodiacSign,
 } from '../types/dailyFortune'
 import { GlassPanel } from './GlassPanel'
+import { Toast } from './toast'
 import styles from './HomePage.module.css'
 
 interface HomePageProps {
@@ -308,7 +309,12 @@ export function HomePage({
         }
       } catch (exception) {
         if (!cancelled) {
-          setError(resolveFortuneErrorCopy(exception))
+          const message = resolveFortuneErrorCopy(exception)
+          setError(message)
+          Toast.show(message, {
+            type: 'error',
+            position: 'top',
+          })
         }
       } finally {
         if (!cancelled) {

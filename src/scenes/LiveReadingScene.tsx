@@ -18,6 +18,7 @@ import {
   submitRevealEvent,
 } from '../services/liveReadingApi'
 import { GlassPanel } from '../components/GlassPanel'
+import { Toast } from '../components/toast'
 import { getRuntimePlatform, isNativeApp } from '../platform/runtime'
 import type {
   AuthPayload,
@@ -503,6 +504,17 @@ export function LiveReadingScene({
 
   const roomRef = useRef<Room | null>(null)
   const effectTimerRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (!error) {
+      return
+    }
+
+    Toast.show(error, {
+      type: 'error',
+      position: 'top',
+    })
+  }, [error])
 
   const captureFailure = useCallback(
     (
@@ -1474,7 +1486,6 @@ export function LiveReadingScene({
           </GlassPanel>
         )}
 
-        {error ? <p className={styles.errorText}>{error}</p> : null}
         {failureDetail ? (
           <GlassPanel
             borderRadius={16}

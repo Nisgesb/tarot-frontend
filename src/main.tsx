@@ -22,9 +22,12 @@ import './styles/surfaces.css'
 import './styles/scenes.css'
 import './styles/overlays.css'
 import App from './App.tsx'
+import { ToastProviderWithViewport } from './components/toast'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <ToastProviderWithViewport>
+      <App />
+    </ToastProviderWithViewport>
   </StrictMode>,
 )
