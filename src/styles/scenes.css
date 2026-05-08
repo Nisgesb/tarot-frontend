@@ -2,30 +2,68 @@
   --bottom-nav-reserved: calc(var(--safe-bottom) + 94px);
 }
 
+.app-root .secondary-scene-back-button,
+.app-root .topbar-link.secondary-scene-back-button {
+  position: absolute;
+  top: calc(var(--safe-top) + 12px);
+  left: max(12px, var(--safe-left));
+  z-index: 36;
+  width: 40px;
+  min-height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  color: rgba(253, 244, 251, 0.88);
+  font-size: 1.5rem;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: none;
+}
+
+.app-root .secondary-scene-back-button:hover,
+.app-root .topbar-link.secondary-scene-back-button:hover {
+  filter: brightness(1.06);
+}
+
+.app-root.scene-aiReading .secondary-scene-back-button,
+.app-root.scene-aiReading .topbar-link.secondary-scene-back-button {
+  color: rgba(52, 64, 96, 0.9);
+}
+
+.app-root .result-back-icon {
+  width: 40px;
+  min-height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  color: rgba(253, 244, 251, 0.88);
+  font-size: 1.5rem;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: none;
+}
+
+.app-root.scene-dreamEntry {
+  background: #f5f6f8 !important;
+}
+
+.app-root.scene-dreamEntry::before,
+.app-root.scene-dreamEntry::after {
+  background: none !important;
+  opacity: 0 !important;
+}
+
 .shared-home-surface,
 .app-root .dream-gallery-scene,
 .app-root .my-dreams-scene {
   isolation: isolate;
-  background:
-    linear-gradient(
-      180deg,
-      var(--tarot-home-veil-soft) 0%,
-      rgba(32, 22, 38, 0.18) 14%,
-      var(--tarot-home-veil-mid) 54%,
-      var(--tarot-home-veil-strong) 100%
-    ),
-    radial-gradient(circle at 50% -6%, rgba(255, 255, 255, 0.18), transparent 28%),
-    radial-gradient(circle at 16% 10%, var(--tarot-home-fog-plum), transparent 28%),
-    radial-gradient(circle at 84% 16%, var(--tarot-home-fog-blue), transparent 30%),
-    radial-gradient(circle at 48% 92%, rgba(191, 163, 255, 0.18), transparent 40%),
-    linear-gradient(
-      180deg,
-      var(--tarot-home-sky-top) 0%,
-      var(--tarot-home-sky-mid) 22%,
-      var(--tarot-home-sky-bottom) 54%,
-      var(--tarot-home-base-deep) 76%,
-      var(--tarot-home-base-void) 100%
-    );
+  background: transparent;
 }
 
 .shared-home-surface::before,
@@ -38,38 +76,8 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-}
-
-.shared-home-surface::before,
-.app-root .dream-gallery-scene::before,
-.app-root .my-dreams-scene::before {
-  z-index: 1;
-  background:
-    radial-gradient(circle at 50% 8%, rgba(255, 255, 255, 0.13), transparent 20%),
-    radial-gradient(circle at 24% 72%, rgba(245, 204, 230, 0.2), transparent 26%),
-    radial-gradient(circle at 80% 74%, rgba(191, 163, 255, 0.16), transparent 30%),
-    radial-gradient(circle at 68% 20%, rgba(255, 248, 252, 0.1), transparent 18%);
-  filter: blur(22px);
-  opacity: 0.92;
-}
-
-.shared-home-surface::after,
-.app-root .dream-gallery-scene::after,
-.app-root .my-dreams-scene::after {
-  z-index: 1;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.03) 0%,
-      transparent 20%,
-      transparent 76%,
-      rgba(0, 0, 0, 0.06) 100%
-    ),
-    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px),
-    radial-gradient(circle at 72% 64%, rgba(255, 255, 255, 0.02) 0 1px, transparent 1px),
-    radial-gradient(circle at 56% 18%, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px);
-  background-size: auto, 120px 120px, 160px 160px, 180px 180px;
-  opacity: 0.74;
+  background: none;
+  opacity: 0;
 }
 
 .app-root.scene-dreamEntry .dream-entry-scene.home-intro-active,

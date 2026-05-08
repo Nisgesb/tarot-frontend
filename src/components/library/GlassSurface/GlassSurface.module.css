@@ -1,0 +1,67 @@
+.glassSurface {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: opacity 0.26s ease-out;
+}
+
+.glassSurfaceFilter {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  z-index: -1;
+}
+
+.glassSurfaceContent {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border-radius: inherit;
+  position: relative;
+  z-index: 1;
+}
+
+.glassSurfaceSvg {
+  background: none;
+  backdrop-filter: var(--filter-id, url(#glass-filter)) saturate(var(--glass-saturation, 1));
+  -webkit-backdrop-filter: var(--filter-id, url(#glass-filter)) saturate(var(--glass-saturation, 1));
+  border: 0;
+  box-shadow: none;
+}
+
+.glassSurfaceFallback {
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 0;
+  box-shadow: none;
+}
+
+@supports not (backdrop-filter: blur(10px)) {
+  .glassSurfaceFallback {
+    background: none;
+    box-shadow: none;
+  }
+
+  .glassSurfaceFallback::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: none;
+    border-radius: inherit;
+    z-index: -1;
+  }
+}
+
+.glassSurface:focus-visible {
+  outline: 2px solid light-dark(#007aff, #0a84ff);
+  outline-offset: 2px;
+}

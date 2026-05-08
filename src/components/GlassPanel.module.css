@@ -1,0 +1,26 @@
+.panel {
+  position: relative;
+  width: 100%;
+  isolation: isolate;
+  display: block !important;
+  box-shadow:
+    0 22px 48px rgba(12, 10, 28, 0.22),
+    0 10px 22px rgba(12, 10, 28, 0.14);
+}
+
+.panelFill {
+  height: 100%;
+}
+
+.content {
+  width: 100%;
+  height: auto;
+  display: block !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  padding: 0 !important;
+}
+
+.contentFill {
+  height: 100%;
+}

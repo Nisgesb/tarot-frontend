@@ -28,15 +28,18 @@ import { getGalleryDreams } from './services/galleryService'
 import {
   loadStoredAuth,
   loginWithEmail,
+  logoutAuth,
+  refreshAuth,
   registerWithEmail,
   saveStoredAuth,
+  sendRegisterCode,
 } from './services/liveReadingApi'
 import {
   loadDreamRecords,
   saveDreamRecords,
   upsertDreamRecord,
 } from './services/dreamStorageService'
-import { AuthScene } from './scenes/AuthScene'
+import { AuthScene, type AuthSubmitPayload } from './scenes/AuthScene'
 import { DreamEntryScene } from './scenes/DreamEntryScene'
 import { DreamGalleryScene } from './scenes/DreamGalleryScene'
 import { DreamInsightsLoader } from './scenes/DreamInsightsLoader'
@@ -378,13 +381,9 @@ function DreamHeroApp() {
     loadMotionLastPermission(),
   )
   const [motionRecoveryDismissed, setMotionRecoveryDismissed] = useState(false)
-  const [homeIntroPending, setHomeIntroPending] = useState(() => {
-    if (typeof window === 'undefined') {
-      return false
-    }
-
-    return window.location.pathname === '/dream/new' || !SHOW_HERO_ON_BOOT
-  })
+  // Do not replay home intro on hard refresh of /dream/new.
+  // Keep transition only for the explicit Hero -> Enter flow.
+  const [homeIntroPending, setHomeIntroPending] = useState(false)
   const [auth, setAuth] = useState<AuthPayload | null>(() => loadStoredAuth())
   const [authPending, setAuthPending] = useState(false)
   const [authError, setAuthError] = useState<string | null>(null)
@@ -475,19 +474,27 @@ function DreamHeroApp() {
   )
 
   const openMyWithAuthGate = useCallback(() => {
-    navigateWithAuthGate('/archive', actions.goArchive)
-  }, [actions, navigateWithAuthGate])
+    setAuthGatePrompt((previous) => ({
+      ...previous,
+      visible: false,
+    }))
+    actions.goArchive()
+  }, [actions])
 
   const openCircleWithAuthGate = useCallback(() => {
-    navigateWithAuthGate('/gallery', actions.goGallery)
-  }, [actions, navigateWithAuthGate])
+    setAuthGatePrompt((previous) => ({
+      ...previous,
+      visible: false,
+    }))
+    actions.goGallery()
+  }, [actions])
 
   const openLiveReadingWithAuthGate = useCallback(() => {
     navigateWithAuthGate('/live-reading', () => actions.goFeature('live-reading'))
   }, [actions, navigateWithAuthGate])
 
   const handleSubmitAuth = useCallback(
-    async (payload: { email: string; password: string }) => {
+    async (payload: AuthSubmitPayload) => {
       if (!authRouteMode) {
         return
       }
@@ -497,8 +504,13 @@ function DreamHeroApp() {
 
       try {
         const authPayload =
-          authRouteMode === 'register'
-            ? await registerWithEmail(payload.email, payload.password)
+          payload.kind === 'register'
+            ? await registerWithEmail({
+                email: payload.email,
+                password: payload.password,
+                birthday: payload.birthday,
+                verificationCode: payload.verificationCode,
+              })
             : await loginWithEmail(payload.email, payload.password)
 
         syncAuthState(authPayload)
@@ -522,6 +534,13 @@ function DreamHeroApp() {
     [actions, authReturnPath, authRouteMode, syncAuthState],
   )
 
+  const handleSendRegisterCode = useCallback(async (email: string) => {
+    const response = await sendRegisterCode(email)
+    const expiresInMinutes = Math.max(1, Math.ceil(response.expiresInSeconds / 60))
+
+    return `验证码已发送至 ${response.email}，有效期 ${expiresInMinutes} 分钟，可在 ${response.resendIntervalSeconds} 秒后重发。`
+  }, [])
+
   const handleSwitchAuthMode = useCallback(() => {
     if (authRouteMode === 'login') {
       actions.goRegister(authReturnPath, true)
@@ -542,6 +561,37 @@ function DreamHeroApp() {
       visible: false,
     }))
   }, [actions, authGatePrompt.targetPath])
+
+  const handleContinueAfterAuth = useCallback(() => {
+    actions.goPath(authReturnPath, true)
+  }, [actions, authReturnPath])
+
+  const handleLogout = useCallback(async () => {
+    const currentAuth = auth
+    const currentProtectedPath = resolveProtectedPath(sceneState.path)
+
+    if (currentProtectedPath) {
+      actions.goDreamEntry(true)
+    }
+
+    if (!currentAuth) {
+      syncAuthState(null)
+      setAuthError(null)
+      return
+    }
+
+    setAuthPending(true)
+    setAuthError(null)
+
+    try {
+      await logoutAuth(currentAuth.accessToken, currentAuth.refreshToken)
+    } catch (exception) {
+      console.warn('[Auth][Logout]', exception)
+    } finally {
+      syncAuthState(null)
+      setAuthPending(false)
+    }
+  }, [actions, auth, sceneState.path, syncAuthState])
 
   useEffect(() => {
     try {
@@ -671,31 +721,55 @@ function DreamHeroApp() {
       return
     }
 
-    let blockedPath: ProtectedPath | null = null
-
-    if (sceneState.scene === 'myDreams') {
-      blockedPath = '/archive'
-    } else if (sceneState.scene === 'gallery') {
-      blockedPath = '/gallery'
-    } else if (sceneState.scene === 'featureLanding' && sceneState.featureSlug === 'live-reading') {
-      blockedPath = '/live-reading'
-    }
-
-    if (!blockedPath) {
+    if (sceneState.scene !== 'featureLanding' || sceneState.featureSlug !== 'live-reading') {
       return
     }
 
-    openAuthGatePrompt(blockedPath)
+    openAuthGatePrompt('/live-reading')
     actions.goDreamEntry(true)
   }, [actions, auth, openAuthGatePrompt, sceneState.featureSlug, sceneState.scene])
 
   useEffect(() => {
-    if (!auth || !authRouteMode) {
+    const storedAuth = loadStoredAuth()
+
+    if (!storedAuth) {
+      syncAuthState(null)
       return
     }
 
-    actions.goPath(authReturnPath, true)
-  }, [actions, auth, authReturnPath, authRouteMode])
+    let cancelled = false
+    setAuthPending(true)
+
+    void refreshAuth(storedAuth.refreshToken)
+      .then((nextAuth) => {
+        if (cancelled) {
+          return
+        }
+
+        syncAuthState(nextAuth)
+      })
+      .catch((exception) => {
+        if (cancelled) {
+          return
+        }
+
+        console.warn('[Auth][Refresh]', exception)
+        syncAuthState(null)
+
+        if (window.location.pathname === '/login' || window.location.pathname === '/register') {
+          setAuthError('登录态已失效，请重新登录。')
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setAuthPending(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [syncAuthState])
 
   useEffect(() => {
     if (sceneState.scene !== 'dreamEntry') {
@@ -1012,8 +1086,8 @@ function DreamHeroApp() {
   )
 
   const showMotionDebug =
-    viewportProfile.pointerCoarse &&
-    sceneState.scene === 'hero'
+    sceneState.scene === 'hero' ||
+    sceneState.scene === 'entering'
   const shouldHoldHomeForIntro =
     sceneState.scene === 'dreamEntry' &&
     homeIntroPending &&
@@ -1031,10 +1105,8 @@ function DreamHeroApp() {
     sceneState.scene === 'authLogin' ||
     sceneState.scene === 'authRegister' ||
     liveReadingActive
-  const useSceneOwnedBackground =
-    sceneState.scene === 'dreamEntry' ||
-    sceneState.scene === 'gallery' ||
-    sceneState.scene === 'myDreams'
+  const showLaunchBackground =
+    sceneState.scene === 'hero' || sceneState.scene === 'entering'
   const activePrimaryTab: PrimaryBottomNavTab =
     sceneState.scene === 'myDreams'
       ? 'my'
@@ -1084,7 +1156,7 @@ function DreamHeroApp() {
       keyboardOffset={keyboardAware.keyboardOffset}
       style={shellStyle}
     >
-      {!useSceneOwnedBackground ? (
+      {showLaunchBackground ? (
         <NebulaBackground
           entered={entered}
           reducedMotion={reducedMotion}
@@ -1095,7 +1167,7 @@ function DreamHeroApp() {
           composition={resolveNebulaComposition(sceneState.scene, viewportProfile.deviceClass)}
         />
       ) : null}
-      {!useSceneOwnedBackground ? (
+      {showLaunchBackground ? (
         <StarField
           entered={entered}
           reducedMotion={reducedMotion}
@@ -1110,7 +1182,7 @@ function DreamHeroApp() {
         active={enterTransitionState.active}
         phase={enterTransitionState.phase}
       />
-      {!useSceneOwnedBackground ? (
+      {showLaunchBackground ? (
         <DreamPortal
           entered={entered}
           reducedMotion={reducedMotion}
@@ -1136,7 +1208,6 @@ function DreamHeroApp() {
         onSkip={showMotionOnboarding ? handleSkipMotionOnboarding : handleDismissMotionRecovery}
         onOpenSettings={handleOpenMotionSettings}
       />
-
       {sceneState.scene === 'dreamEntry' || sceneState.scene === 'assistantRefine' ? (
         <DreamEntryScene
           key={`entry-${entryRenderKey}`}
@@ -1163,17 +1234,20 @@ function DreamHeroApp() {
           active
           mode={authRouteMode}
           pending={authPending}
+          auth={auth}
           sourcePath={resolveProtectedPath(authReturnPath)}
           error={authError}
           onSubmit={handleSubmitAuth}
+          onSendRegisterCode={handleSendRegisterCode}
           onSwitchMode={handleSwitchAuthMode}
+          onContinue={handleContinueAfterAuth}
+          onLogout={handleLogout}
           onGoHome={actions.goDreamEntry}
         />
       ) : null}
 
       <AiReadingScene
         active={sceneState.scene === 'aiReading'}
-        onGoHome={actions.goDreamEntry}
       />
 
       <DreamInsightsLoader
@@ -1186,8 +1260,10 @@ function DreamHeroApp() {
       {liveReadingActive ? (
         <LiveReadingScene
           active
+          auth={auth}
           onGoHome={actions.goDreamEntry}
-          onAuthStateChange={syncAuthState}
+          onGoLogin={() => actions.goLogin('/live-reading')}
+          onLogout={handleLogout}
         />
       ) : null}
 
@@ -1297,6 +1373,7 @@ function DreamHeroApp() {
           }}
         />
       ) : null}
+
     </MobileAppShell>
   )
 }

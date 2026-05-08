@@ -1,158 +1,398 @@
 .scene {
+  --ai-reading-ink: rgba(31, 39, 63, 0.96);
+  --ai-reading-body: rgba(75, 84, 111, 0.9);
+  --ai-reading-muted: rgba(107, 118, 147, 0.82);
+  --ai-reading-line: rgba(180, 192, 222, 0.62);
+  --ai-reading-paper: rgba(251, 249, 244, 0.94);
+  --ai-reading-paper-strong: rgba(255, 253, 249, 0.98);
+  --ai-reading-accent: rgba(120, 134, 175, 0.82);
+  position: absolute;
+  inset: 0;
+  isolation: isolate;
   display: grid;
   place-items: center;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
   padding:
-    calc(var(--safe-top) + 16px)
-    calc(max(14px, var(--safe-right)))
-    calc(var(--safe-bottom) + 16px)
-    calc(max(14px, var(--safe-left)));
+    calc(var(--safe-top) + 56px)
+    calc(max(18px, var(--safe-right)))
+    calc(var(--safe-bottom) + 20px)
+    calc(max(18px, var(--safe-left)));
+}
+
+:global(.app-root) .scene.scene {
+  padding:
+    calc(var(--safe-top) + 56px)
+    calc(max(18px, var(--safe-right)))
+    calc(var(--safe-bottom) + 20px)
+    calc(max(18px, var(--safe-left)));
+}
+
+.scene::before,
+.scene::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.scene::before {
+  z-index: 0;
+  background:
+    radial-gradient(circle at 14% 9%, rgba(204, 215, 241, 0.5), rgba(204, 215, 241, 0) 34%),
+    radial-gradient(circle at 82% 13%, rgba(233, 206, 221, 0.38), rgba(233, 206, 221, 0) 38%),
+    radial-gradient(circle at 44% 84%, rgba(193, 199, 228, 0.3), rgba(193, 199, 228, 0) 45%),
+    linear-gradient(180deg, #f5f6f8 0%, #f4f5f7 100%);
+}
+
+.scene::after {
+  z-index: 1;
+  background:
+    radial-gradient(circle at 16% 19%, rgba(133, 145, 180, 0.1) 0 1px, transparent 1px),
+    radial-gradient(circle at 74% 46%, rgba(133, 145, 180, 0.08) 0 1px, transparent 1px),
+    radial-gradient(circle at 56% 77%, rgba(133, 145, 180, 0.06) 0 1px, transparent 1px);
+  background-size: 170px 170px, 220px 220px, 240px 240px;
+  opacity: 0.52;
 }
 
 .shell {
-  width: min(100%, 680px);
+  position: relative;
+  z-index: 2;
+  width: min(100%, 460px);
   max-height: 100%;
   overflow: auto;
-  border: 1px solid var(--tarot-home-glass-border);
-  border-radius: 24px;
-  padding: clamp(16px, 3vw, 26px);
+  border: 1px solid rgba(190, 200, 226, 0.76);
+  border-radius: 30px;
+  padding: 22px 20px 18px;
   display: grid;
-  gap: 14px;
+  gap: 16px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.03)),
-    radial-gradient(circle at 14% 10%, rgba(182, 227, 255, 0.16), transparent 34%),
-    radial-gradient(circle at 84% 12%, rgba(210, 196, 255, 0.18), transparent 32%),
-    linear-gradient(
-      148deg,
-      rgba(75, 124, 246, 0.22),
-      rgba(109, 184, 255, 0.14) 38%,
-      rgba(39, 53, 90, 0.62) 76%
-    ),
-    rgba(25, 36, 64, 0.74);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(248, 248, 247, 0.72)),
+    linear-gradient(155deg, rgba(246, 242, 235, 0.78), rgba(248, 250, 255, 0.72) 64%, rgba(251, 247, 241, 0.76)),
+    var(--ai-reading-paper);
   box-shadow:
-    0 18px 42px rgba(15, 20, 35, 0.34),
-    0 1px 0 rgba(255, 255, 255, 0.16) inset;
-  backdrop-filter: blur(16px) saturate(1.08);
+    0 22px 44px rgba(106, 116, 148, 0.18),
+    0 1px 0 rgba(255, 255, 255, 0.76) inset;
+  animation: questionPaperIn 720ms cubic-bezier(0.2, 0.86, 0.24, 1) both;
+}
+
+.shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0)),
+    linear-gradient(110deg, rgba(203, 216, 251, 0.15), rgba(246, 231, 238, 0) 40%),
+    repeating-linear-gradient(
+      0deg,
+      rgba(92, 104, 132, 0.028) 0px,
+      rgba(92, 104, 132, 0.028) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+}
+
+.shell > * {
+  position: relative;
+  z-index: 1;
+}
+
+.shellGlass {
+  border-radius: 30px;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.56) inset;
 }
 
 .drawShell {
   width: min(100%, 1120px);
   max-height: 100%;
-  gap: 12px;
+  gap: 14px;
+}
+
+.questionShell {
+  min-height: min(710px, calc(100dvh - var(--safe-top) - var(--safe-bottom) - 96px));
+  max-height: min(710px, calc(100dvh - var(--safe-top) - var(--safe-bottom) - 96px));
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  overflow: hidden;
 }
 
 .header {
   display: grid;
   gap: 8px;
+  padding-bottom: 2px;
+}
+
+.questionHeader {
+  gap: 10px;
+  animation: questionHeaderIn 660ms cubic-bezier(0.18, 0.88, 0.24, 1) 80ms both;
+}
+
+.questionHeaderTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .eyebrow {
   margin: 0;
-  color: var(--tarot-home-text-meta);
-  font: 500 0.68rem/1.2 'Outfit', sans-serif;
-  letter-spacing: 0.18em;
+  color: var(--ai-reading-muted);
+  font: 600 0.72rem/1.2 'Outfit', sans-serif;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
 }
 
 .title {
   margin: 0;
-  color: var(--tarot-home-text-title);
-  font: 500 clamp(1.86rem, 6.4vw, 2.7rem) / 0.92 'Cormorant Garamond', serif;
-  letter-spacing: -0.03em;
+  color: var(--ai-reading-ink);
+  font: 500 clamp(2.55rem, 8.8vw, 3.36rem) / 0.94 'Cormorant Garamond', serif;
+  letter-spacing: -0.012em;
+  text-shadow:
+    0 10px 24px rgba(106, 120, 157, 0.14),
+    0 0 14px rgba(223, 231, 251, 0.3);
+}
+
+.scene[data-title-font='sans'] .title {
+  font: 500 clamp(2.24rem, 7.6vw, 2.9rem) / 1.06 'Outfit', 'PingFang SC', sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.fontSwitchButton {
+  border: 0;
+  background: transparent;
+  color: rgba(106, 118, 148, 0.9);
+  font: 500 0.64rem/1 'Outfit', sans-serif;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 4px 0;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(159, 171, 202, 0.58);
+  transition:
+    color 220ms ease,
+    border-color 220ms ease;
+}
+
+.fontSwitchButton:hover {
+  color: rgba(60, 74, 112, 0.96);
+  border-color: rgba(108, 126, 182, 0.72);
+}
+
+.fontSwitchButton:focus-visible {
+  outline: 0;
+  box-shadow: 0 2px 0 rgba(108, 126, 182, 0.24);
+}
+
+.ritualGlyphs {
+  margin: -2px 0 0;
+  color: rgba(101, 115, 151, 0.78);
+  font: 500 0.84rem/1 'Cormorant Garamond', serif;
+  letter-spacing: 0.34em;
+  animation: ritualFloat 2.8s ease-in-out infinite;
 }
 
 .copy {
   margin: 0;
-  color: var(--tarot-home-text-body);
-  font: 400 0.95rem/1.62 'Outfit', sans-serif;
+  color: rgba(68, 80, 110, 0.9);
+  font: 400 1rem/1.66 'Outfit', 'PingFang SC', sans-serif;
+  max-width: 28ch;
 }
 
 .inputPanel {
   display: grid;
-  gap: 10px;
+  gap: 12px;
+  padding: 16px 14px 12px;
+  min-height: clamp(310px, 43vh, 390px);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  border: 1px solid var(--ai-reading-line);
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.56), rgba(246, 248, 253, 0.3)),
+    linear-gradient(150deg, rgba(242, 236, 224, 0.4), rgba(249, 251, 255, 0.2) 58%, rgba(250, 241, 232, 0.35)),
+    rgba(255, 253, 248, 0.82);
+  box-shadow:
+    0 14px 24px rgba(116, 127, 159, 0.14),
+    0 1px 0 rgba(255, 255, 255, 0.72) inset;
+}
+
+.inputPanelGlass {
+  border-radius: 20px;
+  overflow: hidden;
 }
 
 .label {
   margin: 0;
-  color: var(--tarot-home-text-body);
-  font: 500 0.8rem/1.2 'Outfit', sans-serif;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  color: var(--ai-reading-body);
+  font: 600 0.82rem/1.2 'Outfit', 'PingFang SC', sans-serif;
+  letter-spacing: 0.02em;
 }
 
 .questionInput {
   width: 100%;
-  border: 1px solid var(--tarot-home-glass-border);
-  border-radius: 16px;
-  padding: 14px 15px;
-  resize: vertical;
-  min-height: 152px;
+  height: 100%;
+  min-height: 180px;
+  border: 1px solid rgba(170, 184, 219, 0.72);
+  border-radius: 18px;
+  padding: 16px;
+  resize: none;
   background:
-    linear-gradient(180deg, rgba(15, 24, 49, 0.74), rgba(12, 20, 42, 0.46));
-  color: rgba(249, 247, 255, 0.94);
-  font: 400 0.98rem/1.52 'Outfit', sans-serif;
+    linear-gradient(180deg, var(--ai-reading-paper-strong), rgba(250, 251, 248, 0.92)),
+    repeating-linear-gradient(
+      0deg,
+      rgba(107, 120, 152, 0.052) 0px,
+      rgba(107, 120, 152, 0.052) 1px,
+      transparent 1px,
+      transparent 28px
+    );
+  color: var(--ai-reading-ink);
+  font: 400 1.03rem/1.7 'Outfit', 'PingFang SC', sans-serif;
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
-    0 12px 28px rgba(8, 14, 31, 0.32);
+    0 0 0 1px rgba(255, 255, 255, 0.66) inset,
+    0 12px 24px rgba(124, 135, 166, 0.12);
+  transition:
+    border-color 220ms ease,
+    box-shadow 220ms ease,
+    transform 220ms ease;
 }
 
 .questionInput::placeholder {
-  color: rgba(223, 230, 246, 0.58);
+  color: rgba(128, 141, 176, 0.82);
 }
 
 .questionInput:focus {
   outline: none;
-  border-color: rgba(234, 225, 255, 0.68);
+  border-color: rgba(130, 150, 205, 0.86);
   box-shadow:
-    0 0 0 3px rgba(184, 208, 255, 0.2),
-    0 12px 28px rgba(8, 14, 31, 0.32);
+    0 0 0 3px rgba(174, 190, 230, 0.32),
+    0 16px 28px rgba(117, 132, 171, 0.2);
+  transform: translateY(-1px);
 }
 
 .counter {
   margin: 0;
   justify-self: end;
-  color: var(--tarot-home-text-meta);
-  font: 400 0.72rem/1 'Outfit', sans-serif;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding-inline: 10px;
+  border: 1px solid rgba(170, 184, 218, 0.76);
+  border-radius: 999px;
+  color: rgba(103, 117, 149, 0.9);
+  font: 500 0.7rem/1 'Outfit', sans-serif;
+  background: rgba(255, 255, 255, 0.88);
 }
 
 .actions {
-  display: flex;
-  align-items: center;
+  display: grid;
   gap: 10px;
-  flex-wrap: wrap;
+  justify-items: center;
+}
+
+.scene :global(.primary-pill),
+.scene :global(.secondary-pill) {
+  width: auto;
+  min-height: 42px;
+  border-radius: 0;
+  padding: 0 8px;
+  font: 500 0.84rem/1 'Outfit', 'PingFang SC', sans-serif;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.scene :global(.primary-pill) {
+  position: relative;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ai-reading-ink);
+}
+
+.scene :global(.primary-pill)::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(117, 132, 173, 0.16), rgba(117, 132, 173, 0.86), rgba(117, 132, 173, 0.16));
+  transform-origin: center;
+  transform: scaleX(0.52);
+  transition: transform 240ms ease;
+}
+
+.scene :global(.primary-pill):hover::after,
+.scene :global(.primary-pill):focus-visible::after {
+  transform: scaleX(1);
+}
+
+.scene :global(.primary-pill):focus-visible {
+  outline: none;
+  color: rgba(38, 52, 90, 0.98);
+}
+
+.scene :global(.secondary-pill) {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: rgba(80, 93, 126, 0.9);
+}
+
+.scene :global(.primary-pill[disabled]) {
+  color: rgba(125, 134, 160, 0.72);
+  opacity: 1;
+}
+
+.scene :global(.primary-pill[disabled])::after {
+  transform: scaleX(0.42);
+  background: rgba(158, 170, 200, 0.34);
 }
 
 .error {
   margin: 0;
-  color: rgba(255, 229, 240, 0.96);
-  border: 1px solid rgba(255, 190, 218, 0.36);
-  border-radius: 12px;
-  background: rgba(132, 46, 84, 0.34);
-  padding: 10px 12px;
+  color: rgba(111, 55, 78, 0.96);
+  border: 1px solid rgba(210, 168, 184, 0.66);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(255, 243, 247, 0.92)),
+    rgba(252, 239, 243, 0.88);
+  padding: 11px 12px;
   font: 400 0.82rem/1.46 'Outfit', sans-serif;
 }
 
 .questionQuote {
   margin: 0;
-  color: rgba(240, 244, 255, 0.86);
-  font: 400 0.92rem/1.56 'Outfit', sans-serif;
+  color: rgba(74, 88, 122, 0.9);
+  font: 400 0.88rem/1.58 'Outfit', sans-serif;
 }
 
 .cardsGrid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: 1fr;
+  gap: 8px;
 }
 
 .drawStage {
   height: clamp(620px, 70svh, 820px);
   min-height: 620px;
-  border: 1px solid rgba(216, 182, 113, 0.24);
+  overflow: hidden;
+  border: 1px solid rgba(173, 188, 223, 0.58);
+  background:
+    radial-gradient(circle at 52% -8%, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0) 42%),
+    radial-gradient(circle at 14% 20%, rgba(214, 223, 255, 0.48), rgba(214, 223, 255, 0) 34%),
+    radial-gradient(circle at 86% 18%, rgba(255, 212, 237, 0.44), rgba(255, 212, 237, 0) 36%),
+    linear-gradient(180deg, rgba(242, 246, 255, 0.96), rgba(229, 235, 252, 0.92));
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.62) inset,
+    0 14px 24px rgba(112, 125, 162, 0.22);
+}
+
+.drawStageGlass {
+  height: clamp(620px, 70svh, 820px);
+  min-height: 620px;
   border-radius: 22px;
   overflow: hidden;
-  background: rgba(10, 6, 28, 0.42);
-  box-shadow:
-    0 18px 40px rgba(5, 8, 22, 0.32),
-    0 0 0 1px rgba(255, 255, 255, 0.06) inset;
 }
 
 .arcFlow {
@@ -161,51 +401,62 @@
 
 .drawnCardsPanel {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 10px;
 }
 
 .drawnCard {
   min-height: 78px;
-  border: 1px dashed rgba(230, 220, 255, 0.24);
-  border-radius: 14px;
   padding: 12px;
   display: grid;
   align-content: center;
   gap: 6px;
-  background: rgba(12, 20, 42, 0.3);
+  border: 1px solid rgba(172, 186, 220, 0.58);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(245, 249, 255, 0.78)),
+    rgba(233, 239, 255, 0.7);
   opacity: 0.76;
   transition:
     opacity 180ms ease,
-    border-color 180ms ease,
     transform 180ms ease;
+}
+
+.drawnCardGlass {
+  border-radius: 14px;
+  overflow: hidden;
 }
 
 .drawnCardRevealed {
   opacity: 1;
   transform: translateY(-1px);
-  border-style: solid;
-  border-color: rgba(240, 222, 169, 0.48);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.03)),
-    rgba(32, 26, 60, 0.58);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 251, 255, 0.84)),
+    linear-gradient(145deg, rgba(255, 214, 237, 0.44), rgba(214, 224, 255, 0.38) 52%, rgba(221, 232, 255, 0.42)),
+    rgba(239, 245, 255, 0.82);
 }
 
 .cardChip {
-  border: 1px solid var(--tarot-home-glass-border-soft);
-  border-radius: 14px;
-  padding: 12px 12px 13px;
+  padding: 13px 13px 14px;
   display: grid;
   gap: 6px;
+  border: 1px solid rgba(171, 186, 221, 0.62);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02)),
-    linear-gradient(150deg, rgba(109, 184, 255, 0.12), rgba(210, 196, 255, 0.08) 52%, rgba(21, 30, 58, 0.42)),
-    rgba(20, 30, 56, 0.42);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(246, 250, 255, 0.86)),
+    linear-gradient(145deg, rgba(255, 219, 240, 0.42), rgba(216, 225, 255, 0.34) 52%, rgba(225, 234, 255, 0.38)),
+    rgba(240, 246, 255, 0.84);
+  box-shadow:
+    0 12px 20px rgba(116, 129, 165, 0.18),
+    0 1px 0 rgba(255, 255, 255, 0.7) inset;
+}
+
+.cardChipGlass {
+  border-radius: 14px;
+  overflow: hidden;
 }
 
 .cardChipLabel {
   margin: 0;
-  color: var(--tarot-home-text-meta);
+  color: rgba(89, 102, 138, 0.92);
   font: 500 0.68rem/1.2 'Outfit', sans-serif;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -213,45 +464,51 @@
 
 .cardChipName {
   margin: 0;
-  color: var(--tarot-home-text-title);
-  font: 500 1.08rem/1.18 'Cormorant Garamond', serif;
+  color: rgba(35, 45, 74, 0.95);
+  font: 500 1.18rem/1.12 'Cormorant Garamond', serif;
 }
 
 .block {
-  border: 1px solid var(--tarot-home-glass-border-soft);
-  border-radius: 14px;
-  padding: 12px 13px;
+  padding: 13px 14px;
   display: grid;
-  gap: 8px;
+  gap: 10px;
+  border: 1px solid rgba(171, 186, 221, 0.62);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02)),
-    linear-gradient(150deg, rgba(109, 184, 255, 0.12), rgba(210, 196, 255, 0.08) 52%, rgba(21, 30, 58, 0.42)),
-    rgba(20, 30, 56, 0.4);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(246, 250, 255, 0.86)),
+    linear-gradient(145deg, rgba(255, 219, 240, 0.42), rgba(216, 225, 255, 0.34) 52%, rgba(225, 234, 255, 0.38)),
+    rgba(240, 246, 255, 0.84);
+  box-shadow:
+    0 12px 20px rgba(116, 129, 165, 0.18),
+    0 1px 0 rgba(255, 255, 255, 0.7) inset;
+}
+
+.blockGlass {
+  border-radius: 14px;
+  overflow: hidden;
 }
 
 .blockLabel {
   margin: 0;
-  color: rgba(240, 244, 255, 0.82);
-  font: 500 0.74rem/1.2 'Outfit', sans-serif;
-  letter-spacing: 0.12em;
+  color: rgba(79, 92, 126, 0.9);
+  font: 500 0.7rem/1.2 'Outfit', sans-serif;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .cardMeta {
   margin: 0;
-  color: var(--tarot-home-text-meta);
+  color: rgba(92, 104, 138, 0.82);
   font: 400 0.76rem/1.2 'Outfit', sans-serif;
 }
 
 .blockText {
   margin: 0;
-  color: var(--tarot-home-text-body);
+  color: rgba(55, 66, 98, 0.92);
   font: 400 0.93rem/1.62 'Outfit', sans-serif;
 }
 
 .summaryBlock {
-  border-color: var(--tarot-home-glass-border);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.7) inset;
 }
 
 .readingBlock {
@@ -271,7 +528,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: var(--tarot-home-text-meta);
+  color: rgba(96, 108, 142, 0.86);
   font: 400 0.76rem/1.2 'Outfit', sans-serif;
 }
 
@@ -279,15 +536,15 @@
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  background: rgba(184, 208, 255, 0.94);
-  box-shadow: 0 0 12px rgba(184, 208, 255, 0.64);
+  background: rgba(104, 130, 205, 0.9);
+  box-shadow: 0 0 12px rgba(128, 152, 223, 0.62);
   animation: pulse 1.1s ease-in-out infinite;
 }
 
 .readingText {
   margin: 0;
-  color: var(--tarot-home-text-body);
-  font: 400 0.95rem/1.7 'Outfit', sans-serif;
+  color: rgba(49, 61, 94, 0.94);
+  font: 400 0.9rem/1.72 'Outfit', sans-serif;
   white-space: pre-wrap;
 }
 
@@ -304,10 +561,104 @@
   }
 }
 
+@keyframes questionPaperIn {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 30px, 0) scale(0.98);
+    filter: blur(6px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes questionHeaderIn {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes ritualFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.76;
+  }
+
+  50% {
+    transform: translateY(-2px);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell,
+  .questionHeader,
+  .ritualGlyphs,
+  .questionInput,
+  .fontSwitchButton,
+  .scene :global(.primary-pill)::after {
+    animation: none;
+    transition: none;
+  }
+}
+
 @media (max-width: 520px) {
+  :global(.app-root) .scene.scene {
+    padding:
+      calc(var(--safe-top) + 56px)
+      calc(max(18px, var(--safe-right)))
+      calc(var(--safe-bottom) + 18px)
+      calc(max(18px, var(--safe-left)));
+  }
+
   .shell {
-    padding: 14px;
-    gap: 12px;
+    padding: 18px 16px 14px;
+    gap: 14px;
+  }
+
+  .questionShell {
+    min-height: min(670px, calc(100dvh - var(--safe-top) - var(--safe-bottom) - 90px));
+    max-height: min(670px, calc(100dvh - var(--safe-top) - var(--safe-bottom) - 90px));
+  }
+
+  .title {
+    font-size: clamp(2.16rem, 9.6vw, 2.68rem);
+    line-height: 0.96;
+  }
+
+  .scene[data-title-font='sans'] .title {
+    font-size: clamp(1.94rem, 8.6vw, 2.34rem);
+    line-height: 1.04;
+  }
+
+  .copy {
+    font-size: 0.92rem;
+    line-height: 1.62;
+  }
+
+  .inputPanel {
+    padding: 14px 12px 10px;
+    min-height: clamp(280px, 40vh, 360px);
+  }
+
+  .questionInput {
+    min-height: 164px;
+    font-size: 0.98rem;
+  }
+
+  .fontSwitchButton {
+    font-size: 0.6rem;
+    letter-spacing: 0.14em;
   }
 
   .drawShell {
@@ -325,8 +676,18 @@
     align-items: stretch;
   }
 
-  .cardsGrid,
   .drawnCardsPanel {
-    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+@media (min-width: 620px) {
+  .cardsGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .drawnCardsPanel {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

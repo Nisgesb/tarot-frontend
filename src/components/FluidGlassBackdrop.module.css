@@ -1,0 +1,24 @@
+.root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+.root::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 16%, rgba(255, 255, 255, 0.1), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 36%, rgba(0, 0, 0, 0.08));
+  mix-blend-mode: screen;
+}
+
+.root :global(canvas) {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}

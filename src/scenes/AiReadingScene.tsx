@@ -4,6 +4,7 @@ import {
   type CelestialTarotArcFlowRevealedCard,
 } from '../components/CelestialTarotArcFlow'
 import { resolveAiReadingCardFront } from '../components/CelestialTarotArcFlow/aiReadingCardFronts'
+import { GlassPanel } from '../components/GlassPanel'
 import {
   createAiReadingSession,
   generateAiReading,
@@ -18,11 +19,13 @@ import styles from './AiReadingScene.module.css'
 
 interface AiReadingSceneProps {
   active: boolean
-  onGoHome: () => void
 }
 
 type AiReadingPhase = 'question' | 'draw' | 'reading'
+type TitleFontMode = 'serif' | 'sans'
+
 const DRAW_COMPLETION_DELAY_MS = 1600
+const AI_READING_TITLE_FONT_KEY = 'ai-reading-title-font-v1'
 
 function asDisplayError(message: string | null) {
   if (!message) {
@@ -38,9 +41,10 @@ function asDisplayError(message: string | null) {
   return normalized
 }
 
-export function AiReadingScene({ active, onGoHome }: AiReadingSceneProps) {
+export function AiReadingScene({ active }: AiReadingSceneProps) {
   const [question, setQuestion] = useState('')
   const [phase, setPhase] = useState<AiReadingPhase>('question')
+  const [titleFontMode, setTitleFontMode] = useState<TitleFontMode>('serif')
   const [anonymousSessionId, setAnonymousSessionId] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [streaming, setStreaming] = useState(false)
@@ -66,6 +70,17 @@ export function AiReadingScene({ active, onGoHome }: AiReadingSceneProps) {
 
     return () => {
       cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(AI_READING_TITLE_FONT_KEY)
+      if (stored === 'serif' || stored === 'sans') {
+        setTitleFontMode(stored)
+      }
+    } catch {
+      // 忽略读取本地调试偏好失败
     }
   }, [])
 
@@ -187,6 +202,20 @@ export function AiReadingScene({ active, onGoHome }: AiReadingSceneProps) {
     .filter(Boolean)
     .join(' ')
 
+  const toggleTitleFont = () => {
+    setTitleFontMode((previous) => {
+      const next: TitleFontMode = previous === 'serif' ? 'sans' : 'serif'
+
+      try {
+        window.localStorage.setItem(AI_READING_TITLE_FONT_KEY, next)
+      } catch {
+        // 忽略写入本地调试偏好失败
+      }
+
+      return next
+    })
+  }
+
   const questionPreview = sessionResult?.question?.trim() || question.trim()
   const requiredDrawCount = sessionResult?.spread.length ?? 3
   const currentDrawIndex = Math.min(drawnCardIds.length, requiredDrawCount)
@@ -218,16 +247,30 @@ export function AiReadingScene({ active, onGoHome }: AiReadingSceneProps) {
         : '点击卡背抽取下一张牌'
 
   return (
-    <section className={className}>
+    <section className={className} data-title-font={titleFontMode}>
       {phase === 'draw' && sessionResult ? (
-        <div className={`${styles.shell} ${styles.drawShell}`}>
+        <GlassPanel
+          width="min(100%, 1120px)"
+          borderRadius={24}
+          backgroundOpacity={0.15}
+          saturation={1.3}
+          className={styles.shellGlass}
+          contentClassName={`${styles.shell} ${styles.drawShell}`}
+        >
           <header className={styles.header}>
             <p className={styles.eyebrow}>Celestial Tarot Arc Flow</p>
             <h2 className={styles.title}>进入抽卡过程</h2>
             {questionPreview ? <p className={styles.questionQuote}>“{questionPreview}”</p> : null}
           </header>
 
-          <div className={styles.drawStage}>
+          <GlassPanel
+            fill
+            borderRadius={22}
+            backgroundOpacity={0.1}
+            saturation={1.22}
+            className={styles.drawStageGlass}
+            contentClassName={styles.drawStage}
+          >
             <CelestialTarotArcFlow
               className={styles.arcFlow}
               mode="draw-sequence"
@@ -246,20 +289,24 @@ export function AiReadingScene({ active, onGoHome }: AiReadingSceneProps) {
               }
               onCardDraw={handleDrawCard}
             />
-          </div>
+          </GlassPanel>
 
           <section className={styles.drawnCardsPanel} aria-label="已抽到的牌">
             {sessionResult.spread.map((card, index) => {
               const revealed = index < drawnCards.length
 
               return (
-                <article
+                <GlassPanel
                   key={card.position}
-                  className={`${styles.drawnCard} ${revealed ? styles.drawnCardRevealed : ''}`}
+                  borderRadius={14}
+                  backgroundOpacity={revealed ? 0.14 : 0.08}
+                  saturation={revealed ? 1.28 : 1.18}
+                  className={styles.drawnCardGlass}
+                  contentClassName={`${styles.drawnCard} ${revealed ? styles.drawnCardRevealed : ''}`}
                 >
                   <p className={styles.cardChipLabel}>{card.positionLabel}</p>
                   <p className={styles.cardChipName}>{revealed ? card.cardName : '等待抽取'}</p>
-                </article>
+                </GlassPanel>
               )
             })}
           </section>
@@ -275,59 +322,76 @@ export function AiReadingScene({ active, onGoHome }: AiReadingSceneProps) {
             >
               重新提问
             </button>
-            <button
-              type="button"
-              className="secondary-pill"
-              onClick={onGoHome}
-              disabled={submitting || generationStartedRef.current}
-            >
-              返回首页
-            </button>
           </div>
-        </div>
+        </GlassPanel>
       ) : (
-        <div className={styles.shell}>
+        <GlassPanel
+          width="min(100%, 460px)"
+          borderRadius={24}
+          backgroundOpacity={0.15}
+          saturation={1.3}
+          className={styles.shellGlass}
+          contentClassName={
+            phase === 'question' ? `${styles.shell} ${styles.questionShell}` : styles.shell
+          }
+        >
           {phase === 'question' ? (
             <>
-            <header className={styles.header}>
-              <p className={styles.eyebrow}>3 Card Tarot</p>
-              <h2 className={styles.title}>Ask One Clear Question</h2>
-              <p className={styles.copy}>
-                只输入这一次你最想确认的问题，随后进入抽卡过程，三张牌归位后再开始 AI 原文流式解读。
-              </p>
-            </header>
+              <header className={`${styles.header} ${styles.questionHeader}`}>
+                <div className={styles.questionHeaderTop}>
+                  <p className={styles.eyebrow}>3 Card Tarot</p>
+                  <button
+                    type="button"
+                    className={styles.fontSwitchButton}
+                    onClick={toggleTitleFont}
+                    aria-label={titleFontMode === 'serif' ? '切换为无衬线标题' : '切换为衬线标题'}
+                  >
+                    {titleFontMode === 'serif' ? 'A↔a 衬线' : 'A↔a 无衬线'}
+                  </button>
+                </div>
+                <h2 className={styles.title}>Ask One Clear Question</h2>
+                <p className={styles.ritualGlyphs} aria-hidden>
+                  ✶ ⟡ ✶
+                </p>
+                <p className={styles.copy}>
+                  只输入这一次你最想确认的问题，随后进入抽卡过程，三张牌归位后再开始 AI 原文流式解读。
+                </p>
+              </header>
 
-            <div className={styles.inputPanel}>
-              <label htmlFor="ai-reading-question" className={styles.label}>
-                你的问题
-              </label>
-              <textarea
-                id="ai-reading-question"
-                className={styles.questionInput}
-                value={question}
-                onChange={(event) => setQuestion(event.target.value)}
-                placeholder="例如：我该继续这段关系，还是先把重心拉回自己？"
-                rows={6}
-                maxLength={280}
-              />
-              <p className={styles.counter}>{question.trim().length} / 280</p>
-            </div>
-
-            <div className={styles.actions}>
-              <button
-                type="button"
-                className="primary-pill"
-                onClick={handleSubmit}
-                disabled={!question.trim() || submitting}
+              <GlassPanel
+                borderRadius={18}
+                backgroundOpacity={0.12}
+                saturation={1.24}
+                className={styles.inputPanelGlass}
+                contentClassName={styles.inputPanel}
               >
-                {submitting ? '正在创建抽卡会话…' : '进入抽卡'}
-              </button>
-              <button type="button" className="secondary-pill" onClick={onGoHome} disabled={submitting}>
-                返回首页
-              </button>
-            </div>
+                <label htmlFor="ai-reading-question" className={styles.label}>
+                  你的问题
+                </label>
+                <textarea
+                  id="ai-reading-question"
+                  className={styles.questionInput}
+                  value={question}
+                  onChange={(event) => setQuestion(event.target.value)}
+                  placeholder="例如：我该继续这段关系，还是先把重心拉回自己？"
+                  rows={6}
+                  maxLength={280}
+                />
+                <p className={styles.counter}>{question.trim().length} / 280</p>
+              </GlassPanel>
 
-            {error ? <p className={styles.error}>{error}</p> : null}
+              <div className={styles.actions}>
+                <button
+                  type="button"
+                  className="primary-pill"
+                  onClick={handleSubmit}
+                  disabled={!question.trim() || submitting}
+                >
+                  {submitting ? '正在创建抽卡会话…' : '进入抽卡'}
+                </button>
+              </div>
+
+              {error ? <p className={styles.error}>{error}</p> : null}
             </>
           ) : sessionResult ? (
             <>
@@ -341,14 +405,27 @@ export function AiReadingScene({ active, onGoHome }: AiReadingSceneProps) {
 
             <section className={styles.cardsGrid}>
               {sessionResult.spread.map((card: SpreadCardItem) => (
-                <article key={card.position} className={styles.cardChip}>
+                <GlassPanel
+                  key={card.position}
+                  borderRadius={14}
+                  backgroundOpacity={0.12}
+                  saturation={1.24}
+                  className={styles.cardChipGlass}
+                  contentClassName={styles.cardChip}
+                >
                   <p className={styles.cardChipLabel}>{card.positionLabel}</p>
                   <p className={styles.cardChipName}>{card.cardName}</p>
-                </article>
+                </GlassPanel>
               ))}
             </section>
 
-            <section className={`${styles.block} ${styles.readingBlock}`}>
+            <GlassPanel
+              borderRadius={14}
+              backgroundOpacity={0.12}
+              saturation={1.24}
+              className={styles.blockGlass}
+              contentClassName={`${styles.block} ${styles.readingBlock}`}
+            >
               <div className={styles.readingHeader}>
                 <p className={styles.blockLabel}>{streaming ? '正在流式生成' : '牌面解读'}</p>
                 {streaming ? (
@@ -361,7 +438,7 @@ export function AiReadingScene({ active, onGoHome }: AiReadingSceneProps) {
               <p className={styles.readingText}>
                 {readingText || (streaming ? 'AI 正在整理这组三张牌…' : '暂无解读文本')}
               </p>
-            </section>
+            </GlassPanel>
 
             {error ? <p className={styles.error}>{error}</p> : null}
 
@@ -369,13 +446,10 @@ export function AiReadingScene({ active, onGoHome }: AiReadingSceneProps) {
               <button type="button" className="primary-pill" onClick={startAnother} disabled={submitting}>
                 再问一个问题
               </button>
-              <button type="button" className="secondary-pill" onClick={onGoHome} disabled={submitting}>
-                返回首页
-              </button>
             </div>
             </>
           ) : null}
-        </div>
+        </GlassPanel>
       )}
     </section>
   )

@@ -50,6 +50,12 @@ export function DreamResultScene({
     .filter(Boolean)
     .join(' ')
   const sectionClassName = `${className} ${mode === 'inspect' ? 'is-inspect' : ''}`
+  const backAriaLabel =
+    mode === 'inspect'
+      ? inspectSource === 'myDreams'
+        ? '返回我的'
+        : '返回圈子'
+      : '返回首页'
 
   if (!dream) {
     return (
@@ -68,12 +74,13 @@ export function DreamResultScene({
   return (
     <section className={sectionClassName}>
       <header className="result-topbar">
-        <button type="button" className="topbar-link" onClick={mode === 'inspect' ? onBackFromInspect : onGoHome}>
-          {mode === 'inspect'
-            ? inspectSource === 'myDreams'
-              ? 'Back to My Dreams'
-              : 'Back to Gallery'
-            : 'AETHER STUDIO'}
+        <button
+          type="button"
+          className="topbar-link result-back-icon"
+          onClick={mode === 'inspect' ? onBackFromInspect : onGoHome}
+          aria-label={backAriaLabel}
+        >
+          ←
         </button>
         <p className="result-top-title">The Dreamkeeper</p>
         <nav className="result-nav">

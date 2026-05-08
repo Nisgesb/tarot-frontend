@@ -4,11 +4,29 @@ export interface AuthUser {
   id: string;
   email: string;
   role: UserRole;
+  birthday: string | null;
+  displayName: string | null;
 }
 
 export interface AuthPayload {
   accessToken: string;
+  refreshToken: string;
+  refreshTokenExpiresAt: string;
   user: AuthUser;
+}
+
+export interface RegisterWithEmailPayload {
+  email: string;
+  password: string;
+  birthday: string;
+  verificationCode: string;
+}
+
+export interface SendRegisterCodeResponse {
+  sent: true;
+  email: string;
+  expiresInSeconds: number;
+  resendIntervalSeconds: number;
 }
 
 export interface ReaderSummary {

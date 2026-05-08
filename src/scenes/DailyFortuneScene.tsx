@@ -8,6 +8,7 @@ import {
   saveStoredZodiacSign,
 } from '../services/dailyFortuneApi'
 import { canUseWindow } from '../platform/runtime'
+import { GlassPanel } from '../components/GlassPanel'
 import {
   ZODIAC_SIGNS,
   ZODIAC_SIGN_LABELS,
@@ -158,8 +159,13 @@ export function DailyFortuneScene({ active, onGoHome }: DailyFortuneSceneProps) 
     <section className={className}>
       <div className={styles.shell}>
         <header className={styles.topBar}>
-          <button type="button" className="topbar-link" onClick={onGoHome}>
-            返回首页
+          <button
+            type="button"
+            className={`topbar-link ${styles.backIconButton}`}
+            onClick={onGoHome}
+            aria-label="返回首页"
+          >
+            ←
           </button>
           <div className={styles.titleWrap}>
             <p className={styles.eyebrow}>Daily Fortune</p>
@@ -168,7 +174,13 @@ export function DailyFortuneScene({ active, onGoHome }: DailyFortuneSceneProps) 
           <span className={styles.spacer} aria-hidden />
         </header>
 
-        <section className={`${styles.surface} ${styles.hero}`}>
+        <GlassPanel
+          borderRadius={28}
+          backgroundOpacity={0.15}
+          saturation={1.3}
+          className={styles.surfaceGlass}
+          contentClassName={`${styles.surface} ${styles.hero}`}
+        >
           <div className={styles.heroMeta}>
             <span className={styles.metaPill}>{formatZhDate(dateIso)}</span>
             <span className={styles.metaPill}>{ZODIAC_SIGN_LABELS[selectedSign]}</span>
@@ -197,10 +209,16 @@ export function DailyFortuneScene({ active, onGoHome }: DailyFortuneSceneProps) 
               ))}
             </div>
           </div>
-        </section>
+        </GlassPanel>
 
         <section className={styles.grid}>
-          <article className={`${styles.surface} ${styles.card}`}>
+          <GlassPanel
+            borderRadius={28}
+            backgroundOpacity={0.14}
+            saturation={1.28}
+            className={styles.surfaceGlass}
+            contentClassName={`${styles.surface} ${styles.card}`}
+          >
             <p className={styles.cardTitle}>代表牌</p>
             <p className={styles.cardName}>{fortune?.cardName ?? '等待载入'}</p>
             <div className={styles.keywords}>
@@ -210,24 +228,48 @@ export function DailyFortuneScene({ active, onGoHome }: DailyFortuneSceneProps) 
                 </span>
               ))}
             </div>
-          </article>
+          </GlassPanel>
 
-          <article className={`${styles.surface} ${styles.card}`}>
+          <GlassPanel
+            borderRadius={28}
+            backgroundOpacity={0.14}
+            saturation={1.28}
+            className={styles.surfaceGlass}
+            contentClassName={`${styles.surface} ${styles.card}`}
+          >
             <p className={styles.cardTitle}>爱情</p>
             <p className={styles.cardCopy}>{fortune?.love ?? '正在加载...'}</p>
-          </article>
+          </GlassPanel>
 
-          <article className={`${styles.surface} ${styles.card}`}>
+          <GlassPanel
+            borderRadius={28}
+            backgroundOpacity={0.14}
+            saturation={1.28}
+            className={styles.surfaceGlass}
+            contentClassName={`${styles.surface} ${styles.card}`}
+          >
             <p className={styles.cardTitle}>事业</p>
             <p className={styles.cardCopy}>{fortune?.career ?? '正在加载...'}</p>
-          </article>
+          </GlassPanel>
 
-          <article className={`${styles.surface} ${styles.card}`}>
+          <GlassPanel
+            borderRadius={28}
+            backgroundOpacity={0.14}
+            saturation={1.28}
+            className={styles.surfaceGlass}
+            contentClassName={`${styles.surface} ${styles.card}`}
+          >
             <p className={styles.cardTitle}>自我成长</p>
             <p className={styles.cardCopy}>{fortune?.self ?? '正在加载...'}</p>
-          </article>
+          </GlassPanel>
 
-          <article className={`${styles.surface} ${styles.card} ${styles.wide}`}>
+          <GlassPanel
+            borderRadius={28}
+            backgroundOpacity={0.14}
+            saturation={1.28}
+            className={`${styles.surfaceGlass} ${styles.wide}`}
+            contentClassName={`${styles.surface} ${styles.card}`}
+          >
             <p className={styles.cardTitle}>今日宜 / 忌</p>
             <div className={styles.hintRow}>
               <p className={styles.hintPill}>
@@ -239,14 +281,20 @@ export function DailyFortuneScene({ active, onGoHome }: DailyFortuneSceneProps) 
                 {fortune?.dont ?? '正在加载...'}
               </p>
             </div>
-          </article>
+          </GlassPanel>
 
-          <article className={`${styles.surface} ${styles.card}`}>
+          <GlassPanel
+            borderRadius={28}
+            backgroundOpacity={0.14}
+            saturation={1.28}
+            className={styles.surfaceGlass}
+            contentClassName={`${styles.surface} ${styles.card}`}
+          >
             <p className={styles.cardTitle}>今日反思</p>
             <p className={styles.reflection}>
               {fortune?.reflectionPrompt ?? '正在加载今日反思问题...'}
             </p>
-          </article>
+          </GlassPanel>
         </section>
 
         {loading ? <p className={styles.status}>正在同步 {ZODIAC_SIGN_LABELS[selectedSign]} 的今日运势...</p> : null}

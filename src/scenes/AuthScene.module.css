@@ -1,85 +1,816 @@
 .authScene {
+  --auth-form-anchor-top: 500px;
+  --auth-cat-relative-top: -322px;
+  position: relative;
   display: grid;
-  place-items: center;
+  place-items: start center;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  box-sizing: border-box;
+  overflow: hidden;
+  padding: calc(var(--safe-top) + 10px) var(--safe-right) calc(var(--safe-bottom) + 18px) var(--safe-left);
+  background: #eeeaf5;
+}
+
+.authScene::before,
+.authScene::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.authScene::before {
+  background: url("/media/auth-login-bg.png") center center / cover no-repeat;
+}
+
+.authSceneBgHighlight::before {
+  background: url("/media/auth-login-bg.png") center center / cover no-repeat;
+}
+
+.authScene::after {
+  background:
+    radial-gradient(circle at 50% 104%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 44%),
+    radial-gradient(circle at 8% 18%, rgba(176, 168, 232, 0.12), rgba(176, 168, 232, 0) 36%),
+    radial-gradient(circle at 92% 22%, rgba(183, 201, 242, 0.12), rgba(183, 201, 242, 0) 34%);
+}
+
+:global(.app-root.scene-authLogin .secondary-scene-back-button),
+:global(.app-root.scene-authRegister .secondary-scene-back-button),
+:global(.app-root.scene-authLogin .topbar-link.secondary-scene-back-button),
+:global(.app-root.scene-authRegister .topbar-link.secondary-scene-back-button) {
+  top: calc(var(--safe-top) + 14px);
+  left: max(16px, var(--safe-left));
+  width: 40px;
+  min-height: 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(210, 217, 244, 0.92);
+  background: rgba(255, 255, 255, 0.76);
+  color: rgba(123, 126, 168, 0.95);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.72) inset,
+    0 10px 20px rgba(173, 181, 214, 0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-size: 1.2rem;
 }
 
 .authShell {
-  max-width: min(100%, 980px);
-  min-height: auto;
+  --auth-shell-scale: min(1, calc((100vw - var(--safe-left) - var(--safe-right)) / 430px));
+  position: relative;
+  z-index: 1;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  box-sizing: border-box;
+  overflow: hidden;
+  zoom: var(--auth-shell-scale);
+  display: block;
 }
 
-.authHeader h2 {
+/* 背景调试面板 */
+.authBgDebugDock {
+  position: absolute;
+  bottom: calc(var(--safe-bottom) + 8px);
+  right: 8px;
+  z-index: 20;
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+}
+
+.authBgDebugToggle {
+  pointer-events: auto;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(169, 180, 216, 0.4);
+  background: rgba(252, 254, 255, 0.7);
+  color: rgba(62, 70, 100, 0.7);
+  font:
+    500 0.6rem/1 "Outfit",
+    "PingFang SC",
+    sans-serif;
+  letter-spacing: 0.04em;
+  box-shadow: 0 4px 10px rgba(87, 99, 138, 0.1);
+}
+
+.authBgDebugPanel {
+  pointer-events: auto;
+  display: grid;
+  gap: 10px;
+  width: min(252px, calc(100vw - 48px));
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(184, 196, 226, 0.68);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(244, 247, 255, 0.78)), rgba(252, 254, 255, 0.84);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.78) inset,
+    0 14px 24px rgba(91, 102, 136, 0.16);
+}
+
+.authBgSourceSwitch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.authBgSourceButton {
+  min-height: 36px;
+  padding: 0 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(171, 183, 217, 0.62);
+  background: rgba(255, 255, 255, 0.78);
+  color: rgba(60, 70, 96, 0.88);
+  font:
+    600 0.74rem/1.1 "Outfit",
+    "PingFang SC",
+    sans-serif;
+}
+
+.authBgSourceButtonActive {
+  border-color: rgba(117, 133, 184, 0.78);
+  background: linear-gradient(140deg, rgba(228, 235, 255, 0.92), rgba(243, 248, 255, 0.95));
+  color: rgba(44, 53, 85, 0.96);
+}
+
+.authGlassDebugSection {
+  display: grid;
+  gap: 8px;
+  padding-top: 2px;
+  border-top: 1px solid rgba(170, 182, 214, 0.34);
+}
+
+.authGlassDebugTitle {
   margin: 0;
+  color: rgba(52, 61, 90, 0.92);
+  font:
+    700 0.66rem/1 "Outfit",
+    "PingFang SC",
+    sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.authGlassDebugSliderRow {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 54px;
+  align-items: center;
+  gap: 8px;
+}
+
+.authGlassDebugLabel {
+  color: rgba(78, 91, 126, 0.9);
+  font:
+    600 0.64rem/1.1 "Outfit",
+    "PingFang SC",
+    sans-serif;
+  letter-spacing: 0.02em;
+}
+
+.authGlassDebugSlider {
+  width: 100%;
+  accent-color: rgba(95, 113, 184, 0.84);
+}
+
+.authGlassDebugValue {
+  justify-self: end;
+  color: rgba(49, 59, 93, 0.88);
+  font:
+    600 0.64rem/1.1 "Outfit",
+    "PingFang SC",
+    sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.authGlassDebugResetButton {
+  justify-self: start;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(157, 170, 206, 0.56);
+  background: rgba(255, 255, 255, 0.74);
+  color: rgba(56, 66, 94, 0.9);
+  font:
+    500 0.66rem/1 "Outfit",
+    "PingFang SC",
+    sans-serif;
+}
+
+.authTopbar {
+  position: absolute;
+  top: calc(var(--safe-top) + 14px);
+  left: 0;
+  right: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+}
+
+.backArrowButton {
+  pointer-events: auto;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid rgba(210, 217, 244, 0.7);
+  background: rgba(255, 255, 255, 0.55);
+  color: rgba(123, 126, 168, 0.9);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.backArrowButton svg {
+  width: 16px;
+  height: 16px;
+}
+
+.skipButton {
+  pointer-events: auto;
+  min-height: 34px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(208, 214, 240, 0.6);
+  background: rgba(255, 255, 255, 0.6);
+  color: rgba(146, 150, 219, 0.9);
+  font:
+    500 0.82rem/1 "Outfit",
+    "PingFang SC",
+    sans-serif;
+  box-shadow: 0 4px 12px rgba(173, 182, 216, 0.1);
+}
+
+.skipButton:disabled {
+  opacity: 0.6;
+}
+
+.authHeader {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 4px;
+  padding-top: calc(var(--safe-top) + 56px);
+}
+
+.authBrandEyebrow {
+  margin: 0;
+  color: rgba(144, 149, 219, 0.96);
+  font:
+    600 0.72rem/1 "Outfit",
+    sans-serif;
+  letter-spacing: 0.36em;
+  text-transform: uppercase;
+}
+
+.authBrandTitle {
+  margin: 0;
+  color: #6561c9;
+  font:
+    500 clamp(2.8rem, 11.6vw, 4rem) / 0.96 "STKaiti",
+    "KaiTi",
+    "Songti SC",
+    serif;
+  letter-spacing: 0.03em;
+}
+
+/* 副标题：细体，与UI参考一致 */
+.authBrandSubtitle {
+  margin: 0;
+  color: rgba(128, 134, 186, 0.92);
+  font:
+    300 clamp(0.88rem, 3.4vw, 1.05rem) / 1.3 "STKaiti",
+    "KaiTi",
+    "Songti SC",
+    serif;
+  letter-spacing: 0.06em;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.authEyeFloat {
+  position: absolute;
+  left: 50%;
+  top: calc(
+    var(--auth-form-anchor-top) +
+    var(--auth-stage-offset-y, 0px) +
+    var(--auth-cat-relative-top) +
+    var(--auth-cat-offset-y, 0px)
+  );
+  transform: translateX(calc(-50% + var(--auth-cat-offset-x, 0px))) scale(var(--auth-cat-scale, 1));
+  transform-origin: center bottom;
+  z-index: 3;
+  width: clamp(130px, 32vw, 190px);
+  pointer-events: none;
+}
+
+.authEyeFloat img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 18px rgba(122, 129, 196, 0.2));
+}
+
+/* 玻璃卡片：位置下移，充分露出猫咪 */
+.authStageGlass {
+  position: absolute;
+  left: 50%;
+  right: auto;
+  top: calc(var(--auth-form-anchor-top) + var(--auth-stage-offset-y, 0px));
+  margin-top: 0;
+  transform: translateX(-50%);
+  border-radius: 24px;
+  border: 1px solid rgba(246, 249, 255, 0.72);
+  overflow: hidden;
+  width: 85%;
+  isolation: isolate;
+  z-index: 6;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.78) inset,
+    5px 9px 20px 0 rgb(213 217 233 / 20%),
+    0 24px 58px rgb(205 206 210 / 13%);
+  backdrop-filter: blur(24px) saturate(158%);
+  -webkit-backdrop-filter: blur(24px) saturate(158%);
+  background: rgba(242, 244, 255, 0.5);
+}
+
+.authStageGlass::before,
+.authStageGlass::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.authStageGlass::before {
+  z-index: 2;
+  padding: 1.4px;
+  background: linear-gradient(134deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.26) 33%, rgba(255, 255, 255, 0.52) 62%, rgba(255, 255, 255, 0.04) 100%);
+  opacity: 0.62;
+  mix-blend-mode: screen;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.authStageGlass::after {
+  z-index: 2;
+  padding: 1.4px;
+  background: linear-gradient(138deg, rgba(255, 255, 255, 0.01) 0%, rgba(255, 255, 255, 0.34) 38%, rgba(255, 255, 255, 0.62) 66%, rgba(255, 255, 255, 0.02) 100%);
+  opacity: 0.44;
+  mix-blend-mode: overlay;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
 }
 
 .authStage {
-  margin-top: 0;
-  padding: 18px;
-  border: 1px solid var(--tarot-home-glass-border-soft);
-  border-radius: 22px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.015)),
-    linear-gradient(145deg, rgba(245, 204, 230, 0.14), rgba(191, 163, 255, 0.12) 52%, rgba(50, 34, 56, 0.22)),
-    rgba(46, 32, 52, 0.42);
-  box-shadow:
-    0 14px 26px rgba(30, 20, 36, 0.18),
-    0 1px 0 rgba(255, 255, 255, 0.05) inset;
-  display: grid;
-  gap: 12px;
-}
-
-.fieldLabel {
+  position: relative;
+  z-index: 1;
+  padding: 20px 20px !important;
   display: grid;
   gap: 8px;
-  color: var(--tarot-home-text-body);
-  font: 500 0.86rem/1.2 'Outfit', sans-serif;
+  background: linear-gradient(
+    180deg,
+    rgba(244, 246, 255, 0.16) 0%,
+    rgba(244, 246, 255, 0.16) 100%
+  );
+}
+
+.authPanelHeader {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+/* 欢迎回来标题：字号适中 */
+.authPanelHeader h3 {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #6966cb;
+  font:
+    500 clamp(1.3rem, 5vw, 1.65rem) / 1 "STKaiti",
+    "KaiTi",
+    "Songti SC",
+    serif;
+  letter-spacing: 0.05em;
+}
+
+.panelSpark {
+  color: rgba(164, 169, 236, 0.9);
+  font-size: 0.45em;
+}
+
+.authPanelHeader p {
+  margin: 0;
+  color: rgba(129, 134, 184, 0.97);
+  font:
+    400 0.74rem/1.3 "Outfit",
+    "PingFang SC",
+    "Hiragino Sans GB",
+    "Microsoft YaHei",
+    sans-serif;
+}
+
+.fieldRow {
+  display: block;
+  width: 88%;
+  margin-inline: auto;
+}
+
+.fieldRow + .fieldRow {
+  margin-top: 15px;
+}
+
+/* 输入框：Liquid Glass，半透明淡紫白，带毛玻璃模糊 */
+.inputShell {
+  width: 100%;
+  min-height: 56px;
+  border: 1px solid rgba(220, 224, 248, 0.7);
+  border-radius: 16px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(240, 242, 255, 0.52);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.72) inset,
+    0 2px 8px rgba(150, 160, 210, 0.14);
+}
+
+.fieldStack {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.fieldInlineLabel {
+  margin: 0;
+  color: rgba(100, 104, 173, 0.97);
+  font:
+    600 0.74rem/1.1 "Outfit",
+    "PingFang SC",
+    "Hiragino Sans GB",
+    "Microsoft YaHei",
+    sans-serif;
+  letter-spacing: 0.01em;
+}
+
+.inputIcon {
+  width: 20px;
+  height: 20px;
+  color: rgba(145, 155, 210, 0.7);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.inputIcon svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .fieldInput {
   width: 100%;
-  min-height: 44px;
-  border: 1px solid var(--tarot-home-glass-border-soft);
-  border-radius: 14px;
-  padding: 0 12px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.02)),
-    rgba(39, 24, 47, 0.42);
-  color: var(--tarot-home-text-title);
-  font: 500 0.95rem/1 'Outfit', sans-serif;
+  min-height: 26px;
+  border: 0;
+  background: transparent;
+  color: #514b74;
+  font:
+    600 0.82rem/1.1 "Outfit",
+    "PingFang SC",
+    "Hiragino Sans GB",
+    "Microsoft YaHei",
+    sans-serif;
+  padding: 0;
+}
+
+.fieldInput::placeholder {
+  color: rgba(159, 165, 212, 0.9);
+  font-weight: 400;
 }
 
 .fieldInput:focus-visible {
-  outline: 2px solid rgba(245, 204, 230, 0.6);
-  outline-offset: 1px;
+  outline: none;
+}
+
+.passwordHintIcon {
+  width: 24px;
+  height: 24px;
+  color: rgba(151, 155, 212, 0.86);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.passwordHintIcon svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.codeInputShell {
+  padding-right: 6px !important;
+}
+
+/* 获取验证码按钮：更小巧的圆角按钮 */
+.codeButtonInner {
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(200, 208, 240, 0.8);
+  background: rgba(255, 255, 255, 0.9);
+  color: rgba(115, 105, 200, 0.9);
+  font:
+    600 0.76rem/1 "Outfit",
+    "PingFang SC",
+    sans-serif;
+  box-shadow: 0 2px 6px rgba(160, 170, 220, 0.1);
+  white-space: nowrap;
+}
+
+.codeButtonInner:disabled {
+  opacity: 0.55;
 }
 
 .errorText {
   margin: 0;
-  color: #ffd5df;
-  font-size: 0.84rem;
+  color: rgba(220, 89, 129, 0.95);
+  font:
+    600 0.76rem/1.35 "Outfit",
+    "PingFang SC",
+    "Hiragino Sans GB",
+    "Microsoft YaHei",
+    sans-serif;
+}
+
+.statusText,
+.metaText {
+  margin: 0;
+  color: rgba(120, 127, 173, 0.94);
+  font:
+    400 0.78rem/1.4 "Outfit",
+    "PingFang SC",
+    "Hiragino Sans GB",
+    "Microsoft YaHei",
+    sans-serif;
 }
 
 .actionRow {
+  display: flex;
+  align-items: center;
+  width: 80%;
+  margin-inline: auto;
+  margin-top: 20px;
+}
+
+/* 主按钮：深紫渐变，匹配UI参考更饱和的色调 */
+.submitButton {
+  width: 100%;
+  min-height: 56px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 30px;
+  background: linear-gradient(135deg, #a990e8 0%, #8b6ed8 50%, #7b5fd4 100%);
+  color: rgba(255, 255, 255, 0.98);
+  font:
+    600 1rem/1 "Outfit",
+    "PingFang SC",
+    "Hiragino Sans GB",
+    "Microsoft YaHei",
+    sans-serif;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.28) inset,
+    0 8px 18px rgba(120, 90, 210, 0.36);
+}
+
+.submitButton:disabled {
+  opacity: 0.6;
+}
+
+.submitSpark {
+  font-size: 0.88rem;
+  line-height: 1;
+  color: rgba(237, 234, 255, 0.9);
+}
+
+.altButton {
+  min-height: 42px;
+  border: 1px solid rgba(208, 214, 236, 0.84);
+  border-radius: 999px;
+  padding: 0 14px;
+  background: rgba(255, 255, 255, 0.66);
+  color: rgba(112, 118, 164, 0.92);
+  font:
+    600 0.84rem/1 "Outfit",
+    "PingFang SC",
+    "Hiragino Sans GB",
+    "Microsoft YaHei",
+    sans-serif;
+}
+
+.altButton:disabled {
+  opacity: 0.56;
+}
+
+.authBottomActions {
+  width: 100%;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
   margin-top: 2px;
 }
 
-.backButton {
+.authModeSwitch {
+  width: 100%;
   width: fit-content;
-  min-height: 38px;
-  border: 1px solid var(--tarot-home-glass-border-soft);
-  border-radius: 999px;
-  padding: 0 14px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.02)),
-    rgba(39, 24, 47, 0.36);
-  color: rgba(253, 244, 251, 0.86);
-  font: 500 0.74rem/1 'Outfit', sans-serif;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  margin: 0 auto;
+  border: 0;
+  background: transparent;
+  color: rgba(120, 126, 170, 0.92);
+  font:
+    500 0.94rem/1.1 "Outfit",
+    "PingFang SC",
+    "Hiragino Sans GB",
+    "Microsoft YaHei",
+    sans-serif;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  justify-content: center;
 }
 
-@media (min-width: 860px) {
-  .authShell {
-    padding: 34px;
-  }
+.authModeSwitch:disabled {
+  opacity: 0.52;
+}
+
+.authModeSwitchLead {
+  color: rgba(130, 136, 178, 0.9);
+  font-weight: 500;
+}
+
+.authModeSwitchAction {
+  color: rgba(110, 96, 225, 0.98);
+  font-weight: 700;
+}
+
+/* 游客体验：纯文字链接 */
+.backButton {
+  width: fit-content;
+  min-height: 36px;
+  margin: 0 auto;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(112, 100, 218, 0.96);
+  font:
+    600 0.9rem/1 "Outfit",
+    "PingFang SC",
+    "Hiragino Sans GB",
+    "Microsoft YaHei",
+    sans-serif;
+}
+
+.backButton:disabled {
+  opacity: 0.58;
+}
+
+/* 卡片外部底部区域 */
+.authFooter {
+  display: grid;
+  gap: 16px;
+  padding: 20px 0 8px;
+}
+
+.altDivider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.altDivider p {
+  margin: 0;
+  color: rgba(127, 134, 186, 0.85);
+  font:
+    400 0.74rem/1 "Outfit",
+    "PingFang SC",
+    sans-serif;
+  white-space: nowrap;
+}
+
+/* 分割线延伸更长 */
+.lineLeft,
+.lineRight {
+  height: 1px;
+  flex: 1;
+  max-width: 80px;
+  background: linear-gradient(90deg, rgba(185, 194, 238, 0), rgba(185, 194, 238, 0.55));
+}
+
+.lineRight {
+  background: linear-gradient(90deg, rgba(185, 194, 238, 0.55), rgba(185, 194, 238, 0));
+}
+
+.diamond {
+  width: 4px;
+  height: 4px;
+  background: rgba(185, 194, 238, 0.75);
+  transform: rotate(45deg);
+  flex-shrink: 0;
+}
+
+.providerRow {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+}
+
+.providerButton {
+  border: 0;
+  background: transparent;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  color: rgba(137, 143, 186, 0.95);
+  font:
+    600 0.72rem/1 "Outfit",
+    "PingFang SC",
+    "Hiragino Sans GB",
+    "Microsoft YaHei",
+    sans-serif;
+}
+
+.providerIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  background: #ffffff;
+  box-shadow: 0 4px 14px rgba(184, 191, 226, 0.18);
+}
+
+.providerWechat,
+.providerApple,
+.providerMail {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.providerLabel {
+  color: rgba(106, 114, 167, 0.96);
+  font-size: 0.72rem;
+}
+
+.termsText {
+  margin: 0;
+  text-align: center;
+  color: rgba(124, 130, 176, 0.88);
+  font:
+    400 0.68rem/1.4 "Outfit",
+    "PingFang SC",
+    "Hiragino Sans GB",
+    "Microsoft YaHei",
+    sans-serif;
+}
+
+.termsText a {
+  color: rgba(121, 125, 205, 0.95);
+  text-decoration: none;
 }

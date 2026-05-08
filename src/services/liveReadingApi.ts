@@ -4,6 +4,8 @@ import type {
   CallSession,
   JoinTokenResponse,
   ReaderSummary,
+  RegisterWithEmailPayload,
+  SendRegisterCodeResponse,
   TarotDeckSummary,
 } from '../types/liveReading';
 
@@ -52,6 +54,48 @@ function createLiveReadingApiError(options: CreateApiErrorOptions): LiveReadingA
   return error;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function normalizeStoredAuth(raw: unknown): AuthPayload | null {
+  if (!isRecord(raw) || !isRecord(raw.user)) {
+    return null;
+  }
+
+  const accessToken = typeof raw.accessToken === 'string' ? raw.accessToken : null;
+  const refreshToken = typeof raw.refreshToken === 'string' ? raw.refreshToken : null;
+  const refreshTokenExpiresAt =
+    typeof raw.refreshTokenExpiresAt === 'string' ? raw.refreshTokenExpiresAt : null;
+  const userId = typeof raw.user.id === 'string' ? raw.user.id : null;
+  const userEmail = typeof raw.user.email === 'string' ? raw.user.email : null;
+  const userRole = raw.user.role;
+
+  if (
+    !accessToken ||
+    !refreshToken ||
+    !refreshTokenExpiresAt ||
+    !userId ||
+    !userEmail ||
+    (userRole !== 'USER' && userRole !== 'READER' && userRole !== 'ADMIN')
+  ) {
+    return null;
+  }
+
+  return {
+    accessToken,
+    refreshToken,
+    refreshTokenExpiresAt,
+    user: {
+      id: userId,
+      email: userEmail,
+      role: userRole,
+      birthday: typeof raw.user.birthday === 'string' ? raw.user.birthday : null,
+      displayName: typeof raw.user.displayName === 'string' ? raw.user.displayName : null,
+    },
+  };
+}
+
 export function isLiveReadingApiError(error: unknown): error is LiveReadingApiError {
   if (!(error instanceof Error)) {
     return false;
@@ -69,7 +113,7 @@ export function isLiveReadingApiError(error: unknown): error is LiveReadingApiEr
 async function requestJson<T>(path: string, options: RequestOptions = {}) {
   const method = options.method ?? 'GET';
   const url = `${API_BASE_URL}${path}`;
-  const hasJsonBody = options.body !== undefined
+  const hasJsonBody = options.body !== undefined;
 
   let response: Response;
 
@@ -132,6 +176,10 @@ async function requestJson<T>(path: string, options: RequestOptions = {}) {
 }
 
 export function loadStoredAuth(): AuthPayload | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
   try {
     const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
 
@@ -139,13 +187,17 @@ export function loadStoredAuth(): AuthPayload | null {
       return null;
     }
 
-    return JSON.parse(raw) as AuthPayload;
+    return normalizeStoredAuth(JSON.parse(raw));
   } catch {
     return null;
   }
 }
 
 export function saveStoredAuth(auth: AuthPayload | null) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
   try {
     if (!auth) {
       window.localStorage.removeItem(AUTH_STORAGE_KEY);
@@ -158,13 +210,19 @@ export function saveStoredAuth(auth: AuthPayload | null) {
   }
 }
 
-export function registerWithEmail(email: string, password: string) {
-  return requestJson<AuthPayload>('/auth/register', {
+export function sendRegisterCode(email: string) {
+  return requestJson<SendRegisterCodeResponse>('/auth/register/send-code', {
     method: 'POST',
     body: {
       email,
-      password,
     },
+  });
+}
+
+export function registerWithEmail(payload: RegisterWithEmailPayload) {
+  return requestJson<AuthPayload>('/auth/register', {
+    method: 'POST',
+    body: payload,
   });
 }
 
@@ -174,6 +232,25 @@ export function loginWithEmail(email: string, password: string) {
     body: {
       email,
       password,
+    },
+  });
+}
+
+export function refreshAuth(refreshToken: string) {
+  return requestJson<AuthPayload>('/auth/refresh', {
+    method: 'POST',
+    body: {
+      refreshToken,
+    },
+  });
+}
+
+export function logoutAuth(accessToken: string, refreshToken: string) {
+  return requestJson<{ success: true }>('/auth/logout', {
+    method: 'POST',
+    token: accessToken,
+    body: {
+      refreshToken,
     },
   });
 }

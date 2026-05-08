@@ -4,9 +4,11 @@ import {
   useMemo,
   useState,
   type AnimationEvent as ReactAnimationEvent,
+  type CSSProperties,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react'
+import { HOME_MENU_ITEMS, type HomeMenuItem } from '../config/homeMenu'
 import {
   fetchDailyFortune,
   loadStoredZodiacSign,
@@ -34,6 +36,32 @@ interface HomeEntryCard {
   render: () => ReactNode
 }
 
+type MenuItemStyle = CSSProperties & {
+  '--item-index': number
+}
+
+function SettingsIcon() {
+  return (
+    <svg
+      className={styles.menuToggleIcon}
+      viewBox="0 0 24 24"
+      width={16}
+      height={16}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+    >
+      <path d="M4 12L20 12" className={`${styles.menuLine} ${styles.menuLineTop}`} />
+      <path d="M4 12H20" className={`${styles.menuLine} ${styles.menuLineMiddle}`} />
+      <path d="M4 12H20" className={`${styles.menuLine} ${styles.menuLineBottom}`} />
+    </svg>
+  )
+}
+
 const LIQUID_GLASS_CARD_PRESET = {
   borderRadius: 20,
   distortionScale: -62,
@@ -50,6 +78,82 @@ const LIQUID_GLASS_CARD_PRESET = {
 const NETWORK_ERROR_COPY = '星讯暂时未连接，请稍后再试。'
 const SERVICE_ERROR_COPY = '星盘通道正在校准，请稍后刷新。'
 const UNKNOWN_ERROR_COPY = '星轨轻微波动，请稍后再试。'
+const HOME_LOOP_DEBUG_STORAGE_KEY = 'home-loop-video-debug-v1'
+
+const HOME_LOOP_VIDEO_OPTIONS = [
+  {
+    id: 'loop',
+    label: '小猫视频 A',
+    src: '/media/tarot-cat-loop.webm',
+  },
+  {
+    id: 'mascot',
+    label: '小猫视频 B',
+    src: '/media/tarot-cat-mascot.webm',
+  },
+] as const
+
+type HomeLoopVideoId = (typeof HOME_LOOP_VIDEO_OPTIONS)[number]['id']
+
+interface HomeLoopDebugState {
+  videoId: HomeLoopVideoId
+  sizePercent: number
+  offsetX: number
+  offsetY: number
+}
+
+const DEFAULT_HOME_LOOP_DEBUG_STATE: HomeLoopDebugState = {
+  videoId: 'loop',
+  sizePercent: 100,
+  offsetX: 0,
+  offsetY: 0,
+}
+
+function parseFiniteNumber(value: unknown, fallback: number) {
+  const numericValue = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(numericValue) ? numericValue : fallback
+}
+
+function clampNumber(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value))
+}
+
+function normalizeHomeLoopDebugState(input: unknown): HomeLoopDebugState {
+  if (!input || typeof input !== 'object') {
+    return DEFAULT_HOME_LOOP_DEBUG_STATE
+  }
+
+  const state = input as Partial<Record<keyof HomeLoopDebugState, unknown>>
+  const videoId: HomeLoopVideoId = state.videoId === 'mascot' ? 'mascot' : 'loop'
+  const sizePercent = Math.round(
+    clampNumber(
+      parseFiniteNumber(state.sizePercent, DEFAULT_HOME_LOOP_DEBUG_STATE.sizePercent),
+      70,
+      150,
+    ),
+  )
+  const offsetX = Math.round(
+    clampNumber(
+      parseFiniteNumber(state.offsetX, DEFAULT_HOME_LOOP_DEBUG_STATE.offsetX),
+      -120,
+      120,
+    ),
+  )
+  const offsetY = Math.round(
+    clampNumber(
+      parseFiniteNumber(state.offsetY, DEFAULT_HOME_LOOP_DEBUG_STATE.offsetY),
+      -120,
+      120,
+    ),
+  )
+
+  return {
+    videoId,
+    sizePercent,
+    offsetX,
+    offsetY,
+  }
+}
 
 function formatZhDate(dateIso: string) {
   const [year, month, day] = dateIso.split('-').map((item) => Number(item))
@@ -102,12 +206,62 @@ export function HomePage({
   onOpenDailyFortune,
 }: HomePageProps) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [homeLoopDebugOpen, setHomeLoopDebugOpen] = useState(false)
+  const [homeLoopDebugState, setHomeLoopDebugState] = useState<HomeLoopDebugState>(
+    DEFAULT_HOME_LOOP_DEBUG_STATE,
+  )
   const [selectedSign, setSelectedSign] = useState<ZodiacSign>(resolveDefaultZodiacSign())
   const [signHydrated, setSignHydrated] = useState(false)
   const [fortune, setFortune] = useState<DailyFortunePayload | null>(null)
   const [, setLoading] = useState(false)
   const [, setError] = useState<string | null>(null)
   const dateIso = useMemo(() => resolveTodayDateIso(), [])
+  const activeHomeLoopVideo = useMemo(
+    () =>
+      HOME_LOOP_VIDEO_OPTIONS.find((item) => item.id === homeLoopDebugState.videoId) ??
+      HOME_LOOP_VIDEO_OPTIONS[0],
+    [homeLoopDebugState.videoId],
+  )
+  const homeLoopVideoStyle = useMemo(
+    () =>
+      ({
+        '--home-loop-scale': String(homeLoopDebugState.sizePercent / 100),
+        '--home-loop-offset-x': `${homeLoopDebugState.offsetX}px`,
+        '--home-loop-offset-y': `${homeLoopDebugState.offsetY}px`,
+      }) as CSSProperties,
+    [homeLoopDebugState.offsetX, homeLoopDebugState.offsetY, homeLoopDebugState.sizePercent],
+  )
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    try {
+      const raw = window.localStorage.getItem(HOME_LOOP_DEBUG_STORAGE_KEY)
+
+      if (!raw) {
+        return
+      }
+
+      const parsed = JSON.parse(raw)
+      setHomeLoopDebugState(normalizeHomeLoopDebugState(parsed))
+    } catch {
+      // 忽略视频调试状态读取失败。
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    try {
+      window.localStorage.setItem(HOME_LOOP_DEBUG_STORAGE_KEY, JSON.stringify(homeLoopDebugState))
+    } catch {
+      // 忽略视频调试状态写入失败。
+    }
+  }, [homeLoopDebugState])
 
   useEffect(() => {
     let cancelled = false
@@ -169,6 +323,24 @@ export function HomePage({
       cancelled = true
     }
   }, [dateIso, selectedSign, signHydrated])
+
+  useEffect(() => {
+    if (!menuOpen) {
+      return
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [menuOpen])
 
   const pageClassName = ['shared-home-surface', styles.page, embedded ? styles.pageEmbedded : '']
     .filter(Boolean)
@@ -234,6 +406,41 @@ export function HomePage({
     }
 
     event.currentTarget.classList.remove(styles.rippleActive)
+  }, [])
+  const handleMenuSelect = useCallback(
+    (item: HomeMenuItem) => {
+      setMenuOpen(false)
+
+      if (item.destinationKind === 'ai-flow') {
+        onOpenAiReading?.()
+        return
+      }
+
+      if (item.slug === 'daily-fortune') {
+        onOpenDailyFortune?.()
+        return
+      }
+
+      onOpenLiveReadingDebug?.()
+    },
+    [onOpenAiReading, onOpenDailyFortune, onOpenLiveReadingDebug],
+  )
+  const isMenuItemDisabled = useCallback(
+    (item: HomeMenuItem) => {
+      if (item.destinationKind === 'ai-flow') {
+        return !onOpenAiReading
+      }
+
+      if (item.slug === 'daily-fortune') {
+        return !onOpenDailyFortune
+      }
+
+      return !onOpenLiveReadingDebug
+    },
+    [onOpenAiReading, onOpenDailyFortune, onOpenLiveReadingDebug],
+  )
+  const patchHomeLoopDebugState = useCallback((patch: Partial<HomeLoopDebugState>) => {
+    setHomeLoopDebugState((previous) => normalizeHomeLoopDebugState({ ...previous, ...patch }))
   }, [])
   const dailyFortuneCard = useMemo(
     () => (
@@ -370,27 +577,158 @@ export function HomePage({
               setMenuOpen((prevState) => !prevState)
             }}
             aria-expanded={menuOpen}
-            aria-label={menuOpen ? '关闭菜单' : '打开菜单'}
+            aria-label={menuOpen ? '关闭设置栏' : '打开设置栏'}
           >
-            <svg
-              className={styles.menuToggleIcon}
-              width={16}
-              height={16}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden
-            >
-              <path d="M4 12L20 12" className={`${styles.menuLine} ${styles.menuLineTop}`} />
-              <path d="M4 12H20" className={`${styles.menuLine} ${styles.menuLineMiddle}`} />
-              <path d="M4 12H20" className={`${styles.menuLine} ${styles.menuLineBottom}`} />
-            </svg>
+            <SettingsIcon />
           </button>
         </header>
+
+        <div
+          className={styles.settingsLayer}
+          data-open={menuOpen ? 'true' : 'false'}
+          aria-hidden={!menuOpen}
+        >
+          <button
+            type="button"
+            className={styles.settingsScrim}
+            onClick={() => {
+              setMenuOpen(false)
+            }}
+            tabIndex={menuOpen ? 0 : -1}
+            aria-label="关闭设置栏"
+          />
+
+          <aside className={styles.settingsPanel} aria-label="设置栏">
+            <div className={styles.settingsPanelHeader}>
+              <p className={styles.settingsEyebrow}>Settings</p>
+              <h2 className={styles.settingsTitle}>设置</h2>
+            </div>
+
+            <div className={styles.settingsMenuList}>
+              {HOME_MENU_ITEMS.map((item, index) => {
+                const disabled = isMenuItemDisabled(item)
+
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={styles.settingsMenuItem}
+                    onClick={() => {
+                      handleMenuSelect(item)
+                    }}
+                    disabled={disabled}
+                    tabIndex={menuOpen ? 0 : -1}
+                    style={{ '--item-index': index } as MenuItemStyle}
+                  >
+                    <span className={styles.settingsMenuText}>
+                      <span className={styles.settingsMenuTitle}>{item.label}</span>
+                      <span className={styles.settingsMenuSubtitle}>{item.subtitle}</span>
+                    </span>
+                    <span className={styles.settingsMenuArrow} aria-hidden>
+                      ↗
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </aside>
+        </div>
+
+        <div className={styles.homeLoopDebugDock}>
+          <button
+            type="button"
+            className={styles.homeLoopDebugToggle}
+            onClick={() => {
+              setHomeLoopDebugOpen((previous) => !previous)
+            }}
+            aria-expanded={homeLoopDebugOpen}
+            aria-controls="home-loop-debug-panel"
+          >
+            {homeLoopDebugOpen ? '收起视频调试' : '视频调试'}
+          </button>
+
+          {homeLoopDebugOpen ? (
+            <div id="home-loop-debug-panel" className={styles.homeLoopDebugPanel}>
+              <div className={styles.homeLoopSourceSwitch} role="tablist" aria-label="视频切换">
+                {HOME_LOOP_VIDEO_OPTIONS.map((item) => {
+                  const active = item.id === homeLoopDebugState.videoId
+
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={`${styles.homeLoopSourceButton} ${active ? styles.homeLoopSourceButtonActive : ''}`}
+                      onClick={() => {
+                        patchHomeLoopDebugState({ videoId: item.id })
+                      }}
+                      aria-pressed={active}
+                    >
+                      {item.label}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <label className={styles.homeLoopSliderRow}>
+                <span className={styles.homeLoopSliderLabel}>大小</span>
+                <input
+                  className={styles.homeLoopSlider}
+                  type="range"
+                  min={70}
+                  max={150}
+                  step={1}
+                  value={homeLoopDebugState.sizePercent}
+                  onChange={(event) => {
+                    patchHomeLoopDebugState({ sizePercent: Number(event.currentTarget.value) })
+                  }}
+                />
+                <span className={styles.homeLoopSliderValue}>{homeLoopDebugState.sizePercent}%</span>
+              </label>
+
+              <label className={styles.homeLoopSliderRow}>
+                <span className={styles.homeLoopSliderLabel}>左右</span>
+                <input
+                  className={styles.homeLoopSlider}
+                  type="range"
+                  min={-120}
+                  max={120}
+                  step={1}
+                  value={homeLoopDebugState.offsetX}
+                  onChange={(event) => {
+                    patchHomeLoopDebugState({ offsetX: Number(event.currentTarget.value) })
+                  }}
+                />
+                <span className={styles.homeLoopSliderValue}>{homeLoopDebugState.offsetX}px</span>
+              </label>
+
+              <label className={styles.homeLoopSliderRow}>
+                <span className={styles.homeLoopSliderLabel}>上下</span>
+                <input
+                  className={styles.homeLoopSlider}
+                  type="range"
+                  min={-120}
+                  max={120}
+                  step={1}
+                  value={homeLoopDebugState.offsetY}
+                  onChange={(event) => {
+                    patchHomeLoopDebugState({ offsetY: Number(event.currentTarget.value) })
+                  }}
+                />
+                <span className={styles.homeLoopSliderValue}>{homeLoopDebugState.offsetY}px</span>
+              </label>
+
+              <button
+                type="button"
+                className={styles.homeLoopResetButton}
+                onClick={() => {
+                  setHomeLoopDebugState(DEFAULT_HOME_LOOP_DEBUG_STATE)
+                }}
+              >
+                重置
+              </button>
+            </div>
+          ) : null}
+        </div>
 
         <section className={styles.dailyShowcaseSection} aria-label="首页今日运势">
           {dailyFortuneCard}
@@ -407,6 +745,22 @@ export function HomePage({
             {entryCards.map((item) => (
               <div key={item.id}>{item.render()}</div>
             ))}
+          </div>
+        </section>
+
+        <section className={styles.homeLoopSection} aria-label="占卜师猫咪动画">
+          <div className={styles.homeLoopFrame}>
+            <video
+              className={styles.homeLoopVideo}
+              src={activeHomeLoopVideo.src}
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="auto"
+              style={homeLoopVideoStyle}
+              aria-label={activeHomeLoopVideo.label}
+            />
           </div>
         </section>
       </div>

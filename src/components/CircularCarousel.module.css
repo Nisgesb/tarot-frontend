@@ -1,0 +1,51 @@
+.root {
+  width: 100%;
+}
+
+.viewport {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding-top: 40px;
+  padding-bottom: 20px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.track {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--carousel-spacing, 20px);
+  padding-inline: var(--carousel-side-spacing, 0px);
+}
+
+.itemContainer {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  scroll-snap-align: center;
+  transform-origin: center top;
+  transition:
+    transform 180ms ease-out,
+    opacity 180ms ease-out;
+  cursor: pointer;
+}
+
+.contentWrapper {
+  width: 100%;
+  border-radius: 28px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow:
+    0 20px 44px rgba(11, 9, 24, 0.18),
+    0 8px 18px rgba(11, 9, 24, 0.12);
+  transition: filter 180ms ease-out;
+  will-change: filter;
+}

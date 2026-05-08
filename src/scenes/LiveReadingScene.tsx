@@ -15,12 +15,9 @@ import {
   getOnlineReaders,
   getTarotDecks,
   isLiveReadingApiError,
-  loadStoredAuth,
-  loginWithEmail,
-  registerWithEmail,
-  saveStoredAuth,
   submitRevealEvent,
 } from '../services/liveReadingApi'
+import { GlassPanel } from '../components/GlassPanel'
 import { getRuntimePlatform, isNativeApp } from '../platform/runtime'
 import type {
   AuthPayload,
@@ -34,8 +31,10 @@ import styles from './LiveReadingScene.module.css'
 
 interface LiveReadingSceneProps {
   active: boolean
+  auth: AuthPayload | null
   onGoHome: () => void
-  onAuthStateChange?: (auth: AuthPayload | null) => void
+  onGoLogin: () => void
+  onLogout: () => void | Promise<void>
 }
 
 interface VideoTileData {
@@ -468,13 +467,11 @@ function VideoTile({ tile }: { tile: VideoTileData }) {
 
 export function LiveReadingScene({
   active,
+  auth,
   onGoHome,
-  onAuthStateChange,
+  onGoLogin,
+  onLogout,
 }: LiveReadingSceneProps) {
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [auth, setAuth] = useState<AuthPayload | null>(() => loadStoredAuth())
   const [readers, setReaders] = useState<ReaderSummary[]>([])
   const [decks, setDecks] = useState<TarotDeckSummary[]>([])
   const [selectedReaderId, setSelectedReaderId] = useState<string | null>(null)
@@ -806,10 +803,6 @@ export function LiveReadingScene({
   }, [active, auth, bootstrapLiveReading, captureFailure])
 
   useEffect(() => {
-    onAuthStateChange?.(auth)
-  }, [auth, onAuthStateChange])
-
-  useEffect(() => {
     if (active) {
       return
     }
@@ -952,27 +945,6 @@ export function LiveReadingScene({
     roomRef.current?.disconnect()
     roomRef.current = room
     setTrackVersion((value) => value + 1)
-  }
-
-  const submitAuth = async () => {
-    setError(null)
-    setFailureDetail(null)
-    setBusy(true)
-
-    try {
-      const payload =
-        authMode === 'register'
-          ? await registerWithEmail(email, password)
-          : await loginWithEmail(email, password)
-
-      setAuth(payload)
-      saveStoredAuth(payload)
-    } catch (exception) {
-      const message = exception instanceof Error ? exception.message : '登录失败'
-      setError(message)
-    } finally {
-      setBusy(false)
-    }
   }
 
   const startCall = async () => {
@@ -1185,18 +1157,22 @@ export function LiveReadingScene({
     setCameraSwitching(false)
   }
 
-  const signOut = () => {
+  const signOut = async () => {
     roomRef.current?.disconnect()
     roomRef.current = null
     setSession(null)
     setParticipantRole(null)
-    setAuth(null)
-    saveStoredAuth(null)
+    setTrackVersion((value) => value + 1)
     setFailureDetail(null)
     setError(null)
     setCameraSwitchSupported(false)
     setCameraFacingMode('user')
     setCameraSwitching(false)
+    try {
+      await onLogout()
+    } catch (exception) {
+      console.warn('[LiveReading][Logout]', exception)
+    }
   }
 
   const className = [
@@ -1212,12 +1188,17 @@ export function LiveReadingScene({
     <section className={className}>
       <div className={styles.shell}>
         <header className={styles.header}>
-          <button type="button" className={styles.backButton} onClick={onGoHome}>
-            返回首页
+          <button
+            type="button"
+            className={styles.backButton}
+            onClick={onGoHome}
+            aria-label="返回首页"
+          >
+            ←
           </button>
           <p className={styles.eyebrow}>LIVE READING</p>
           {auth ? (
-            <button type="button" className={styles.outlineButton} onClick={signOut}>
+            <button type="button" className={styles.outlineButton} onClick={() => void signOut()}>
               退出
             </button>
           ) : (
@@ -1225,12 +1206,26 @@ export function LiveReadingScene({
           )}
         </header>
 
-        <p className={styles.runtimeHint}>
-          运行时：{runtimeInfo.label} · 上下文：
-          {runtimeInfo.isSecureContext ? '安全' : '非安全'} · 媒体能力：
-          {supportsGetUserMedia ? '可用' : '不可用'}
-        </p>
-        <div className={styles.runtimeDiagnostics}>
+        <GlassPanel
+          borderRadius={14}
+          backgroundOpacity={0.12}
+          saturation={1.24}
+          className={styles.runtimeHintGlass}
+          contentClassName={styles.runtimeHintPanel}
+        >
+          <p className={styles.runtimeHint}>
+            运行时：{runtimeInfo.label} · 上下文：
+            {runtimeInfo.isSecureContext ? '安全' : '非安全'} · 媒体能力：
+            {supportsGetUserMedia ? '可用' : '不可用'}
+          </p>
+        </GlassPanel>
+        <GlassPanel
+          borderRadius={16}
+          backgroundOpacity={0.12}
+          saturation={1.24}
+          className={styles.runtimeDiagnosticsGlass}
+          contentClassName={styles.runtimeDiagnostics}
+        >
           <div className={styles.runtimeDiagnosticsHeader}>
             <p>媒体诊断</p>
             <button
@@ -1283,53 +1278,35 @@ export function LiveReadingScene({
               {mediaDiagnostics.lastProbeTriggeredBy === 'manual' ? '手动' : '自动'}）
             </p>
           ) : null}
-        </div>
+        </GlassPanel>
 
         {!auth ? (
-          <div className={styles.authPanel}>
+          <GlassPanel
+            borderRadius={26}
+            backgroundOpacity={0.14}
+            saturation={1.28}
+            className={`${styles.panelGlass} ${styles.authPanelGlass}`}
+            contentClassName={styles.authPanel}
+          >
             <h2>真人连线占卜</h2>
-            <p>邮箱密码登录后可直接发起 1v1 视频咨询。</p>
+            <p>当前真人连线已接入全局认证，请先在登录页完成认证后再进入。</p>
             <div className={styles.modeSwitch}>
-              <button
-                type="button"
-                className={authMode === 'login' ? styles.modeActive : styles.modeButton}
-                onClick={() => setAuthMode('login')}
-              >
-                登录
-              </button>
-              <button
-                type="button"
-                className={authMode === 'register' ? styles.modeActive : styles.modeButton}
-                onClick={() => setAuthMode('register')}
-              >
-                注册
+              <button type="button" className={styles.modeActive} onClick={onGoLogin}>
+                去登录
               </button>
             </div>
-            <label className={styles.fieldLabel}>
-              邮箱
-              <input
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                type="email"
-                autoComplete="email"
-              />
-            </label>
-            <label className={styles.fieldLabel}>
-              密码
-              <input
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                type="password"
-                autoComplete={authMode === 'login' ? 'current-password' : 'new-password'}
-              />
-            </label>
-            <button type="button" className={styles.primaryButton} onClick={submitAuth} disabled={busy}>
-              {busy ? '提交中...' : authMode === 'register' ? '注册并进入' : '登录并进入'}
-            </button>
-            <p className={styles.helperText}>占卜师测试账号：test2@123.com / test123</p>
-          </div>
+            <p className={styles.helperText}>
+              固定测试用户：123@123.com / 123123
+            </p>
+          </GlassPanel>
         ) : !session ? (
-          <div className={styles.setupPanel}>
+          <GlassPanel
+            borderRadius={26}
+            backgroundOpacity={0.14}
+            saturation={1.28}
+            className={`${styles.panelGlass} ${styles.setupPanelGlass}`}
+            contentClassName={styles.setupPanel}
+          >
             {auth.user.role === 'READER' ? (
               <div className={styles.block}>
                 <h3>占卜师加入会话</h3>
@@ -1405,9 +1382,15 @@ export function LiveReadingScene({
             >
               {busy ? '正在创建连线...' : '立即连线'}
             </button>
-          </div>
+          </GlassPanel>
         ) : (
-          <div className={styles.callPanel}>
+          <GlassPanel
+            borderRadius={26}
+            backgroundOpacity={0.14}
+            saturation={1.28}
+            className={`${styles.panelGlass} ${styles.callPanelGlass}`}
+            contentClassName={styles.callPanel}
+          >
             <div className={styles.callStatusBar}>
               <p>
                 房间状态：
@@ -1488,12 +1471,18 @@ export function LiveReadingScene({
                 挂断
               </button>
             </div>
-          </div>
+          </GlassPanel>
         )}
 
         {error ? <p className={styles.errorText}>{error}</p> : null}
         {failureDetail ? (
-          <div className={styles.failureDetailCard}>
+          <GlassPanel
+            borderRadius={16}
+            backgroundOpacity={0.12}
+            saturation={1.22}
+            className={styles.failureDetailGlass}
+            contentClassName={styles.failureDetailCard}
+          >
             <p className={styles.failureDetailTitle}>失败阶段：{failureDetail.stageLabel}</p>
             <p>
               错误：{failureDetail.errorName} · {failureDetail.message}
@@ -1513,7 +1502,7 @@ export function LiveReadingScene({
               {failureDetail.supportsGetUserMedia ? '可用' : '不可用'}
             </p>
             <p>时间：{failureDetail.timestamp}</p>
-          </div>
+          </GlassPanel>
         ) : null}
       </div>
     </section>
