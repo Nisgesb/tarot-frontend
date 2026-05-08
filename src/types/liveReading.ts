@@ -17,9 +17,24 @@ export interface AuthPayload {
 
 export interface RegisterWithEmailPayload {
   email: string;
-  password: string;
+  password?: string;
+  passwordCipher?: string;
+  passwordKeyId?: string;
   birthday: string;
   verificationCode: string;
+}
+
+export interface LoginWithEmailPayload {
+  email: string;
+  password?: string;
+  passwordCipher?: string;
+  passwordKeyId?: string;
+}
+
+export interface AuthPasswordCryptoPublicKeyResponse {
+  alg: 'RSA-OAEP-256';
+  keyId: string;
+  publicKeyPem: string;
 }
 
 export interface SendRegisterCodeResponse {

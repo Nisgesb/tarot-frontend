@@ -34,12 +34,17 @@ import {
   saveStoredAuth,
   sendRegisterCode,
 } from './services/liveReadingApi'
+import { encryptPassword } from './services/passwordCryptoService'
 import {
   loadDreamRecords,
   saveDreamRecords,
   upsertDreamRecord,
 } from './services/dreamStorageService'
-import { AuthScene, type AuthSubmitPayload } from './scenes/AuthScene'
+import {
+  AuthScene,
+  type AuthSubmitPayload,
+  type SendRegisterCodeResult,
+} from './scenes/AuthScene'
 import { DreamEntryScene } from './scenes/DreamEntryScene'
 import { DreamGalleryScene } from './scenes/DreamGalleryScene'
 import { DreamInsightsLoader } from './scenes/DreamInsightsLoader'
@@ -503,15 +508,19 @@ function DreamHeroApp() {
       setAuthError(null)
 
       try {
+        const encryptedPassword = await encryptPassword(payload.password)
         const authPayload =
           payload.kind === 'register'
             ? await registerWithEmail({
                 email: payload.email,
-                password: payload.password,
+                ...encryptedPassword,
                 birthday: payload.birthday,
                 verificationCode: payload.verificationCode,
               })
-            : await loginWithEmail(payload.email, payload.password)
+            : await loginWithEmail({
+                email: payload.email,
+                ...encryptedPassword,
+              })
 
         syncAuthState(authPayload)
         setAuthGatePrompt((previous) => ({
@@ -534,11 +543,16 @@ function DreamHeroApp() {
     [actions, authReturnPath, authRouteMode, syncAuthState],
   )
 
-  const handleSendRegisterCode = useCallback(async (email: string) => {
-    const response = await sendRegisterCode(email)
-    const expiresInMinutes = Math.max(1, Math.ceil(response.expiresInSeconds / 60))
+  const clearAuthError = useCallback(() => {
+    setAuthError(null)
+  }, [])
 
-    return `验证码已发送至 ${response.email}，有效期 ${expiresInMinutes} 分钟，可在 ${response.resendIntervalSeconds} 秒后重发。`
+  const handleSendRegisterCode = useCallback(async (email: string): Promise<SendRegisterCodeResult> => {
+    const response = await sendRegisterCode(email)
+    return {
+      resendIntervalSeconds: response.resendIntervalSeconds,
+      expiresInSeconds: response.expiresInSeconds,
+    }
   }, [])
 
   const handleSwitchAuthMode = useCallback(() => {
@@ -1237,6 +1251,7 @@ function DreamHeroApp() {
           auth={auth}
           sourcePath={resolveProtectedPath(authReturnPath)}
           error={authError}
+          onClearError={clearAuthError}
           onSubmit={handleSubmitAuth}
           onSendRegisterCode={handleSendRegisterCode}
           onSwitchMode={handleSwitchAuthMode}

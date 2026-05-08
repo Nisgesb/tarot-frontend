@@ -134,6 +134,16 @@ interface AuthRegisterPayload {
 
 export type AuthSubmitPayload = AuthLoginPayload | AuthRegisterPayload
 
+export interface SendRegisterCodeResult {
+  resendIntervalSeconds?: number
+  expiresInSeconds?: number
+}
+
+interface FeedbackPromptState {
+  title: string
+  message: string
+}
+
 interface AuthSceneProps {
   active: boolean
   mode: AuthSceneMode
@@ -141,8 +151,9 @@ interface AuthSceneProps {
   auth: AuthPayload | null
   sourcePath: string | null
   error: string | null
+  onClearError: () => void
   onSubmit: (payload: AuthSubmitPayload) => void | Promise<void>
-  onSendRegisterCode: (email: string) => Promise<string | void> | string | void
+  onSendRegisterCode: (email: string) => Promise<SendRegisterCodeResult | void> | SendRegisterCodeResult | void
   onSwitchMode: () => void
   onContinue: () => void
   onLogout: () => void | Promise<void>
@@ -164,6 +175,7 @@ export function AuthScene({
   auth,
   sourcePath,
   error,
+  onClearError,
   onSubmit,
   onSendRegisterCode,
   onSwitchMode,
@@ -178,8 +190,8 @@ export function AuthScene({
   const [verificationCode, setVerificationCode] = useState('')
   const [passwordFocused, setPasswordFocused] = useState(false)
   const [codePending, setCodePending] = useState(false)
-  const [codeMessage, setCodeMessage] = useState<string | null>(null)
-  const [codeError, setCodeError] = useState<string | null>(null)
+  const [codeCooldownSeconds, setCodeCooldownSeconds] = useState(0)
+  const [feedbackPrompt, setFeedbackPrompt] = useState<FeedbackPromptState | null>(null)
   const [bgDebugOpen, setBgDebugOpen] = useState(false)
   const [backgroundPreset, setBackgroundPreset] = useState<AuthBackgroundPreset>(() => loadAuthBackgroundPreset())
   const [formDebugState, setFormDebugState] = useState<AuthFormDebugState>(() => loadAuthFormDebugState())
@@ -190,6 +202,11 @@ export function AuthScene({
   const submitLabel = pending ? '提交中...' : (registerMode ? '创建我的占卜档案' : '进入占卜空间')
   const panelTitle = registerMode ? '欢迎加入' : '欢迎回来'
   const panelSubtitle = registerMode ? '保存牌阵记录，解锁今日运势与专属指引' : '继续你的今日指引，保存牌阵与运势记录'
+  const codeButtonLabel = codePending
+    ? '发送中...'
+    : codeCooldownSeconds > 0
+      ? `${codeCooldownSeconds}s`
+      : '获取验证码'
   const panelClassName = [
     'scene-panel',
     'scene-template-form',
@@ -222,8 +239,40 @@ export function AuthScene({
     setCatDebugState((previous) => normalizeAuthCatDebugState({ ...previous, ...patch }))
   }, [])
 
-  useEffect(() => { setCodeMessage(null); setCodeError(null) }, [mode])
-  useEffect(() => { setCodeMessage(null); setCodeError(null) }, [email])
+  useEffect(() => {
+    setFeedbackPrompt(null)
+    setCodeCooldownSeconds(0)
+  }, [mode])
+
+  useEffect(() => {
+    if (!error || error.trim().length === 0) {
+      return
+    }
+    setFeedbackPrompt({
+      title: '操作失败',
+      message: error,
+    })
+  }, [error])
+
+  useEffect(() => {
+    if (codeCooldownSeconds <= 0) {
+      return
+    }
+
+    const timer = window.setInterval(() => {
+      setCodeCooldownSeconds((previous) => {
+        if (previous <= 1) {
+          window.clearInterval(timer)
+          return 0
+        }
+        return previous - 1
+      })
+    }, 1000)
+
+    return () => {
+      window.clearInterval(timer)
+    }
+  }, [codeCooldownSeconds])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -242,23 +291,35 @@ export function AuthScene({
 
   const handleSendRegisterCode = async () => {
     const normalizedEmail = email.trim()
-    if (!normalizedEmail || codePending || pending) return
+    if (!normalizedEmail || codePending || pending || codeCooldownSeconds > 0) return
     setCodePending(true)
-    setCodeMessage(null)
-    setCodeError(null)
+    setFeedbackPrompt(null)
     try {
-      const message = await onSendRegisterCode(normalizedEmail)
-      setCodeMessage(message ?? '验证码已发送，请检查邮箱。')
+      const result = await onSendRegisterCode(normalizedEmail)
+      const cooldown = Math.max(1, Math.floor(result?.resendIntervalSeconds ?? 60))
+      setCodeCooldownSeconds(cooldown)
+      setFeedbackPrompt({
+        title: '验证码已发送',
+        message: `请检查邮箱，${cooldown} 秒后可重发。`,
+      })
     } catch (exception) {
       const message =
         exception instanceof Error && exception.message.trim().length > 0
           ? exception.message
           : '验证码发送失败，请稍后重试。'
-      setCodeError(message)
+      setFeedbackPrompt({
+        title: '发送失败',
+        message,
+      })
     } finally {
       setCodePending(false)
     }
   }
+
+  const closeFeedbackPrompt = useCallback(() => {
+    setFeedbackPrompt(null)
+    onClearError()
+  }, [onClearError])
 
   return (
     <section className={panelClassName} aria-label={registerMode ? 'Register' : 'Login'}>
@@ -513,9 +574,9 @@ export function AuthScene({
                       type="button"
                       className={styles.codeButtonInner}
                       onClick={() => void handleSendRegisterCode()}
-                      disabled={pending || codePending || email.trim().length === 0}
+                      disabled={pending || codePending || codeCooldownSeconds > 0 || email.trim().length === 0}
                     >
-                      {codePending ? '发送中...' : '获取验证码'}
+                      {codeButtonLabel}
                     </button>
                   </div>
                 </div>
@@ -556,9 +617,6 @@ export function AuthScene({
                   ) : null}
                 </div>
               </div>
-              {error && <p className={styles.errorText}>{error}</p>}
-              {codeMessage && <p className={styles.statusText}>{codeMessage}</p>}
-              {codeError && <p className={styles.errorText}>{codeError}</p>}
               <div className={styles.actionRow}>
                 <button
                   type="button"
@@ -612,6 +670,19 @@ export function AuthScene({
           )}
         </GlassPanel>
       </div>
+      {feedbackPrompt ? (
+        <aside className="motion-permission-prompt is-recovery" role="dialog" aria-live="polite">
+          <div className="motion-permission-card">
+            <p className="motion-permission-title">{feedbackPrompt.title}</p>
+            <p className="motion-permission-copy">{feedbackPrompt.message}</p>
+            <div className="motion-permission-actions">
+              <button type="button" className="primary-pill" onClick={closeFeedbackPrompt}>
+                知道了
+              </button>
+            </div>
+          </div>
+        </aside>
+      ) : null}
     </section>
   )
 }

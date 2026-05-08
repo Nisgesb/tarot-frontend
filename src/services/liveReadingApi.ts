@@ -1,8 +1,10 @@
 import type {
+  AuthPasswordCryptoPublicKeyResponse,
   AuthPayload,
   CardRevealPayload,
   CallSession,
   JoinTokenResponse,
+  LoginWithEmailPayload,
   ReaderSummary,
   RegisterWithEmailPayload,
   SendRegisterCodeResponse,
@@ -226,13 +228,14 @@ export function registerWithEmail(payload: RegisterWithEmailPayload) {
   });
 }
 
-export function loginWithEmail(email: string, password: string) {
+export function getAuthPasswordCryptoPublicKey() {
+  return requestJson<AuthPasswordCryptoPublicKeyResponse>('/auth/crypto/public-key');
+}
+
+export function loginWithEmail(payload: LoginWithEmailPayload) {
   return requestJson<AuthPayload>('/auth/login', {
     method: 'POST',
-    body: {
-      email,
-      password,
-    },
+    body: payload,
   });
 }
 
