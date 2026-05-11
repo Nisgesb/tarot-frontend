@@ -1730,6 +1730,7 @@ body {
 
 .scene-dreamEntry .portal-scene,
 .scene-aiReading .portal-scene,
+.scene-physicalReading .portal-scene,
 .scene-assistantRefine .portal-scene,
 .scene-featureLanding .portal-scene,
 .scene-generating .portal-scene,
@@ -1742,7 +1743,8 @@ body {
 }
 
 .scene-dreamEntry .portal-scene,
-.scene-aiReading .portal-scene {
+.scene-aiReading .portal-scene,
+.scene-physicalReading .portal-scene {
   opacity: 0;
   pointer-events: none;
 }
@@ -1766,6 +1768,7 @@ body {
 .scene-inspectDream .hero-overlay,
 .scene-dreamEntry .hero-overlay,
 .scene-aiReading .hero-overlay,
+.scene-physicalReading .hero-overlay,
 .scene-assistantRefine .hero-overlay,
 .scene-generating .hero-overlay {
   opacity: 0;

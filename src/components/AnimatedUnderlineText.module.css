@@ -1,0 +1,30 @@
+.root {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+}
+
+.inner {
+  position: relative;
+  display: inline-flex;
+  max-width: 100%;
+}
+
+.text {
+  display: inline-block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.underline {
+  position: absolute;
+  left: 0;
+  bottom: -10px;
+  width: 100%;
+  overflow: visible;
+  color: currentColor;
+  pointer-events: none;
+}

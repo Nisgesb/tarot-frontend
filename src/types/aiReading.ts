@@ -31,3 +31,8 @@ export interface CreateAiReadingSessionResponse {
 export interface GenerateAiReadingRequest {
   anonymousSessionId: string
 }
+
+export interface GeneratePhysicalReadingRequest {
+  question: string
+  imageDataUrl: string
+}

@@ -29,7 +29,9 @@
 }
 
 .app-root.scene-aiReading .secondary-scene-back-button,
-.app-root.scene-aiReading .topbar-link.secondary-scene-back-button {
+.app-root.scene-aiReading .topbar-link.secondary-scene-back-button,
+.app-root.scene-physicalReading .secondary-scene-back-button,
+.app-root.scene-physicalReading .topbar-link.secondary-scene-back-button {
   color: rgba(52, 64, 96, 0.9);
 }
 
@@ -49,12 +51,18 @@
   text-transform: none;
 }
 
-.app-root.scene-dreamEntry {
-  background: #f5f6f8 !important;
+.app-root.scene-dreamEntry,
+.app-root.scene-myDreams,
+.app-root.scene-gallery {
+  background: #ececef !important;
 }
 
 .app-root.scene-dreamEntry::before,
-.app-root.scene-dreamEntry::after {
+.app-root.scene-dreamEntry::after,
+.app-root.scene-myDreams::before,
+.app-root.scene-myDreams::after,
+.app-root.scene-gallery::before,
+.app-root.scene-gallery::after {
   background: none !important;
   opacity: 0 !important;
 }

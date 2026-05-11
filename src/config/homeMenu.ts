@@ -1,4 +1,4 @@
-export type HomeMenuDestinationKind = 'ai-flow' | 'feature'
+export type HomeMenuDestinationKind = 'ai-flow' | 'physical-flow' | 'feature'
 
 export type FeatureLandingSlug = 'live-reading' | 'daily-fortune'
 
@@ -14,12 +14,17 @@ export interface AiFlowHomeMenuItem extends BaseHomeMenuItem {
   destinationKind: 'ai-flow'
 }
 
+export interface PhysicalFlowHomeMenuItem extends BaseHomeMenuItem {
+  slug: 'physical-reading'
+  destinationKind: 'physical-flow'
+}
+
 export interface FeatureHomeMenuItem extends BaseHomeMenuItem {
   slug: FeatureLandingSlug
   destinationKind: 'feature'
 }
 
-export type HomeMenuItem = AiFlowHomeMenuItem | FeatureHomeMenuItem
+export type HomeMenuItem = AiFlowHomeMenuItem | PhysicalFlowHomeMenuItem | FeatureHomeMenuItem
 
 export interface FeatureLandingConfig {
   slug: FeatureLandingSlug
@@ -57,6 +62,14 @@ export const HOME_MENU_ITEMS: HomeMenuItem[] = [
     slug: 'ai-reading',
     path: '/ai-reading',
     destinationKind: 'ai-flow',
+  },
+  {
+    id: 'menu-physical-reading',
+    label: '实体卡占卜',
+    subtitle: '拍照上传实体牌面并分析',
+    slug: 'physical-reading',
+    path: '/physical-reading',
+    destinationKind: 'physical-flow',
   },
   {
     id: 'menu-live-reading',

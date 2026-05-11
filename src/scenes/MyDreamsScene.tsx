@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { MutableRefObject } from 'react'
 import type { PerformanceTier } from '../hooks/useViewportProfile'
 import type { MotionProfile, MotionVector } from '../motion/types'
@@ -23,13 +24,13 @@ interface MyDreamsSceneProps {
       y: number
       color: string
       radius: number
-    },
-  ) => void
+    },) => void
 }
 
 export function MyDreamsScene({
   active,
   dreams,
+  reducedMotion,
   onGoHome,
   onGoGallery,
   onStartNew,
@@ -40,14 +41,14 @@ export function MyDreamsScene({
     'my-dreams-scene',
     styles.scene,
     active ? 'is-active' : '',
-  ]
-    .filter(Boolean)
+  ].filter(Boolean)
     .join(' ')
 
   const totalDraws = Math.max(36, dreams.length * 3)
   const collectionCount = Math.max(12, Math.round(dreams.length * 0.8))
   const streakDays = Math.max(7, Math.min(31, dreams.length + 2))
   const notesCount = Math.max(18, dreams.length * 2)
+  const [profileFlipped, setProfileFlipped] = useState(false)
 
   const handleOpenLatest = () => {
     const latest = dreams[0]
@@ -65,96 +66,118 @@ export function MyDreamsScene({
   }
 
   const functionRows = [
-    { id: 'records', title: '我的记录', subtitle: '查看你的运势与抽牌历史', icon: '📋', onClick: handleOpenLatest },
-    { id: 'collection', title: '收藏牌阵', subtitle: '管理你收藏的牌阵', icon: '🗂️', onClick: onGoGallery },
-    { id: 'checkin', title: '每日签到', subtitle: '签到获取能量与奖励', icon: '📅', onClick: onStartNew },
-    { id: 'vip', title: '会员中心', subtitle: '解锁专属特权与优惠', icon: '👑', onClick: onGoHome },
-    { id: 'notice', title: '消息通知', subtitle: '系统消息与活动提醒', icon: '🔔', onClick: onGoGallery },
-    { id: 'settings', title: '设置', subtitle: '账号与隐私设置', icon: '⬢', onClick: onGoHome },
+    { id: 'records', title: '我的记录', subtitle: '查看你的运势与抽牌历史', icon: <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>, onClick: handleOpenLatest },
+    { id: 'collection', title: '收藏牌阵', subtitle: '管理你收藏的牌阵', icon: <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v8"/><path d="M12 3v4a1 1 0 0 0 1 1h4"/></svg>, onClick: onGoGallery },
+    { id: 'checkin', title: '每日签到', subtitle: '签到获取能量与奖励', icon: <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14l2 2 4-4"/></svg>, onClick: onStartNew },
+    { id: 'vip', title: '会员中心', subtitle: '解锁专属特权与优惠', icon: <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3 7h7l-5.5 4 2.5 7-6-4.5-6 4.5 2.5-7L2 9h7l3-7z"/></svg>, onClick: onGoHome },
+    { id: 'notice', title: '消息通知', subtitle: '系统消息与活动提醒', icon: <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>, onClick: onGoGallery },
+    { id: 'settings', title: '设置', subtitle: '账号与隐私设置', icon: <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>, onClick: onGoHome },
   ] as const
 
   return (
     <section className={className} aria-label="我的页面">
       <div className={styles.shell}>
         <header className={styles.hero}>
-          <div className={styles.heroActions}>
-            <button type="button" className={styles.heroIconButton} aria-label="消息" onClick={onGoGallery}>
-              <svg viewBox="0 0 24 24" role="presentation">
-                <path d="M4.5 11.6a7.5 7.5 0 1 1 3 6l-2.8.8.8-2.8a7.5 7.5 0 0 1-1-4Z" />
-                <circle cx="9.5" cy="11.7" r="0.95" />
-                <circle cx="12.5" cy="11.7" r="0.95" />
-                <circle cx="15.5" cy="11.7" r="0.95" />
-              </svg>
-              <span className={styles.dot} aria-hidden />
-            </button>
-            <button type="button" className={styles.heroIconButton} aria-label="设置" onClick={onGoHome}>
-              <svg viewBox="0 0 24 24" role="presentation">
-                <path d="M13.8 3.6 15 5.8c.3.4.8.7 1.3.7h2.4v2.9l-2.2 1.2c-.4.2-.7.7-.7 1.2v.4c0 .5.3.9.7 1.2l2.2 1.2v2.9h-2.4c-.5 0-1 .3-1.3.7l-1.2 2.2h-3.6l-1.2-2.2c-.3-.4-.8-.7-1.3-.7H5.3v-2.9l2.2-1.2c.4-.3.7-.7.7-1.2v-.4c0-.5-.3-1-.7-1.2L5.3 9.4V6.5h2.4c.5 0 1-.3 1.3-.7l1.2-2.2h3.6Z" />
-                <circle cx="12" cy="12" r="2.8" />
-              </svg>
-            </button>
-          </div>
           <p className={styles.heroEyebrow}>MY SPACE</p>
           <h2 className={styles.heroTitle}>我的空间</h2>
         </header>
 
-        <article className={styles.profileCard}>
-          <div className={styles.avatarWrap}>
-            <img src="/media/auth-eye-open.png" alt="头像" />
-          </div>
-          <div className={styles.profileBody}>
-            <div className={styles.nameRow}>
-              <h3>月光旅人</h3>
-              <button type="button" aria-label="编辑资料" className={styles.iconTinyButton} onClick={onStartNew}>
-                <svg viewBox="0 0 24 24" role="presentation">
-                  <path d="m4 16.9 8.7-8.7 3.4 3.4-8.7 8.7H4v-3.4Z" />
-                  <path d="m14 6.8 1.8-1.8a1.8 1.8 0 0 1 2.6 0l.6.6a1.8 1.8 0 0 1 0 2.6L17.2 10" />
-                </svg>
+        <article
+          className={[
+            styles.profileCardShell,
+            active && !reducedMotion ? styles.cardEntrance : '',
+            active && !reducedMotion ? styles.cardEntranceProfile : '',
+          ].filter(Boolean).join(' ')}
+        >
+          <div
+            className={`${styles.profileCard} ${profileFlipped ? styles.profileCardFlipped : ''}`}
+            onClick={() => setProfileFlipped((current) => !current)}
+          >
+            <div className={`${styles.profileFace} ${styles.profileFaceFront}`}>
+              <div className={styles.profileFaceTop}>
+                <div className={styles.avatarWrap}>
+                  <img src="/media/auth-eye-open.png" alt="头像" />
+                </div>
+                <div className={styles.profileBody}>
+                  <div className={styles.nameRow}>
+                    <h3>月光旅人</h3>
+                    <button
+                      type="button"
+                      aria-label="编辑资料"
+                      className={styles.iconTinyButton}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        onStartNew()
+                      }}
+                    >
+                      <svg viewBox="0 0 24 24" role="presentation">
+                        <path d="m4 16.9 8.7-8.7 3.4 3.4-8.7 8.7H4v-3.4Z" />
+                        <path d="m14 6.8 1.8-1.8a1.8 1.8 0 0 1 2.6 0l.6.6a1.8 1.8 0 0 1 0 2.6L17.2 10" />
+                      </svg>
+                    </button>
+                  </div>
+                  <p className={styles.profileStatus}>塔罗旅程进行中</p>
+                  <div className={styles.tags}>
+                    <span>天秤座</span>
+                    <span>Lv.6</span>
+                    <span>今日能量稳定</span>
+                  </div>
+                </div>
+              </div>
+              <div className={styles.progressRow}>
+                <p>经验值 860 / 1200</p>
+                <div className={styles.progressTrack}>
+                  <span className={styles.progressBar} />
+                </div>
+              </div>
+              <button
+                type="button"
+                className={styles.editButton}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  onStartNew()
+                }}
+              >
+                编辑资料
               </button>
+              <span className={styles.flipHint}>点击翻面</span>
             </div>
-            <p className={styles.profileStatus}>塔罗旅程进行中 ✨</p>
-            <div className={styles.tags}>
-              <span>♎ 天秤座</span>
-              <span>☆ Lv.6</span>
-              <span>🔮 今日能量稳定</span>
-            </div>
-            <div className={styles.progressRow}>
-              <p>经验值 860 / 1200</p>
-              <div className={styles.progressTrack}>
-                <span className={styles.progressBar} />
+
+            <div className={`${styles.profileFace} ${styles.profileFaceBack}`}>
+              <div className={styles.statsStrip} aria-label="我的数据概览">
+                <article className={styles.statItem}>
+                  <p>累计抽牌</p>
+                  <h4>{totalDraws}</h4>
+                  <span>次</span>
+                </article>
+                <article className={styles.statItem}>
+                  <p>收藏牌阵</p>
+                  <h4>{collectionCount}</h4>
+                  <span>个</span>
+                </article>
+                <article className={styles.statItem}>
+                  <p>连续签到</p>
+                  <h4>{streakDays}</h4>
+                  <span>天</span>
+                </article>
+                <article className={styles.statItem}>
+                  <p>灵感记录</p>
+                  <h4>{notesCount}</h4>
+                  <span>条</span>
+                </article>
               </div>
             </div>
           </div>
-          <div className={styles.crystalVisual} aria-hidden />
-          <button type="button" className={styles.editButton} onClick={onStartNew}>
-            编辑资料
-          </button>
         </article>
 
-        <section className={styles.statsStrip} aria-label="我的数据概览">
-          <article className={styles.statItem}>
-            <p>累计抽牌</p>
-            <h4>{totalDraws}</h4>
-            <span>次</span>
-          </article>
-          <article className={styles.statItem}>
-            <p>收藏牌阵</p>
-            <h4>{collectionCount}</h4>
-            <span>个</span>
-          </article>
-          <article className={styles.statItem}>
-            <p>连续签到</p>
-            <h4>{streakDays}</h4>
-            <span>天</span>
-          </article>
-          <article className={styles.statItem}>
-            <p>灵感记录</p>
-            <h4>{notesCount}</h4>
-            <span>条</span>
-          </article>
-        </section>
-
-        <section className={styles.featureCard} aria-label="我的功能">
+        <section
+          className={[
+            styles.featureCard,
+            active && !reducedMotion ? styles.cardEntrance : '',
+            active && !reducedMotion ? styles.cardEntranceFeature : '',
+          ].filter(Boolean).join(' ')}
+          aria-label="我的功能"
+        >
           <header className={styles.featureHeader}>
             <h3>我的功能</h3>
             <span aria-hidden>✦</span>
@@ -173,7 +196,14 @@ export function MyDreamsScene({
           </div>
         </section>
 
-        <section className={styles.archiveCard} aria-label="我的占卜档案">
+        <section
+          className={[
+            styles.archiveCard,
+            active && !reducedMotion ? styles.cardEntrance : '',
+            active && !reducedMotion ? styles.cardEntranceArchive : '',
+          ].filter(Boolean).join(' ')}
+          aria-label="我的占卜档案"
+        >
           <div className={styles.archiveCopy}>
             <h3>我的占卜档案</h3>
             <p>查看你的运势记录与抽牌足迹</p>

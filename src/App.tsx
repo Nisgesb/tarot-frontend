@@ -54,6 +54,7 @@ import { AiReadingScene } from './scenes/AiReadingScene'
 import { FeatureLandingScene } from './scenes/FeatureLandingScene'
 import { LiveReadingScene } from './scenes/LiveReadingScene'
 import { MyDreamsScene } from './scenes/MyDreamsScene'
+import { PhysicalReadingScene } from './scenes/PhysicalReadingScene'
 import { EMPTY_RAW_DREAM_INPUT } from './types/dream'
 import type { DreamRecord, RawDreamInput } from './types/dream'
 import type { AuthPayload } from './types/liveReading'
@@ -237,6 +238,7 @@ function resolveBackgroundSpeed(scene: string) {
     case 'dreamEntry':
       return 0.88
     case 'aiReading':
+    case 'physicalReading':
     case 'assistantRefine':
     case 'featureLanding':
       return 0.94
@@ -261,6 +263,7 @@ function resolveStarSpeed(scene: string) {
       return 2.64
     case 'dreamEntry':
     case 'aiReading':
+    case 'physicalReading':
     case 'assistantRefine':
     case 'featureLanding':
       return 0.92
@@ -358,6 +361,7 @@ function DreamHeroApp() {
   const keyboardAware = useKeyboardAwareViewport(
     sceneState.scene === 'dreamEntry' ||
       sceneState.scene === 'aiReading' ||
+      sceneState.scene === 'physicalReading' ||
       sceneState.scene === 'assistantRefine' ||
       sceneState.scene === 'authLogin' ||
       sceneState.scene === 'authRegister' ||
@@ -1121,6 +1125,7 @@ function DreamHeroApp() {
   const allowTextInputFocus =
     sceneState.scene === 'assistantRefine' ||
     sceneState.scene === 'aiReading' ||
+    sceneState.scene === 'physicalReading' ||
     sceneState.scene === 'authLogin' ||
     sceneState.scene === 'authRegister' ||
     liveReadingActive
@@ -1243,6 +1248,7 @@ function DreamHeroApp() {
           onPhaseChange={handleDreamEntryPhaseChange}
           onVisualize={handleVisualize}
           onOpenAiReading={actions.goAiReading}
+          onOpenPhysicalReading={actions.goPhysicalReading}
           onOpenLiveReadingDebug={openLiveReadingWithAuthGate}
           onOpenDailyFortune={() => actions.goFeature('daily-fortune')}
         />
@@ -1268,6 +1274,10 @@ function DreamHeroApp() {
 
       <AiReadingScene
         active={sceneState.scene === 'aiReading'}
+      />
+
+      <PhysicalReadingScene
+        active={sceneState.scene === 'physicalReading'}
       />
 
       <DreamInsightsLoader

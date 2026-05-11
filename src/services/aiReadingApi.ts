@@ -3,6 +3,7 @@ import type {
   CreateAiReadingSessionRequest,
   CreateAiReadingSessionResponse,
   GenerateAiReadingRequest,
+  GeneratePhysicalReadingRequest,
 } from '../types/aiReading'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:3001'
@@ -131,6 +132,77 @@ export async function generateAiReading(
 
   try {
     response = await fetch(`${API_BASE_URL}/ai-readings/${encodeURIComponent(readingId)}/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'text/plain',
+      },
+      body: JSON.stringify(payload),
+    })
+  } catch (exception) {
+    const message =
+      exception instanceof Error && exception.message.trim().length > 0
+        ? exception.message
+        : 'Network request failed'
+
+    throw createAiReadingApiError(message, 'NETWORK_ERROR', null)
+  }
+
+  if (!response.ok) {
+    const message = await extractErrorMessage(response)
+
+    throw createAiReadingApiError(message, 'HTTP_ERROR', response.status)
+  }
+
+  if (!response.body) {
+    const text = await response.text()
+
+    if (text.length > 0) {
+      onChunk(text)
+    }
+
+    return text
+  }
+
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let fullText = ''
+
+  while (true) {
+    const { done, value } = await reader.read()
+
+    if (done) {
+      break
+    }
+
+    const chunk = decoder.decode(value, { stream: true })
+
+    if (!chunk) {
+      continue
+    }
+
+    fullText += chunk
+    onChunk(chunk)
+  }
+
+  const tail = decoder.decode()
+
+  if (tail) {
+    fullText += tail
+    onChunk(tail)
+  }
+
+  return fullText
+}
+
+export async function generatePhysicalReading(
+  payload: GeneratePhysicalReadingRequest,
+  onChunk: (chunk: string) => void,
+) {
+  let response: Response
+
+  try {
+    response = await fetch(`${API_BASE_URL}/ai-readings/physical/generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -1,11 +1,13 @@
 .scene {
-  --ai-reading-ink: rgba(31, 39, 63, 0.96);
-  --ai-reading-body: rgba(75, 84, 111, 0.9);
-  --ai-reading-muted: rgba(107, 118, 147, 0.82);
-  --ai-reading-line: rgba(180, 192, 222, 0.62);
-  --ai-reading-paper: rgba(251, 249, 244, 0.94);
-  --ai-reading-paper-strong: rgba(255, 253, 249, 0.98);
-  --ai-reading-accent: rgba(120, 134, 175, 0.82);
+  --ai-reading-ink: #222960;
+  --ai-reading-body: rgba(44, 56, 92, 0.9);
+  --ai-reading-muted: rgba(113, 122, 162, 0.82);
+  --ai-reading-line: rgba(174, 186, 255, 0.76);
+  --ai-reading-paper: rgba(255, 255, 255, 0.92);
+  --ai-reading-paper-strong: rgba(255, 255, 255, 0.98);
+  --ai-reading-accent: #8f8ff0;
+  --ai-reading-lilac: #b69bff;
+  --ai-reading-blue: #5d8df5;
   position: absolute;
   inset: 0;
   isolation: isolate;
@@ -14,18 +16,18 @@
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   padding:
-    calc(var(--safe-top) + 56px)
-    calc(max(18px, var(--safe-right)))
-    calc(var(--safe-bottom) + 20px)
-    calc(max(18px, var(--safe-left)));
+    calc(var(--safe-top) + 36px)
+    calc(max(20px, var(--safe-right)))
+    calc(var(--safe-bottom) + 28px)
+    calc(max(20px, var(--safe-left)));
 }
 
 :global(.app-root) .scene.scene {
   padding:
-    calc(var(--safe-top) + 56px)
-    calc(max(18px, var(--safe-right)))
-    calc(var(--safe-bottom) + 20px)
-    calc(max(18px, var(--safe-left)));
+    calc(var(--safe-top) + 36px)
+    calc(max(20px, var(--safe-right)))
+    calc(var(--safe-bottom) + 28px)
+    calc(max(20px, var(--safe-left)));
 }
 
 .scene::before,
@@ -39,10 +41,10 @@
 .scene::before {
   z-index: 0;
   background:
-    radial-gradient(circle at 14% 9%, rgba(204, 215, 241, 0.5), rgba(204, 215, 241, 0) 34%),
-    radial-gradient(circle at 82% 13%, rgba(233, 206, 221, 0.38), rgba(233, 206, 221, 0) 38%),
-    radial-gradient(circle at 44% 84%, rgba(193, 199, 228, 0.3), rgba(193, 199, 228, 0) 45%),
-    linear-gradient(180deg, #f5f6f8 0%, #f4f5f7 100%);
+    radial-gradient(circle at 8% 6%, rgba(204, 220, 255, 0.72), rgba(204, 220, 255, 0) 34%),
+    radial-gradient(circle at 92% 10%, rgba(255, 222, 235, 0.62), rgba(255, 222, 235, 0) 38%),
+    radial-gradient(circle at 50% 90%, rgba(197, 205, 255, 0.52), rgba(197, 205, 255, 0) 42%),
+    linear-gradient(180deg, #f7f9ff 0%, #f3f5fb 100%);
 }
 
 .scene::after {
@@ -55,24 +57,31 @@
   opacity: 0.52;
 }
 
+.scene[data-phase='draw'],
+.scene[data-phase='reading'] {
+  align-items: start;
+}
+
 .shell {
   position: relative;
   z-index: 2;
-  width: min(100%, 460px);
+  width: min(100%, 760px);
   max-height: 100%;
   overflow: auto;
-  border: 1px solid rgba(190, 200, 226, 0.76);
-  border-radius: 30px;
-  padding: 22px 20px 18px;
+  border: 1px solid rgba(201, 211, 255, 0.72);
+  border-radius: 46px;
+  padding: clamp(44px, 5.8vw, 58px) clamp(30px, 5.2vw, 44px) clamp(28px, 4.4vw, 38px) !important;
   display: grid;
-  gap: 16px;
+  gap: 18px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(248, 248, 247, 0.72)),
-    linear-gradient(155deg, rgba(246, 242, 235, 0.78), rgba(248, 250, 255, 0.72) 64%, rgba(251, 247, 241, 0.76)),
+    radial-gradient(circle at 4% 0%, rgba(215, 227, 255, 0.74), rgba(215, 227, 255, 0) 34%),
+    radial-gradient(circle at 94% 10%, rgba(255, 230, 240, 0.64), rgba(255, 230, 240, 0) 36%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.96), rgba(251, 250, 255, 0.84) 58%, rgba(255, 255, 255, 0.92)),
     var(--ai-reading-paper);
   box-shadow:
-    0 22px 44px rgba(106, 116, 148, 0.18),
-    0 1px 0 rgba(255, 255, 255, 0.76) inset;
+    0 34px 70px rgba(118, 130, 176, 0.24),
+    0 14px 34px rgba(155, 164, 210, 0.16),
+    0 1px 0 rgba(255, 255, 255, 0.86) inset;
   animation: questionPaperIn 720ms cubic-bezier(0.2, 0.86, 0.24, 1) both;
 }
 
@@ -83,15 +92,8 @@
   border-radius: inherit;
   pointer-events: none;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0)),
-    linear-gradient(110deg, rgba(203, 216, 251, 0.15), rgba(246, 231, 238, 0) 40%),
-    repeating-linear-gradient(
-      0deg,
-      rgba(92, 104, 132, 0.028) 0px,
-      rgba(92, 104, 132, 0.028) 1px,
-      transparent 1px,
-      transparent 4px
-    );
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0)),
+    radial-gradient(ellipse at 56% 16%, rgba(190, 184, 255, 0.24), rgba(190, 184, 255, 0) 28%);
 }
 
 .shell > * {
@@ -100,23 +102,29 @@
 }
 
 .shellGlass {
-  border-radius: 30px;
+  border-radius: 46px;
   overflow: hidden;
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.56) inset;
+    0 0 0 1px rgba(255, 255, 255, 0.72) inset;
 }
 
 .drawShell {
   width: min(100%, 1120px);
-  max-height: 100%;
+  max-height: none;
+  overflow: visible;
   gap: 14px;
 }
 
 .questionShell {
-  min-height: min(710px, calc(100dvh - var(--safe-top) - var(--safe-bottom) - 96px));
-  max-height: min(710px, calc(100dvh - var(--safe-top) - var(--safe-bottom) - 96px));
-  grid-template-rows: auto minmax(0, 1fr) auto auto;
-  overflow: hidden;
+  min-height: min(980px, calc(100dvh - var(--safe-top) - var(--safe-bottom) - 64px));
+  max-height: min(980px, calc(100dvh - var(--safe-top) - var(--safe-bottom) - 64px));
+  grid-template-rows: auto minmax(240px, 0.9fr) auto auto;
+  overflow: auto;
+}
+
+.readingShell {
+  max-height: none;
+  overflow: visible;
 }
 
 .header {
@@ -126,131 +134,127 @@
 }
 
 .questionHeader {
-  gap: 10px;
+  gap: 13px;
   animation: questionHeaderIn 660ms cubic-bezier(0.18, 0.88, 0.24, 1) 80ms both;
-}
-
-.questionHeaderTop {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
 }
 
 .eyebrow {
   margin: 0;
-  color: var(--ai-reading-muted);
-  font: 600 0.72rem/1.2 'Outfit', sans-serif;
+  color: rgba(139, 143, 232, 0.92);
+  font: 600 clamp(0.74rem, 1.5vw, 0.88rem) / 1.2 'Outfit', sans-serif;
   letter-spacing: 0.24em;
   text-transform: uppercase;
+}
+
+.eyebrow::before,
+.eyebrow::after {
+  content: '✦';
+  margin-inline: 0 10px;
+  color: rgba(154, 148, 246, 0.82);
+  letter-spacing: 0;
+}
+
+.eyebrow::after {
+  margin-inline: 10px 0;
 }
 
 .title {
   margin: 0;
   color: var(--ai-reading-ink);
-  font: 500 clamp(2.55rem, 8.8vw, 3.36rem) / 0.94 'Cormorant Garamond', serif;
-  letter-spacing: -0.012em;
+  max-width: 11.5ch;
+  font: 500 clamp(3.24rem, 7.6vw, 4.92rem) / 0.93 'Cormorant Garamond', serif;
+  letter-spacing: 0;
   text-shadow:
-    0 10px 24px rgba(106, 120, 157, 0.14),
-    0 0 14px rgba(223, 231, 251, 0.3);
+    0 16px 24px rgba(53, 61, 116, 0.12),
+    0 0 18px rgba(222, 227, 255, 0.36);
 }
 
-.scene[data-title-font='sans'] .title {
-  font: 500 clamp(2.24rem, 7.6vw, 2.9rem) / 1.06 'Outfit', 'PingFang SC', sans-serif;
-  letter-spacing: -0.02em;
+.title::after {
+  content: '✦';
+  color: rgba(212, 178, 246, 0.76);
+  font-size: 0.32em;
+  vertical-align: top;
+  margin-left: 8px;
 }
 
-.fontSwitchButton {
-  border: 0;
-  background: transparent;
-  color: rgba(106, 118, 148, 0.9);
-  font: 500 0.64rem/1 'Outfit', sans-serif;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  padding: 4px 0;
-  cursor: pointer;
-  border-bottom: 1px solid rgba(159, 171, 202, 0.58);
-  transition:
-    color 220ms ease,
-    border-color 220ms ease;
-}
-
-.fontSwitchButton:hover {
-  color: rgba(60, 74, 112, 0.96);
-  border-color: rgba(108, 126, 182, 0.72);
-}
-
-.fontSwitchButton:focus-visible {
-  outline: 0;
-  box-shadow: 0 2px 0 rgba(108, 126, 182, 0.24);
+.drawPageTitle {
+  max-width: none;
+  font-size: clamp(2.6rem, 7.4vw, 4rem);
+  line-height: 1;
+  letter-spacing: 0.02em;
 }
 
 .ritualGlyphs {
   margin: -2px 0 0;
-  color: rgba(101, 115, 151, 0.78);
-  font: 500 0.84rem/1 'Cormorant Garamond', serif;
-  letter-spacing: 0.34em;
+  color: rgba(174, 153, 244, 0.9);
+  font: 600 1.08rem/1 'Cormorant Garamond', serif;
+  letter-spacing: 0.46em;
   animation: ritualFloat 2.8s ease-in-out infinite;
 }
 
 .copy {
   margin: 0;
-  color: rgba(68, 80, 110, 0.9);
-  font: 400 1rem/1.66 'Outfit', 'PingFang SC', sans-serif;
-  max-width: 28ch;
+  color: rgba(41, 54, 93, 0.9);
+  font: 400 clamp(1rem, 2.1vw, 1.24rem) / 1.72 'Outfit', 'PingFang SC', sans-serif;
+  max-width: 25ch;
 }
 
 .inputPanel {
   display: grid;
-  gap: 12px;
-  padding: 16px 14px 12px;
-  min-height: clamp(310px, 43vh, 390px);
+  gap: 10px;
+  padding: 0;
+  min-height: clamp(260px, 30vh, 330px);
   grid-template-rows: auto minmax(0, 1fr) auto;
-  border: 1px solid var(--ai-reading-line);
-  border-radius: 20px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.56), rgba(246, 248, 253, 0.3)),
-    linear-gradient(150deg, rgba(242, 236, 224, 0.4), rgba(249, 251, 255, 0.2) 58%, rgba(250, 241, 232, 0.35)),
-    rgba(255, 253, 248, 0.82);
-  box-shadow:
-    0 14px 24px rgba(116, 127, 159, 0.14),
-    0 1px 0 rgba(255, 255, 255, 0.72) inset;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .inputPanelGlass {
-  border-radius: 20px;
-  overflow: hidden;
+  border-radius: 32px;
+  overflow: visible;
+  box-shadow: none !important;
 }
 
 .label {
   margin: 0;
-  color: var(--ai-reading-body);
-  font: 600 0.82rem/1.2 'Outfit', 'PingFang SC', sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(43, 54, 102, 0.94);
+  font: 700 0.98rem/1.2 'Outfit', 'PingFang SC', sans-serif;
   letter-spacing: 0.02em;
+}
+
+.labelIcon {
+  width: 26px;
+  height: 20px;
+  border-radius: 8px 8px 8px 3px;
+  display: inline-grid;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.95);
+  font: 700 0.68rem/1 'Outfit', sans-serif;
+  letter-spacing: 0.08em;
+  background: linear-gradient(135deg, #b9a0ff, #7a89f6);
+  box-shadow: 0 8px 14px rgba(138, 136, 235, 0.26);
 }
 
 .questionInput {
   width: 100%;
   height: 100%;
-  min-height: 180px;
-  border: 1px solid rgba(170, 184, 219, 0.72);
-  border-radius: 18px;
-  padding: 16px;
+  min-height: 220px;
+  border: 2px solid rgba(173, 190, 255, 0.84);
+  border-radius: 28px;
+  padding: 24px 30px 48px;
   resize: none;
   background:
-    linear-gradient(180deg, var(--ai-reading-paper-strong), rgba(250, 251, 248, 0.92)),
-    repeating-linear-gradient(
-      0deg,
-      rgba(107, 120, 152, 0.052) 0px,
-      rgba(107, 120, 152, 0.052) 1px,
-      transparent 1px,
-      transparent 28px
-    );
+    radial-gradient(circle at 92% 5%, rgba(223, 219, 255, 0.24), rgba(223, 219, 255, 0) 32%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(252, 253, 255, 0.88));
   color: var(--ai-reading-ink);
-  font: 400 1.03rem/1.7 'Outfit', 'PingFang SC', sans-serif;
+  font: 400 clamp(0.98rem, 2.1vw, 1.16rem) / 1.7 'Outfit', 'PingFang SC', sans-serif;
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.66) inset,
-    0 12px 24px rgba(124, 135, 166, 0.12);
+    0 18px 34px rgba(146, 139, 235, 0.16),
+    0 1px 0 rgba(255, 255, 255, 0.82) inset;
   transition:
     border-color 220ms ease,
     box-shadow 220ms ease,
@@ -258,78 +262,161 @@
 }
 
 .questionInput::placeholder {
-  color: rgba(128, 141, 176, 0.82);
+  color: rgba(126, 137, 176, 0.72);
 }
 
 .questionInput:focus {
   outline: none;
   border-color: rgba(130, 150, 205, 0.86);
   box-shadow:
-    0 0 0 3px rgba(174, 190, 230, 0.32),
-    0 16px 28px rgba(117, 132, 171, 0.2);
+    0 0 0 4px rgba(189, 190, 255, 0.3),
+    0 20px 36px rgba(128, 136, 229, 0.2);
   transform: translateY(-1px);
 }
 
 .counter {
-  margin: 0;
+  margin: -44px 22px 0 0;
   justify-self: end;
-  min-height: 24px;
+  min-height: 28px;
   display: inline-flex;
   align-items: center;
-  padding-inline: 10px;
-  border: 1px solid rgba(170, 184, 218, 0.76);
-  border-radius: 999px;
-  color: rgba(103, 117, 149, 0.9);
-  font: 500 0.7rem/1 'Outfit', sans-serif;
-  background: rgba(255, 255, 255, 0.88);
+  padding-inline: 0;
+  border: 0;
+  color: rgba(102, 113, 151, 0.9);
+  font: 600 0.9rem/1 'Outfit', sans-serif;
+  background: transparent;
+}
+
+.cardOrnament {
+  position: relative;
+  width: min(200px, 38vw);
+  height: 112px;
+  justify-self: center;
+  margin: 2px 0 0;
+  opacity: 0.7;
+}
+
+.cardOrnament::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  width: min(270px, 52vw);
+  height: 34px;
+  border: 2px solid rgba(188, 185, 255, 0.42);
+  border-top: 0;
+  border-radius: 0 0 999px 999px;
+  transform: translateX(-50%);
+}
+
+.ornamentCard {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  width: 62px;
+  height: 92px;
+  border: 3px solid rgba(196, 185, 255, 0.58);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(255, 255, 255, 0.9) 0 3px, rgba(255, 255, 255, 0) 4px),
+    radial-gradient(circle at 50% 48%, rgba(255, 255, 255, 0) 0 15px, rgba(255, 255, 255, 0.74) 16px, rgba(255, 255, 255, 0) 18px),
+    linear-gradient(180deg, rgba(212, 197, 255, 0.72), rgba(175, 158, 255, 0.46));
+  box-shadow:
+    0 12px 24px rgba(155, 146, 230, 0.16),
+    0 0 0 1px rgba(255, 255, 255, 0.56) inset;
+}
+
+.ornamentCard::before,
+.ornamentCard::after {
+  content: '✦';
+  position: absolute;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.8rem;
+}
+
+.ornamentCard::before {
+  top: 16px;
+  left: 18px;
+}
+
+.ornamentCard::after {
+  right: 18px;
+  bottom: 18px;
+}
+
+.ornamentCardLeft {
+  transform: translateX(-96%) rotate(-13deg);
+}
+
+.ornamentCardCenter {
+  transform: translateX(-50%);
+  z-index: 2;
+}
+
+.ornamentCardRight {
+  transform: translateX(-4%) rotate(13deg);
 }
 
 .actions {
   display: grid;
-  gap: 10px;
+  gap: 12px;
   justify-items: center;
+}
+
+.safeNote {
+  margin: 0;
+  color: rgba(117, 126, 164, 0.74);
+  font: 600 0.78rem/1.2 'Outfit', 'PingFang SC', sans-serif;
+  letter-spacing: 0.04em;
 }
 
 .scene :global(.primary-pill),
 .scene :global(.secondary-pill) {
-  width: auto;
-  min-height: 42px;
-  border-radius: 0;
-  padding: 0 8px;
-  font: 500 0.84rem/1 'Outfit', 'PingFang SC', sans-serif;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+  width: 100%;
+  min-height: 62px;
+  border-radius: 999px;
+  padding: 0 28px;
+  font: 600 clamp(1rem, 2.2vw, 1.26rem) / 1 'Outfit', 'PingFang SC', sans-serif;
+  letter-spacing: 0.12em;
+  text-transform: none;
 }
 
 .scene :global(.primary-pill) {
   position: relative;
   border: 0;
-  background: transparent;
-  box-shadow: none;
-  color: var(--ai-reading-ink);
+  overflow: hidden;
+  background:
+    linear-gradient(92deg, rgba(177, 130, 255, 0.96), rgba(117, 130, 246, 0.96) 62%, rgba(79, 132, 231, 0.98)),
+    #7c82f4;
+  box-shadow:
+    0 18px 36px rgba(98, 114, 222, 0.28),
+    0 8px 20px rgba(171, 125, 236, 0.22),
+    0 1px 0 rgba(255, 255, 255, 0.42) inset;
+  color: rgba(255, 255, 255, 0.96);
 }
 
 .scene :global(.primary-pill)::after {
   content: '';
   position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(117, 132, 173, 0.16), rgba(117, 132, 173, 0.86), rgba(117, 132, 173, 0.16));
-  transform-origin: center;
-  transform: scaleX(0.52);
-  transition: transform 240ms ease;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0) 26%),
+    linear-gradient(110deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0));
+  opacity: 0.72;
+  transform: translateX(-70%);
+  transition: transform 520ms ease;
 }
 
 .scene :global(.primary-pill):hover::after,
 .scene :global(.primary-pill):focus-visible::after {
-  transform: scaleX(1);
+  transform: translateX(70%);
 }
 
 .scene :global(.primary-pill):focus-visible {
   outline: none;
-  color: rgba(38, 52, 90, 0.98);
+  box-shadow:
+    0 0 0 4px rgba(155, 171, 255, 0.34),
+    0 18px 36px rgba(98, 114, 222, 0.28);
 }
 
 .scene :global(.secondary-pill) {
@@ -340,13 +427,9 @@
 }
 
 .scene :global(.primary-pill[disabled]) {
-  color: rgba(125, 134, 160, 0.72);
-  opacity: 1;
-}
-
-.scene :global(.primary-pill[disabled])::after {
-  transform: scaleX(0.42);
-  background: rgba(158, 170, 200, 0.34);
+  color: rgba(255, 255, 255, 0.76);
+  opacity: 0.64;
+  filter: saturate(0.72);
 }
 
 .error {
@@ -377,15 +460,9 @@
   height: clamp(620px, 70svh, 820px);
   min-height: 620px;
   overflow: hidden;
-  border: 1px solid rgba(173, 188, 223, 0.58);
-  background:
-    radial-gradient(circle at 52% -8%, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0) 42%),
-    radial-gradient(circle at 14% 20%, rgba(214, 223, 255, 0.48), rgba(214, 223, 255, 0) 34%),
-    radial-gradient(circle at 86% 18%, rgba(255, 212, 237, 0.44), rgba(255, 212, 237, 0) 36%),
-    linear-gradient(180deg, rgba(242, 246, 255, 0.96), rgba(229, 235, 252, 0.92));
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.62) inset,
-    0 14px 24px rgba(112, 125, 162, 0.22);
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .drawStageGlass {
@@ -393,6 +470,8 @@
   min-height: 620px;
   border-radius: 22px;
   overflow: hidden;
+  background: transparent;
+  box-shadow: none !important;
 }
 
 .arcFlow {
@@ -605,7 +684,6 @@
   .questionHeader,
   .ritualGlyphs,
   .questionInput,
-  .fontSwitchButton,
   .scene :global(.primary-pill)::after {
     animation: none;
     transition: none;
@@ -615,50 +693,103 @@
 @media (max-width: 520px) {
   :global(.app-root) .scene.scene {
     padding:
-      calc(var(--safe-top) + 56px)
-      calc(max(18px, var(--safe-right)))
+      calc(var(--safe-top) + 24px)
+      calc(max(14px, var(--safe-right)))
       calc(var(--safe-bottom) + 18px)
-      calc(max(18px, var(--safe-left)));
+      calc(max(14px, var(--safe-left)));
   }
 
   .shell {
-    padding: 18px 16px 14px;
+    border-radius: 34px;
+    padding: 34px 22px 24px !important;
     gap: 14px;
   }
 
   .questionShell {
-    min-height: min(670px, calc(100dvh - var(--safe-top) - var(--safe-bottom) - 90px));
-    max-height: min(670px, calc(100dvh - var(--safe-top) - var(--safe-bottom) - 90px));
+    min-height: min(800px, calc(100dvh - var(--safe-top) - var(--safe-bottom) - 42px));
+    max-height: min(800px, calc(100dvh - var(--safe-top) - var(--safe-bottom) - 42px));
+    grid-template-rows: auto minmax(220px, 0.9fr) auto auto;
   }
 
   .title {
-    font-size: clamp(2.16rem, 9.6vw, 2.68rem);
+    font-size: clamp(2.28rem, 11.4vw, 3.08rem);
     line-height: 0.96;
   }
 
-  .scene[data-title-font='sans'] .title {
-    font-size: clamp(1.94rem, 8.6vw, 2.34rem);
+  .drawPageTitle {
+    font-size: clamp(2.2rem, 11vw, 3.24rem);
     line-height: 1.04;
+  }
+
+  .eyebrow {
+    font-size: 0.64rem;
+    letter-spacing: 0.18em;
+  }
+
+  .eyebrow::before,
+  .eyebrow::after {
+    margin-inline: 0 7px;
+  }
+
+  .eyebrow::after {
+    margin-inline: 7px 0;
+  }
+
+  .questionHeader {
+    gap: 10px;
   }
 
   .copy {
     font-size: 0.92rem;
-    line-height: 1.62;
+    line-height: 1.66;
   }
 
   .inputPanel {
-    padding: 14px 12px 10px;
-    min-height: clamp(280px, 40vh, 360px);
+    min-height: clamp(226px, 31vh, 300px);
+  }
+
+  .label {
+    font-size: 0.9rem;
+  }
+
+  .labelIcon {
+    width: 24px;
+    height: 19px;
   }
 
   .questionInput {
-    min-height: 164px;
-    font-size: 0.98rem;
+    min-height: 188px;
+    border-radius: 24px;
+    padding: 18px 22px 44px;
+    font-size: 0.9rem;
+    line-height: 1.62;
   }
 
-  .fontSwitchButton {
-    font-size: 0.6rem;
-    letter-spacing: 0.14em;
+  .counter {
+    margin: -40px 18px 0 0;
+    font-size: 0.82rem;
+  }
+
+  .cardOrnament {
+    width: 150px;
+    height: 88px;
+    margin-top: 0;
+  }
+
+  .ornamentCard {
+    width: 48px;
+    height: 70px;
+    border-radius: 11px;
+  }
+
+  .scene :global(.primary-pill),
+  .scene :global(.secondary-pill) {
+    min-height: 54px;
+    font-size: 0.95rem;
+  }
+
+  .safeNote {
+    font-size: 0.72rem;
   }
 
   .drawShell {

@@ -1,5 +1,10 @@
 .page {
   --home-shell-width: min(100%, 430px);
+  --home-topbar-offset: 10px;
+  --home-topbar-height: 38px;
+  --home-topbar-gap: 64px;
+  --home-settings-panel-gap: 20px;
+  --home-topbar-padding-inline: clamp(18px, 5vw, 22px);
   --home-radius-xl: 30px;
   --home-radius-lg: 22px;
   --home-radius-md: 16px;
@@ -52,8 +57,8 @@
   min-height: 100dvh;
   margin: 0 auto;
   padding:
-    calc(env(safe-area-inset-top, 0px) + 20px)
-    clamp(18px, 5vw, 22px)
+    calc(env(safe-area-inset-top, 0px) + var(--home-topbar-offset) + var(--home-topbar-height) + var(--home-topbar-gap))
+    var(--home-topbar-padding-inline)
     calc(env(safe-area-inset-bottom, 0px) + var(--bottom-nav-reserved, 0px) + 22px);
   display: grid;
   align-content: start;
@@ -65,13 +70,18 @@
 }
 
 .dailyTopBar {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + var(--home-topbar-offset));
+  left: 50%;
+  transform: translateX(-50%);
+  width: var(--home-shell-width);
+  padding-inline: var(--home-topbar-padding-inline);
+  box-sizing: border-box;
+  z-index: 40;
   display: flex;
   align-items: center;
   justify-content: flex-start;
   gap: 12px;
-  min-height: 38px;
-  position: relative;
-  z-index: 34;
 }
 
 .menuToggleButton {
@@ -193,7 +203,12 @@
 
 .settingsPanel {
   position: absolute;
-  top: calc(env(safe-area-inset-top, 0px) + 66px);
+  top: calc(
+    env(safe-area-inset-top, 0px) +
+    var(--home-topbar-offset) +
+    var(--home-topbar-height) +
+    var(--home-settings-panel-gap)
+  );
   left: clamp(18px, 5vw, 22px);
   width: min(318px, calc(100% - 36px));
   padding: 16px;
@@ -382,8 +397,10 @@
   .settingsPanel,
   .settingsScrim,
   .settingsMenuItem,
-  .menuLine {
+  .menuLine,
+  .homeEntranceCard {
     transition: none;
+    animation: none;
   }
 
   .settingsLayer[data-open='true'] .settingsPanel::before,
@@ -394,6 +411,12 @@
   .settingsLayer[data-open='true'] .settingsMenuItem {
     opacity: 1;
     transform: none;
+  }
+
+  .homeEntranceCard {
+    opacity: 1;
+    transform: none;
+    filter: none;
   }
 }
 
@@ -538,6 +561,65 @@
 
 .dailyShowcaseSection {
   padding-top: 2px;
+}
+
+.homeEntranceCard {
+  opacity: 0;
+  transform: translate3d(0, 18px, 0) scale(0.985);
+  animation: homeCardEntrance 680ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.dailyCardButton.homeEntranceCard {
+  animation-delay: 80ms;
+}
+
+.dailyShowcaseGrid .homeEntranceCard:nth-child(1) {
+  animation-delay: 180ms;
+}
+
+.dailyShowcaseGrid .homeEntranceCard:nth-child(2) {
+  animation-delay: 240ms;
+}
+
+.dailyShowcaseGrid .homeEntranceCard:nth-child(3) {
+  animation-delay: 300ms;
+}
+
+.dailyShowcaseGrid .homeEntranceCard:nth-child(4) {
+  animation-delay: 360ms;
+}
+
+.entryGridItem.homeEntranceCard:nth-child(1) {
+  animation-delay: 460ms;
+}
+
+.entryGridItem.homeEntranceCard:nth-child(2) {
+  animation-delay: 540ms;
+}
+
+.entryGridItem.homeEntranceCard:nth-child(3) {
+  animation-delay: 620ms;
+}
+
+@keyframes homeCardEntrance {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0) scale(0.985);
+    filter: blur(3px);
+  }
+
+  70% {
+    opacity: 1;
+    transform: translate3d(0, -2px, 0) scale(1.002);
+    filter: blur(0);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0);
+  }
 }
 
 .dailyShowcaseSurface {
@@ -844,9 +926,24 @@
 
 .entryGrid {
   width: 100%;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: nowrap;
   gap: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.entryGrid::-webkit-scrollbar {
+  display: none;
+}
+
+.entryGridItem {
+  flex: 0 0 calc((100% - 12px) / 2);
+  min-width: calc((100% - 12px) / 2);
+  scroll-snap-align: start;
 }
 
 .homeLoopSection {
@@ -1008,6 +1105,7 @@
 }
 
 .actionStackCardSurface,
+.physicalStackCardSurface,
 .liveStackCardSurface {
   box-shadow:
     0 10px 22px rgba(0, 0, 0, 0.12),
@@ -1069,6 +1167,10 @@
   background: none;
 }
 
+.physicalStackCard {
+  background: none;
+}
+
 .liveStackCard {
   background: none;
 }
@@ -1101,6 +1203,21 @@
     sans-serif;
   letter-spacing: 0.016em;
   text-wrap: balance;
+}
+
+.entryTitleUnderlineWrap {
+  width: 100%;
+}
+
+.entryTitleUnderlineText {
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+}
+
+.entryTitleUnderlineSvg {
+  color: rgba(94, 91, 118, 0.92);
 }
 
 .entryFeatureCopy {
@@ -1167,6 +1284,12 @@
 }
 
 @media (max-width: 420px) {
+  .page {
+    --home-topbar-padding-inline: 16px;
+    --home-topbar-gap: 56px;
+    --home-settings-panel-gap: 16px;
+  }
+
   .shell {
     gap: 14px;
     padding-inline: 16px;
@@ -1277,10 +1400,15 @@
 }
 
 @media (min-width: 768px) {
+  .page {
+    --home-topbar-gap: 68px;
+    --home-settings-panel-gap: 24px;
+  }
+
   .shell {
     --home-shell-width: min(100%, 760px);
     gap: 20px;
-    padding-top: calc(env(safe-area-inset-top, 0px) + 24px);
+    padding-top: calc(env(safe-area-inset-top, 0px) + var(--home-topbar-offset) + var(--home-topbar-height) + var(--home-topbar-gap));
     padding-inline: clamp(22px, 4vw, 30px);
   }
 
@@ -1298,6 +1426,11 @@
 
   .entryGrid {
     gap: 16px;
+  }
+
+  .entryGridItem {
+    flex-basis: calc((100% - 16px) / 2);
+    min-width: calc((100% - 16px) / 2);
   }
 
   .homeLoopSection {

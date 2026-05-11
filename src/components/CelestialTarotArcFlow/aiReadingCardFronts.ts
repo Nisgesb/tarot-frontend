@@ -1,17 +1,17 @@
 import type { SpreadCardItem } from '../../types/aiReading'
 
 const AI_READING_CARD_FRONT_BY_SLUG: Record<string, string> = {
-  'lovers': '/library/celestial-tarot-arc-flow/cards/fronts/004.png',
-  'devil': '/library/celestial-tarot-arc-flow/cards/fronts/005.jpg',
-  'judgement': '/library/celestial-tarot-arc-flow/cards/fronts/060.png',
-  'moon': '/library/celestial-tarot-arc-flow/cards/fronts/061.jpg',
-  'tower': '/library/celestial-tarot-arc-flow/cards/fronts/063.jpg',
-  'hanged-man': '/library/celestial-tarot-arc-flow/cards/fronts/064.png',
-  'hermit': '/library/celestial-tarot-arc-flow/cards/fronts/065.png',
-  'death': '/library/celestial-tarot-arc-flow/cards/fronts/066.png',
-  'emperor': '/library/celestial-tarot-arc-flow/cards/fronts/071.png',
-  'temperance': '/library/celestial-tarot-arc-flow/cards/fronts/072.png',
-  'strength': '/library/celestial-tarot-arc-flow/cards/fronts/069.png',
+  'lovers': '/library/celestial-tarot-arc-flow/cards/fronts/004.webp',
+  'devil': '/library/celestial-tarot-arc-flow/cards/fronts/005.webp',
+  'judgement': '/library/celestial-tarot-arc-flow/cards/fronts/060.webp',
+  'moon': '/library/celestial-tarot-arc-flow/cards/fronts/061.webp',
+  'tower': '/library/celestial-tarot-arc-flow/cards/fronts/063.webp',
+  'hanged-man': '/library/celestial-tarot-arc-flow/cards/fronts/064.webp',
+  'hermit': '/library/celestial-tarot-arc-flow/cards/fronts/065.webp',
+  'death': '/library/celestial-tarot-arc-flow/cards/fronts/066.webp',
+  'emperor': '/library/celestial-tarot-arc-flow/cards/fronts/071.webp',
+  'temperance': '/library/celestial-tarot-arc-flow/cards/fronts/072.webp',
+  'strength': '/library/celestial-tarot-arc-flow/cards/fronts/069.webp',
 }
 
 function buildFallbackCardFront(cardName: string) {

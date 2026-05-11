@@ -22,12 +22,14 @@ import {
   type ZodiacSign,
 } from '../types/dailyFortune'
 import { GlassPanel } from './GlassPanel'
+import { AnimatedUnderlineText } from './AnimatedUnderlineText'
 import { Toast } from './toast'
 import styles from './HomePage.module.css'
 
 interface HomePageProps {
   embedded?: boolean
   onOpenAiReading?: () => void
+  onOpenPhysicalReading?: () => void
   onOpenLiveReadingDebug?: () => void
   onOpenDailyFortune?: () => void
 }
@@ -203,6 +205,7 @@ function resolveFortuneErrorCopy(error: unknown) {
 export function HomePage({
   embedded = false,
   onOpenAiReading,
+  onOpenPhysicalReading,
   onOpenLiveReadingDebug,
   onOpenDailyFortune,
 }: HomePageProps) {
@@ -422,6 +425,11 @@ export function HomePage({
         return
       }
 
+      if (item.destinationKind === 'physical-flow') {
+        onOpenPhysicalReading?.()
+        return
+      }
+
       if (item.slug === 'daily-fortune') {
         onOpenDailyFortune?.()
         return
@@ -429,12 +437,16 @@ export function HomePage({
 
       onOpenLiveReadingDebug?.()
     },
-    [onOpenAiReading, onOpenDailyFortune, onOpenLiveReadingDebug],
+    [onOpenAiReading, onOpenDailyFortune, onOpenLiveReadingDebug, onOpenPhysicalReading],
   )
   const isMenuItemDisabled = useCallback(
     (item: HomeMenuItem) => {
       if (item.destinationKind === 'ai-flow') {
         return !onOpenAiReading
+      }
+
+      if (item.destinationKind === 'physical-flow') {
+        return !onOpenPhysicalReading
       }
 
       if (item.slug === 'daily-fortune') {
@@ -443,7 +455,7 @@ export function HomePage({
 
       return !onOpenLiveReadingDebug
     },
-    [onOpenAiReading, onOpenDailyFortune, onOpenLiveReadingDebug],
+    [onOpenAiReading, onOpenDailyFortune, onOpenLiveReadingDebug, onOpenPhysicalReading],
   )
   const patchHomeLoopDebugState = useCallback((patch: Partial<HomeLoopDebugState>) => {
     setHomeLoopDebugState((previous) => normalizeHomeLoopDebugState({ ...previous, ...patch }))
@@ -452,7 +464,7 @@ export function HomePage({
     () => (
       <button
         type="button"
-        className={`${styles.dailyCardButton} ${styles.rippleButton} ${styles.rippleLight}`}
+        className={`${styles.dailyCardButton} ${styles.rippleButton} ${styles.rippleLight} ${styles.homeEntranceCard}`}
         onClick={onOpenDailyFortune}
         onPointerDown={handleCardPointerDown}
         onAnimationEnd={handleCardRippleEnd}
@@ -485,7 +497,7 @@ export function HomePage({
 
               <div className={`${styles.luckyGrid} ${styles.dailyShowcaseGrid}`}>
                 {luckyGridItems.map((item) => (
-                  <div key={item.id} className={styles.luckyCardSurface}>
+                  <div key={item.id} className={`${styles.luckyCardSurface} ${styles.homeEntranceCard}`}>
                     <div className={`${styles.luckyCard} ${styles.dailyShowcaseLuckyCard}`}>
                       <p className={styles.luckyLabel}>{item.label}</p>
                       <p className={styles.luckyValue}>{item.value}</p>
@@ -528,9 +540,50 @@ export function HomePage({
               contentClassName={`${styles.entryFeatureCard} ${styles.actionStackCard}`}
             >
                 <p className={styles.entryFeatureBadge}>AI Tarot</p>
-                <h3 className={styles.entryFeatureTitle}>问一个问题，抽三张牌</h3>
+                <h3 className={styles.entryFeatureTitle}>
+                  <AnimatedUnderlineText
+                    text="塔罗占卜"
+                    className={styles.entryTitleUnderlineWrap}
+                    textClassName={styles.entryTitleUnderlineText}
+                    underlineClassName={styles.entryTitleUnderlineSvg}
+                  />
+                </h3>
                 <p className={styles.entryFeatureCopy}>
                   输入你最想确认的问题，进入星弧抽卡过程，再由 AI 原文流式解读牌面。
+                </p>
+            </GlassPanel>
+          </button>
+        ),
+      },
+      {
+        id: 'physical-reading',
+        render: () => (
+          <button
+            type="button"
+            className={`${styles.entryCardButton} ${styles.rippleButton} ${styles.rippleDark}`}
+            onClick={onOpenPhysicalReading}
+            onPointerDown={handleCardPointerDown}
+            onAnimationEnd={handleCardRippleEnd}
+            disabled={!onOpenPhysicalReading}
+            aria-label="进入实体卡占卜"
+          >
+            <GlassPanel
+              fill
+              {...LIQUID_GLASS_CARD_PRESET}
+              className={`${styles.entryFeatureCardSurface} ${styles.glassCardSurface} ${styles.physicalStackCardSurface}`}
+              contentClassName={`${styles.entryFeatureCard} ${styles.physicalStackCard}`}
+            >
+                <p className={styles.entryFeatureBadge}>Photo Tarot</p>
+                <h3 className={styles.entryFeatureTitle}>
+                  <AnimatedUnderlineText
+                    text="实体卡占卜"
+                    className={styles.entryTitleUnderlineWrap}
+                    textClassName={styles.entryTitleUnderlineText}
+                    underlineClassName={styles.entryTitleUnderlineSvg}
+                  />
+                </h3>
+                <p className={styles.entryFeatureCopy}>
+                  线下抽出实体牌，拍照上传牌面，让 AI 根据照片和你的问题直接分析。
                 </p>
             </GlassPanel>
           </button>
@@ -555,7 +608,14 @@ export function HomePage({
               contentClassName={`${styles.entryFeatureCard} ${styles.liveStackCard}`}
             >
                 <p className={styles.entryFeatureBadge}>Live Reading</p>
-                <h3 className={styles.entryFeatureTitle}>真人连线</h3>
+                <h3 className={styles.entryFeatureTitle}>
+                  <AnimatedUnderlineText
+                    text="真人连线"
+                    className={styles.entryTitleUnderlineWrap}
+                    textClassName={styles.entryTitleUnderlineText}
+                    underlineClassName={styles.entryTitleUnderlineSvg}
+                  />
+                </h3>
                 <p className={styles.entryFeatureCopy}>
                   保留 1v1 即时通话入口，适合需要实时互动、抽牌同步与解释陪伴的场景。
                 </p>
@@ -569,6 +629,7 @@ export function HomePage({
       handleCardRippleEnd,
       onOpenAiReading,
       onOpenLiveReadingDebug,
+      onOpenPhysicalReading,
     ],
   )
 
@@ -749,7 +810,9 @@ export function HomePage({
         <section className={styles.entryGridSection} aria-label="首页功能卡片入口">
           <div className={styles.entryGrid}>
             {entryCards.map((item) => (
-              <div key={item.id}>{item.render()}</div>
+              <div key={item.id} className={`${styles.entryGridItem} ${styles.homeEntranceCard}`}>
+                {item.render()}
+              </div>
             ))}
           </div>
         </section>

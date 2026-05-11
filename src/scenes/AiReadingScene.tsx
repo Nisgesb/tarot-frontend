@@ -23,10 +23,8 @@ interface AiReadingSceneProps {
 }
 
 type AiReadingPhase = 'question' | 'draw' | 'reading'
-type TitleFontMode = 'serif' | 'sans'
 
 const DRAW_COMPLETION_DELAY_MS = 1600
-const AI_READING_TITLE_FONT_KEY = 'ai-reading-title-font-v1'
 
 function asDisplayError(message: string | null) {
   if (!message) {
@@ -45,7 +43,6 @@ function asDisplayError(message: string | null) {
 export function AiReadingScene({ active }: AiReadingSceneProps) {
   const [question, setQuestion] = useState('')
   const [phase, setPhase] = useState<AiReadingPhase>('question')
-  const [titleFontMode, setTitleFontMode] = useState<TitleFontMode>('serif')
   const [anonymousSessionId, setAnonymousSessionId] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [streaming, setStreaming] = useState(false)
@@ -71,17 +68,6 @@ export function AiReadingScene({ active }: AiReadingSceneProps) {
 
     return () => {
       cancelled = true
-    }
-  }, [])
-
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(AI_READING_TITLE_FONT_KEY)
-      if (stored === 'serif' || stored === 'sans') {
-        setTitleFontMode(stored)
-      }
-    } catch {
-      // 忽略读取本地调试偏好失败
     }
   }, [])
 
@@ -217,20 +203,6 @@ export function AiReadingScene({ active }: AiReadingSceneProps) {
     .filter(Boolean)
     .join(' ')
 
-  const toggleTitleFont = () => {
-    setTitleFontMode((previous) => {
-      const next: TitleFontMode = previous === 'serif' ? 'sans' : 'serif'
-
-      try {
-        window.localStorage.setItem(AI_READING_TITLE_FONT_KEY, next)
-      } catch {
-        // 忽略写入本地调试偏好失败
-      }
-
-      return next
-    })
-  }
-
   const questionPreview = sessionResult?.question?.trim() || question.trim()
   const requiredDrawCount = sessionResult?.spread.length ?? 3
   const currentDrawIndex = Math.min(drawnCardIds.length, requiredDrawCount)
@@ -262,7 +234,7 @@ export function AiReadingScene({ active }: AiReadingSceneProps) {
         : '点击卡背抽取下一张牌'
 
   return (
-    <section className={className} data-title-font={titleFontMode}>
+    <section className={className} data-phase={phase}>
       {phase === 'draw' && sessionResult ? (
         <GlassPanel
           width="min(100%, 1120px)"
@@ -274,7 +246,7 @@ export function AiReadingScene({ active }: AiReadingSceneProps) {
         >
           <header className={styles.header}>
             <p className={styles.eyebrow}>Celestial Tarot Arc Flow</p>
-            <h2 className={styles.title}>进入抽卡过程</h2>
+            <h2 className={`${styles.title} ${styles.drawPageTitle}`}>进入抽卡过程</h2>
             {questionPreview ? <p className={styles.questionQuote}>“{questionPreview}”</p> : null}
           </header>
 
@@ -339,32 +311,22 @@ export function AiReadingScene({ active }: AiReadingSceneProps) {
         </GlassPanel>
       ) : (
         <GlassPanel
-          width="min(100%, 460px)"
-          borderRadius={24}
+          width="min(100%, 760px)"
+          borderRadius={46}
           backgroundOpacity={0.15}
           saturation={1.3}
           className={styles.shellGlass}
           contentClassName={
-            phase === 'question' ? `${styles.shell} ${styles.questionShell}` : styles.shell
+            phase === 'question' ? `${styles.shell} ${styles.questionShell}` : `${styles.shell} ${styles.readingShell}`
           }
         >
           {phase === 'question' ? (
             <>
               <header className={`${styles.header} ${styles.questionHeader}`}>
-                <div className={styles.questionHeaderTop}>
-                  <p className={styles.eyebrow}>3 Card Tarot</p>
-                  <button
-                    type="button"
-                    className={styles.fontSwitchButton}
-                    onClick={toggleTitleFont}
-                    aria-label={titleFontMode === 'serif' ? '切换为无衬线标题' : '切换为衬线标题'}
-                  >
-                    {titleFontMode === 'serif' ? 'A↔a 衬线' : 'A↔a 无衬线'}
-                  </button>
-                </div>
+                <p className={styles.eyebrow}>3 Card Tarot</p>
                 <h2 className={styles.title}>Ask One Clear Question</h2>
                 <p className={styles.ritualGlyphs} aria-hidden>
-                  ✶ ⟡ ✶
+                  ✦ ◊ ☾ ✦
                 </p>
                 <p className={styles.copy}>
                   只输入这一次你最想确认的问题，随后进入抽卡过程，三张牌归位后再开始 AI 原文流式解读。
@@ -379,7 +341,8 @@ export function AiReadingScene({ active }: AiReadingSceneProps) {
                 contentClassName={styles.inputPanel}
               >
                 <label htmlFor="ai-reading-question" className={styles.label}>
-                  你的问题
+                  <span className={styles.labelIcon} aria-hidden>•••</span>
+                  <span>你的问题</span>
                 </label>
                 <textarea
                   id="ai-reading-question"
@@ -393,6 +356,12 @@ export function AiReadingScene({ active }: AiReadingSceneProps) {
                 <p className={styles.counter}>{question.trim().length} / 280</p>
               </GlassPanel>
 
+              <div className={styles.cardOrnament} aria-hidden="true">
+                <span className={`${styles.ornamentCard} ${styles.ornamentCardLeft}`} />
+                <span className={`${styles.ornamentCard} ${styles.ornamentCardCenter}`} />
+                <span className={`${styles.ornamentCard} ${styles.ornamentCardRight}`} />
+              </div>
+
               <div className={styles.actions}>
                 <button
                   type="button"
@@ -400,8 +369,9 @@ export function AiReadingScene({ active }: AiReadingSceneProps) {
                   onClick={handleSubmit}
                   disabled={!question.trim() || submitting}
                 >
-                  {submitting ? '正在创建抽卡会话…' : '进入抽卡'}
+                  {submitting ? '正在创建抽卡会话…' : '✦ 进入抽卡 ✦'}
                 </button>
+                <p className={styles.safeNote}>锁 抽卡前可随时修改问题</p>
               </div>
 
             </>

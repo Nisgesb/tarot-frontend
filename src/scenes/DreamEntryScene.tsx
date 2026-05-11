@@ -15,6 +15,7 @@ interface DreamEntrySceneProps {
   onPhaseChange: (phase: 'dreamEntry' | 'assistantRefine') => void
   onVisualize: (payload: { rawInput: RawDreamInput; refinedText: string }) => void
   onOpenAiReading?: () => void
+  onOpenPhysicalReading?: () => void
   onOpenLiveReadingDebug?: () => void
   onOpenDailyFortune?: () => void
 }
@@ -30,6 +31,7 @@ export function DreamEntryScene({
   onPhaseChange,
   onVisualize,
   onOpenAiReading,
+  onOpenPhysicalReading,
   onOpenLiveReadingDebug,
   onOpenDailyFortune,
 }: DreamEntrySceneProps) {
@@ -109,6 +111,7 @@ export function DreamEntryScene({
         <HomePage
           key={stageKey}
           onOpenAiReading={onOpenAiReading}
+          onOpenPhysicalReading={onOpenPhysicalReading}
           onOpenLiveReadingDebug={onOpenLiveReadingDebug}
           onOpenDailyFortune={onOpenDailyFortune}
         />

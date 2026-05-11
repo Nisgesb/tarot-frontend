@@ -57,7 +57,7 @@
   margin: 0;
   padding: 0;
   background: transparent;
-  color: rgba(220, 226, 235, 0.78);
+  color: #5c5b76;
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
@@ -87,11 +87,11 @@
 .tabLabel {
   font: 700 0.88rem/1 'Outfit', sans-serif;
   letter-spacing: 0.012em;
-  color: rgba(204, 206, 214, 0.92);
+  color: #5c5b76;
 }
 
 .tabButtonActive .tabLabel {
-  color: rgba(255, 255, 255, 0.96);
+  color: #e5e5e7;
 }
 
 .floatingButton {
@@ -103,16 +103,16 @@
   align-items: center;
   justify-content: center;
   transform: translateY(-1px);
-  background: linear-gradient(145deg, #121212 0%, #1a1a1a 48%, #121212 100%);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  background-image: radial-gradient(circle at center, #2b48cb 0%, #7a76d4 38%, #afa7dc 68%, #dddbe2 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow:
     0 0 0 3px #f5f6f8,
-    0 10px 20px rgba(0, 0, 0, 0.28),
+    0 10px 20px rgba(0, 0, 0, 0.3),
     0 2px 6px rgba(0, 0, 0, 0.16);
 }
 
 .floatingButtonLabel {
-  color: rgba(255, 255, 255, 0.98);
+  color: #e5e5e7;
   font: 700 0.75rem/1 'Outfit', sans-serif;
   letter-spacing: 0.03em;
 }

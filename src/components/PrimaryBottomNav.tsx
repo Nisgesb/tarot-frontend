@@ -25,7 +25,7 @@ const TAB_COUNT = 3
 const CURVE_HEIGHT = 60
 const CURVE_REFERENCE_WIDTH = 394
 const CURVE_REFERENCE_HEIGHT = 86
-const FLOATING_RISE = 19
+const FLOATING_RISE = 16
 
 function processGradient(colors?: string[]) {
   if (!colors || colors.length === 0) {
@@ -90,7 +90,7 @@ export function PrimaryBottomNav({
   const shellRef = useRef<HTMLDivElement>(null)
   const [viewportWidth, setViewportWidth] = useState(360)
   const gradientId = `primary-nav-gradient-${useId().replaceAll(':', '-')}`
-  const gradient = processGradient(['#121212', '#1a1a1a'])
+  const gradient = processGradient(['#f5f6f8', '#f5f6f8'])
 
   const tabs = useMemo<TabConfig[]>(
     () => [

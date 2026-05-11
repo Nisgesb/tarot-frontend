@@ -12,6 +12,7 @@ export type SceneKey =
   | 'authLogin'
   | 'authRegister'
   | 'aiReading'
+  | 'physicalReading'
   | 'assistantRefine'
   | 'generating'
   | 'featureLanding'
@@ -103,6 +104,16 @@ function parseLocation(pathname: string, search: string): ParsedLocation {
   if (normalizedPath === '/ai-reading') {
     return {
       scene: 'aiReading',
+      path: normalizedPath,
+      dreamId: null,
+      inspectSource: null,
+      featureSlug: null,
+    }
+  }
+
+  if (normalizedPath === '/physical-reading') {
+    return {
+      scene: 'physicalReading',
       path: normalizedPath,
       dreamId: null,
       inspectSource: null,
@@ -286,6 +297,7 @@ export function useSceneMachine() {
       goRegister: (fromPath?: string, replace = false) =>
         applyNavigation(buildAuthPath('/register', fromPath), replace),
       goAiReading: () => applyNavigation('/ai-reading'),
+      goPhysicalReading: () => applyNavigation('/physical-reading'),
       goAssistantRefine: () => applyNavigation('/dream/new?phase=assistant'),
       goGenerating: () => applyNavigation('/dream/new?phase=generating'),
       goArchive: () => applyNavigation('/archive'),
