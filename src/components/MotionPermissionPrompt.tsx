@@ -29,12 +29,12 @@ export function MotionPermissionPrompt({
     >
       <div className="motion-permission-card">
         <p className="motion-permission-title">
-          {denied ? '动态感应已关闭' : '开启动态感应'}
+          {denied ? '启动权限未开启' : '开启启动体验权限'}
         </p>
         <p className="motion-permission-copy">
           {denied
-            ? '你已关闭动态感应，可在系统设置重新开启；未开启时仍可继续以普通模式浏览。'
-            : '开启后首页会随手机倾斜产生空间纵深效果；授权完成后，后续启动会默认自动开启。'}
+            ? '你已拒绝动态感应或定位权限，可在系统设置开启；未开启时仍可继续普通模式。'
+            : '建议同时开启动态感应与定位：动态感应用于起始页空间动效，定位用于首页天气驱动小猫视频。'}
         </p>
         <div className="motion-permission-actions">
           <button
@@ -42,10 +42,10 @@ export function MotionPermissionPrompt({
             className="primary-pill"
             onClick={denied ? onOpenSettings : onEnable}
           >
-            {denied ? '去设置开启' : '开启动态感应'}
+            {denied ? '去设置开启' : '开启权限'}
           </button>
           <button type="button" className="secondary-pill" onClick={onSkip}>
-            {onboarding ? '先体验普通模式' : '继续普通模式'}
+            {onboarding ? '先跳过，稍后再开' : '继续普通模式'}
           </button>
         </div>
       </div>

@@ -2,7 +2,7 @@
   --home-shell-width: min(100%, 430px);
   --home-topbar-offset: 10px;
   --home-topbar-height: 38px;
-  --home-topbar-gap: 64px;
+  --home-topbar-gap: 33px;
   --home-settings-panel-gap: 20px;
   --home-topbar-padding-inline: clamp(18px, 5vw, 22px);
   --home-radius-xl: 30px;
@@ -946,156 +946,6 @@
   scroll-snap-align: start;
 }
 
-.homeLoopSection {
-  width: 100%;
-  padding-top: 0;
-  margin-top: -24px;
-  position: relative;
-  z-index: 6;
-}
-
-.homeLoopDebugDock {
-  position: absolute;
-  top: calc(env(safe-area-inset-top, 0px) + 2px);
-  right: clamp(18px, 5vw, 22px);
-  z-index: 33;
-  display: grid;
-  justify-items: end;
-  gap: 8px;
-  pointer-events: none;
-}
-
-.homeLoopDebugToggle {
-  pointer-events: auto;
-  min-height: 30px;
-  padding: 0 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(155, 168, 204, 0.46);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(248, 251, 255, 0.62)),
-    rgba(252, 254, 255, 0.72);
-  color: rgba(38, 46, 70, 0.86);
-  font: 600 0.66rem/1 'Outfit', 'PingFang SC', sans-serif;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.66) inset,
-    0 8px 16px rgba(86, 96, 128, 0.14);
-}
-
-.homeLoopDebugToggle:active {
-  transform: scale(0.98);
-}
-
-.homeLoopDebugToggle[aria-expanded='true'] {
-  border-color: rgba(128, 143, 185, 0.62);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.8) inset,
-    0 14px 20px rgba(80, 92, 130, 0.2);
-}
-
-.homeLoopDebugPanel {
-  pointer-events: auto;
-  display: grid;
-  gap: 10px;
-  width: min(320px, calc(100vw - 56px));
-  padding: 12px;
-  border-radius: 16px;
-  border: 1px solid rgba(189, 202, 232, 0.66);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 250, 255, 0.72)),
-    rgba(252, 254, 255, 0.8);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.76) inset,
-    0 12px 24px rgba(81, 90, 120, 0.14);
-}
-
-.homeLoopSourceSwitch {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.homeLoopSourceButton {
-  min-height: 36px;
-  padding: 0 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(170, 184, 218, 0.56);
-  background: rgba(255, 255, 255, 0.72);
-  color: rgba(61, 72, 101, 0.86);
-  font: 500 0.72rem/1.2 'Outfit', 'PingFang SC', sans-serif;
-  letter-spacing: 0.02em;
-  cursor: pointer;
-}
-
-.homeLoopSourceButtonActive {
-  border-color: rgba(108, 124, 172, 0.74);
-  background: linear-gradient(140deg, rgba(228, 236, 255, 0.88), rgba(244, 248, 255, 0.9));
-  color: rgba(37, 46, 76, 0.96);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset;
-}
-
-.homeLoopSliderRow {
-  display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) 56px;
-  gap: 10px;
-  align-items: center;
-}
-
-.homeLoopSliderLabel {
-  color: rgba(73, 86, 120, 0.9);
-  font: 600 0.68rem/1.1 'Outfit', 'PingFang SC', sans-serif;
-  letter-spacing: 0.02em;
-}
-
-.homeLoopSlider {
-  width: 100%;
-  accent-color: rgba(102, 123, 190, 0.84);
-}
-
-.homeLoopSliderValue {
-  justify-self: end;
-  color: rgba(49, 60, 92, 0.88);
-  font: 600 0.68rem/1.1 'Outfit', 'PingFang SC', sans-serif;
-  letter-spacing: 0;
-  font-variant-numeric: tabular-nums;
-}
-
-.homeLoopResetButton {
-  justify-self: start;
-  min-height: 32px;
-  padding: 0 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(157, 170, 206, 0.56);
-  background: rgba(255, 255, 255, 0.7);
-  color: rgba(56, 66, 94, 0.9);
-  font: 500 0.7rem/1 'Outfit', 'PingFang SC', sans-serif;
-  cursor: pointer;
-}
-
-.homeLoopFrame {
-  width: 100%;
-  border-radius: 0;
-  overflow: visible;
-  border: 0;
-  background: transparent;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  box-shadow: none;
-}
-
-.homeLoopVideo {
-  display: block;
-  width: 100%;
-  height: clamp(176px, 40vw, 248px);
-  object-fit: contain;
-  background: transparent;
-  transform: translate3d(var(--home-loop-offset-x, 0px), var(--home-loop-offset-y, 0px), 0) scale(var(--home-loop-scale, 1));
-  transform-origin: center;
-  transition: transform 180ms ease;
-  will-change: transform;
-}
-
 .entryFeatureCardSurface {
   width: 100%;
   min-height: 200px;
@@ -1286,7 +1136,7 @@
 @media (max-width: 420px) {
   .page {
     --home-topbar-padding-inline: 16px;
-    --home-topbar-gap: 56px;
+    --home-topbar-gap: 27px;
     --home-settings-panel-gap: 16px;
   }
 
@@ -1346,14 +1196,6 @@
     gap: 10px;
   }
 
-  .homeLoopSection {
-    margin-top: -18px;
-  }
-
-  .homeLoopFrame {
-    border-radius: 20px;
-  }
-
   .entryFeatureCardSurface {
     min-height: 189px;
   }
@@ -1401,7 +1243,7 @@
 
 @media (min-width: 768px) {
   .page {
-    --home-topbar-gap: 68px;
+    --home-topbar-gap: 36px;
     --home-settings-panel-gap: 24px;
   }
 
@@ -1431,10 +1273,6 @@
   .entryGridItem {
     flex-basis: calc((100% - 16px) / 2);
     min-width: calc((100% - 16px) / 2);
-  }
-
-  .homeLoopSection {
-    margin-top: -28px;
   }
 
   .entryFeatureCardSurface {

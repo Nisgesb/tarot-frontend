@@ -312,6 +312,8 @@
   height: min(58vh, 520px);
   min-width: 340px;
   min-height: 280px;
+  perspective: 920px;
+  transform-style: preserve-3d;
   filter: drop-shadow(0 28px 42px rgba(3, 2, 12, 0.42));
 }
 
@@ -361,7 +363,9 @@
   width: var(--ctaf-card-width);
   height: calc(var(--ctaf-card-width) * 1.62);
   transform: translate(-50%, -50%);
-  transform-origin: 50% 86%;
+  transform-origin: 50% 92%;
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
   pointer-events: none;
 }
 
@@ -1385,5 +1389,462 @@
   .stageHint {
     width: calc(100vw - 24px);
     font-size: 0.68rem;
+  }
+}
+
+.rootPaper {
+  color: #2b2d53;
+  --ctaf-ink: #2b2d53;
+  --ctaf-muted: rgba(77, 79, 116, 0.7);
+  --ctaf-gold-bright: #ba9148;
+  --ctaf-gold-line: rgba(181, 147, 76, 0.34);
+}
+
+.rootPaper::before {
+  background:
+    radial-gradient(circle at 14% 18%, rgba(198, 185, 255, 0.08) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 80% 16%, rgba(220, 198, 152, 0.1) 0 1px, transparent 1.4px),
+    radial-gradient(circle at 82% 74%, rgba(198, 185, 255, 0.06) 0 1px, transparent 1.4px),
+    radial-gradient(circle at 28% 80%, rgba(220, 198, 152, 0.05) 0 1px, transparent 1.3px);
+  background-size: 220px 220px, 200px 200px, 260px 260px, 180px 180px;
+  opacity: 0.2;
+}
+
+.rootPaper::after {
+  background-image:
+    radial-gradient(rgba(147, 130, 196, 0.04) 0.7px, transparent 0.9px),
+    radial-gradient(rgba(185, 149, 74, 0.03) 0.6px, transparent 0.8px);
+  background-position: 0 0, 18px 18px;
+  background-size: 18px 18px, 24px 24px;
+  mix-blend-mode: multiply;
+  opacity: 0.18;
+}
+
+.rootPaper .stage {
+  width: min(100%, 1460px);
+  height: 100%;
+  min-height: 100%;
+  overflow: hidden;
+}
+
+.rootPaper .stage::before,
+.rootPaper .stage::after {
+  background: transparent;
+  box-shadow: none;
+  opacity: 0;
+}
+
+.rootPaper .stageAurora {
+  filter: blur(28px);
+  opacity: 0.78;
+}
+
+.rootPaper .stageAuroraViolet {
+  top: 12%;
+  width: 52%;
+  background: radial-gradient(circle, rgba(185, 167, 255, 0.26), rgba(185, 167, 255, 0));
+}
+
+.rootPaper .stageAuroraIndigo {
+  bottom: 12%;
+  width: 50%;
+  background: radial-gradient(circle, rgba(229, 210, 170, 0.18), rgba(229, 210, 170, 0));
+}
+
+.rootPaper .stageDiagram {
+  opacity: 0.48;
+}
+
+.rootPaper .stageLineSoft {
+  stroke: rgba(181, 147, 76, 0.4);
+  stroke-width: 1.12;
+}
+
+.rootPaper .stageLineFaint {
+  stroke: rgba(181, 167, 140, 0.16);
+}
+
+.rootPaper .stageStar {
+  fill: rgba(181, 147, 76, 0.82);
+  filter: drop-shadow(0 0 8px rgba(181, 147, 76, 0.34));
+}
+
+.rootPaper .stageDivider,
+.rootPaper .stageChamber {
+  display: none;
+}
+
+.rootPaper .stageCopy {
+  inset: clamp(10px, 1.8vw, 20px) 0 auto;
+}
+
+.rootPaper .stageEyebrow,
+.rootPaper .stageStatus {
+  color: rgba(80, 78, 118, 0.7);
+  font-family: 'Outfit', 'PingFang SC', sans-serif;
+  font-size: clamp(0.58rem, 0.95vw, 0.74rem);
+  letter-spacing: 0.22em;
+}
+
+.rootPaper .stageTitle {
+  margin-top: 0.08rem;
+  color: #262849;
+  font-size: clamp(1.32rem, 2.2vw, 1.88rem);
+  line-height: 0.98;
+  text-shadow: none;
+}
+
+.rootPaper .stageSubtitle {
+  margin-top: 0.08rem;
+  color: rgba(84, 80, 120, 0.64);
+  font-size: clamp(0.64rem, 0.98vw, 0.84rem);
+  letter-spacing: 0.18em;
+}
+
+.rootPaper .stageSigil {
+  top: 13.4%;
+  width: 50px;
+  height: 50px;
+  opacity: 0.55;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.44), rgba(255, 255, 255, 0) 68%);
+  box-shadow: 0 0 22px rgba(178, 151, 255, 0.18);
+}
+
+.rootPaper .stageSigil::before {
+  border-color: rgba(182, 149, 74, 0.76);
+}
+
+.rootPaper .stageSigil::after {
+  background: rgba(182, 149, 74, 0.9);
+  box-shadow:
+    -18px -10px 0 -2px rgba(182, 149, 74, 0.7),
+    18px -10px 0 -2px rgba(182, 149, 74, 0.7),
+    -18px 10px 0 -2px rgba(182, 149, 74, 0.7),
+    18px 10px 0 -2px rgba(182, 149, 74, 0.7);
+}
+
+.rootPaper .stageSigilCore {
+  border-color: rgba(182, 149, 74, 0.76);
+}
+
+.rootPaper .stageStatusbar {
+  bottom: 1.8%;
+  width: min(500px, calc(100vw - 30px));
+  padding: 0.58rem 1rem 0.68rem;
+  border: 1px solid rgba(203, 176, 122, 0.34);
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(248, 244, 235, 0.7)),
+    rgba(255, 255, 255, 0.52);
+  box-shadow:
+    0 12px 24px rgba(127, 130, 155, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.92) inset;
+  backdrop-filter: blur(12px);
+}
+
+.rootPaper .stageSelection {
+  margin-top: 0.18rem;
+  color: #30304f;
+  font-size: clamp(0.88rem, 1.45vw, 1.08rem);
+  letter-spacing: 0.08em;
+}
+
+.rootPaper .stageHint {
+  margin-top: 0.24rem;
+  width: min(400px, 100%);
+  color: rgba(84, 80, 120, 0.68);
+  font-size: clamp(0.7rem, 0.95vw, 0.82rem);
+  line-height: 1.34;
+}
+
+.rootPaper .stageScene {
+  overflow: visible;
+}
+
+.rootPaper .stageSceneContentHidden {
+  filter: blur(1px);
+  transform: scale(0.995);
+  opacity: 0;
+}
+
+.rootPaper .shuffleIntroLayer {
+  background:
+    radial-gradient(circle at 50% 48%, rgba(180, 156, 255, 0.1), rgba(180, 156, 255, 0) 44%),
+    radial-gradient(circle at 50% 48%, rgba(245, 241, 234, 0), rgba(245, 241, 234, 0.2));
+}
+
+.rootPaper .shuffleIntroPile {
+  width: min(42vw, 360px);
+  height: min(28vh, 240px);
+  min-width: 180px;
+  min-height: 140px;
+  opacity: 0.72;
+  filter: drop-shadow(0 8px 18px rgba(110, 110, 132, 0.1));
+}
+
+.rootPaper .shuffleIntroGlyph {
+  border-color: rgba(188, 159, 93, 0.28);
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 68%),
+    radial-gradient(circle, rgba(175, 148, 255, 0.14), rgba(175, 148, 255, 0) 64%);
+  box-shadow: 0 0 26px rgba(177, 150, 255, 0.16);
+}
+
+.rootPaper .shuffleIntroCard {
+  opacity: 0.72;
+  filter: saturate(0.82) brightness(1.08);
+}
+
+.rootPaper .shuffleIntroGlyph::before {
+  border-color: rgba(188, 159, 93, 0.2);
+}
+
+.rootPaper .shuffleIntroGlyph::after {
+  border-color: rgba(188, 159, 93, 0.26);
+}
+
+.rootPaper .dealIntroDeckAura {
+  background:
+    radial-gradient(circle, rgba(182, 141, 255, 0.22), rgba(182, 141, 255, 0.06) 36%, rgba(182, 141, 255, 0) 68%),
+    radial-gradient(circle, rgba(233, 213, 164, 0.16), rgba(233, 213, 164, 0));
+  filter: blur(6px);
+}
+
+.rootPaper .arcCardFrame {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 244, 219, 0.88),
+    rgba(220, 191, 125, 0.24) 28%,
+    rgba(247, 238, 215, 0.58) 56%,
+    rgba(157, 126, 69, 0.28) 100%
+  );
+  box-shadow:
+    0 10px 22px rgba(106, 109, 138, 0.2),
+    0 0 0 1px rgba(182, 149, 74, 0.16);
+}
+
+.rootPaper .arcCardSurface {
+  border-color: rgba(255, 255, 255, 0.32);
+  background: linear-gradient(180deg, rgba(253, 248, 242, 0.98), rgba(239, 230, 216, 0.96));
+}
+
+.rootPaper .arcCardSurface::before {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.14), transparent 38%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.04));
+}
+
+.rootPaper .arcCardSurface::after {
+  background: radial-gradient(circle at 50% 120%, rgba(96, 72, 34, 0.12), transparent 44%);
+}
+
+.rootPaper .arcCardArt {
+  filter: saturate(0.92) brightness(0.98);
+}
+
+.rootPaper .arcCardGlow {
+  opacity: 0.38;
+  filter: blur(14px);
+  background: radial-gradient(circle, rgba(181, 145, 255, 0.18), rgba(181, 145, 255, 0));
+}
+
+.rootPaper .arcCardShine {
+  opacity: 0.22;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0));
+}
+
+.rootPaper .arcCardHovered .arcCardFrame,
+.rootPaper .arcCardSelected .arcCardFrame {
+  box-shadow:
+    0 18px 32px rgba(106, 109, 138, 0.24),
+    0 0 0 1px rgba(182, 149, 74, 0.28),
+    0 0 24px rgba(165, 132, 238, 0.14);
+}
+
+.rootPaper .arcCardRevealed .arcCardFrame {
+  box-shadow:
+    0 14px 28px rgba(106, 109, 138, 0.2),
+    0 0 0 1px rgba(182, 149, 74, 0.22),
+    0 0 18px rgba(165, 132, 238, 0.1);
+}
+
+.rootPaper .arcCardGhost .arcCardFrame {
+  box-shadow:
+    0 6px 14px rgba(106, 109, 138, 0.14),
+    0 0 0 1px rgba(182, 149, 74, 0.12);
+}
+
+.rootPaper .arcCardBlocked .arcCardFrame {
+  box-shadow:
+    0 6px 14px rgba(106, 109, 138, 0.16),
+    0 0 0 1px rgba(182, 149, 74, 0.16);
+}
+
+.rootPaper .drawFocusZone {
+  width: min(18vw, 180px);
+}
+
+.rootPaper .drawFocusZoneHalo {
+  background: radial-gradient(
+    circle,
+    rgba(180, 156, 255, 0.22),
+    rgba(180, 156, 255, 0.08) 34%,
+    rgba(180, 156, 255, 0) 68%
+  );
+  filter: blur(12px);
+}
+
+.rootPaper .drawFocusZoneGlyph {
+  border: 1px solid rgba(182, 149, 74, 0.24);
+  box-shadow:
+    inset 0 0 0 1px rgba(182, 149, 74, 0.1),
+    0 0 24px rgba(140, 102, 232, 0.16);
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 64%);
+}
+
+.rootPaper .focusCard::before {
+  background:
+    radial-gradient(circle, rgba(255, 245, 224, 0.28) 0%, rgba(255, 245, 224, 0.08) 36%, rgba(255, 245, 224, 0) 72%);
+}
+
+.rootPaper .focusCard::after {
+  border-color: rgba(182, 149, 74, 0.28);
+  box-shadow:
+    inset 0 0 0 1px rgba(182, 149, 74, 0.16),
+    0 0 22px rgba(142, 102, 255, 0.18);
+}
+
+.rootPaper .focusCard .arcCardFrame {
+  box-shadow:
+    0 18px 34px rgba(96, 98, 126, 0.24),
+    0 0 0 1px rgba(182, 149, 74, 0.3),
+    0 0 32px rgba(142, 102, 255, 0.22),
+    0 0 56px rgba(245, 204, 136, 0.12);
+}
+
+@media (max-width: 768px) {
+  .rootPaper .stage {
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+  }
+
+  .rootPaper .stageAurora {
+    width: 88%;
+    height: 28%;
+    filter: blur(22px);
+  }
+
+  .rootPaper .stageDiagram {
+    inset: -8% -16% 0;
+    opacity: 0.34;
+  }
+
+  .rootPaper .shuffleIntroPile {
+    width: min(48vw, 230px);
+    height: min(23vh, 180px);
+    min-width: 160px;
+    min-height: 130px;
+  }
+
+  .rootPaper .stageCopy {
+    inset: max(8px, env(safe-area-inset-top)) 0 auto;
+    padding-inline: 10px;
+  }
+
+  .rootPaper .stageTitle {
+    font-size: clamp(1.18rem, 5vw, 1.66rem);
+  }
+
+  .rootPaper .stageSubtitle {
+    letter-spacing: 0.14em;
+  }
+
+  .rootPaper .stageSigil {
+    top: 12.8%;
+    width: 34px;
+    height: 34px;
+  }
+
+  .rootPaper .stageStatusbar {
+    bottom: max(8px, env(safe-area-inset-bottom));
+    width: calc(100vw - 18px);
+    padding: 0.52rem 0.7rem 0.6rem;
+    border-radius: 18px;
+  }
+
+  .rootPaper .stageStatus {
+    font-size: 0.56rem;
+    letter-spacing: 0.14em;
+  }
+
+  .rootPaper .stageSelection {
+    font-size: 0.86rem;
+  }
+
+  .rootPaper .stageHint {
+    font-size: 0.68rem;
+    line-height: 1.26;
+  }
+
+  .rootPaper .drawFocusZone {
+    width: min(54vw, 220px);
+  }
+
+  .rootPaper .arcCardFrame,
+  .rootPaper .arcCardSurface {
+    border-radius: 10px;
+  }
+
+  .rootPaper .arcCardFrame {
+    padding: 1px;
+  }
+
+  .rootPaper .arcFanWindowed .arcCardFrame {
+    box-shadow:
+      0 8px 16px rgba(106, 109, 138, 0.18),
+      0 0 0 1px rgba(182, 149, 74, 0.14);
+  }
+
+  .rootPaper .arcFanWindowed .arcCardGlow {
+    opacity: 0.26;
+    filter: blur(8px);
+  }
+
+  .rootPaper .arcFanWindowed .arcCardShine {
+    opacity: 0.18;
+  }
+
+  .rootPaper .arcFanWindowed .arcCardHovered .arcCardFrame,
+  .rootPaper .arcFanWindowed .arcCardSelected .arcCardFrame {
+    box-shadow:
+      0 14px 24px rgba(106, 109, 138, 0.22),
+      0 0 0 1px rgba(182, 149, 74, 0.24),
+      0 0 20px rgba(142, 102, 255, 0.16);
+  }
+}
+
+@media (max-width: 480px) {
+  .rootPaper .stageTitle {
+    font-size: clamp(1.02rem, 4.8vw, 1.34rem);
+  }
+
+  .rootPaper .stageSubtitle {
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+  }
+
+  .rootPaper .stageStatusbar {
+    width: calc(100vw - 12px);
+    padding-inline: 0.62rem;
+  }
+
+  .rootPaper .stageHint {
+    width: calc(100vw - 26px);
+    font-size: 0.64rem;
+  }
+
+  .rootPaper .drawFocusZone {
+    width: min(58vw, 210px);
   }
 }

@@ -77,11 +77,6 @@ export function MyDreamsScene({
   return (
     <section className={className} aria-label="我的页面">
       <div className={styles.shell}>
-        <header className={styles.hero}>
-          <p className={styles.heroEyebrow}>MY SPACE</p>
-          <h2 className={styles.heroTitle}>我的空间</h2>
-        </header>
-
         <article
           className={[
             styles.profileCardShell,

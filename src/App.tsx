@@ -7,7 +7,14 @@ import { MotionDebugPanel } from './components/MotionDebugPanel'
 import { MotionPermissionPrompt } from './components/MotionPermissionPrompt'
 import { NebulaBackground } from './components/NebulaBackground'
 import type { NebulaCompositionFrame } from './components/NebulaBackground'
-import { PrimaryBottomNav, type PrimaryBottomNavTab } from './components/PrimaryBottomNav'
+import { type PrimaryBottomNavTab } from './components/PrimaryBottomNav'
+import { PrimaryBottomNavWithMascot } from './components/PrimaryBottomNavWithMascot'
+import {
+  checkAppPermissions,
+  requestAppPermission,
+  openAppPermissionSettings,
+  type AppPermissionState,
+} from './platform/permissionCenter'
 import { PortalTransition } from './components/PortalTransition'
 import type { PortalTransitionOrigin } from './components/PortalTransition'
 import { SoftPageTransitionOverlay } from './components/SoftPageTransitionOverlay'
@@ -63,8 +70,8 @@ const ORB_ZOOM_MS = 560
 const SHOW_HERO_ON_BOOT = import.meta.env.VITE_SHOW_HERO_ON_BOOT !== 'false'
 const MOTION_TUNING_KEY = 'motion-debug-tuning-v1'
 const SCENE_TUNING_KEY = 'motion-debug-scene-v1'
-const MOTION_ONBOARDING_KEY = 'motion-onboarding-complete'
-const MOTION_LAST_PERMISSION_KEY = 'motion-last-permission'
+const STARTUP_PERMISSION_ONBOARDING_KEY = 'startup-permissions-onboarding-complete-v1'
+const LEGACY_MOTION_ONBOARDING_KEY = 'motion-onboarding-complete'
 
 const DEFAULT_SCENE_TUNING: MotionSceneTuning = {
   nebulaTimeScale: 2.06,
@@ -75,7 +82,6 @@ const DEFAULT_SCENE_TUNING: MotionSceneTuning = {
   portalMotionY: 3.36,
 }
 
-type MotionLastPermissionChoice = 'unknown' | 'granted' | 'denied' | 'skipped' | 'unsupported'
 type ProtectedPath = '/archive' | '/gallery' | '/live-reading'
 
 const DEFAULT_AUTH_RETURN_PATH = '/dream/new'
@@ -194,39 +200,22 @@ function loadSceneTuning(): MotionSceneTuning {
   }
 }
 
-function loadMotionOnboardingComplete() {
+function loadStartupPermissionOnboardingComplete() {
   if (typeof window === 'undefined') {
     return false
   }
 
   try {
-    return window.localStorage.getItem(MOTION_ONBOARDING_KEY) === 'true'
-  } catch {
-    return false
-  }
-}
+    const latest = window.localStorage.getItem(STARTUP_PERMISSION_ONBOARDING_KEY)
 
-function loadMotionLastPermission(): MotionLastPermissionChoice {
-  if (typeof window === 'undefined') {
-    return 'unknown'
-  }
-
-  try {
-    const value = window.localStorage.getItem(MOTION_LAST_PERMISSION_KEY)
-
-    if (
-      value === 'granted' ||
-      value === 'denied' ||
-      value === 'skipped' ||
-      value === 'unsupported'
-    ) {
-      return value
+    if (latest === 'true') {
+      return true
     }
-  } catch {
-    return 'unknown'
-  }
 
-  return 'unknown'
+    return window.localStorage.getItem(LEGACY_MOTION_ONBOARDING_KEY) === 'true'
+  } catch {
+    return false
+  }
 }
 
 function resolveBackgroundSpeed(scene: string) {
@@ -379,18 +368,20 @@ function DreamHeroApp() {
     isPhone: viewportProfile.isPhone,
     tuning: motionTuning,
   })
-  const motionDiagnostics = motion.snapshot.diagnostics
   const requestTiltPermission = motion.requestTiltPermission
-  const openTiltSettings = motion.openTiltSettings
 
   const [hasAnimatedIn, setHasAnimatedIn] = useState(false)
-  const [motionOnboardingComplete, setMotionOnboardingComplete] = useState(() =>
-    loadMotionOnboardingComplete(),
+  const [startupPermissionOnboardingComplete, setStartupPermissionOnboardingComplete] = useState(() =>
+    loadStartupPermissionOnboardingComplete(),
   )
-  const [motionLastPermission, setMotionLastPermission] = useState<MotionLastPermissionChoice>(() =>
-    loadMotionLastPermission(),
-  )
-  const [motionRecoveryDismissed, setMotionRecoveryDismissed] = useState(false)
+  const [startupPermissionStates, setStartupPermissionStates] = useState<{
+    motion: AppPermissionState
+    location: AppPermissionState
+  }>({
+    motion: 'unknown',
+    location: 'unknown',
+  })
+  const [startupPermissionRecoveryDismissed, setStartupPermissionRecoveryDismissed] = useState(false)
   // Do not replay home intro on hard refresh of /dream/new.
   // Keep transition only for the explicit Hero -> Enter flow.
   const [homeIntroPending, setHomeIntroPending] = useState(false)
@@ -635,21 +626,13 @@ function DreamHeroApp() {
   useEffect(() => {
     try {
       window.localStorage.setItem(
-        MOTION_ONBOARDING_KEY,
-        motionOnboardingComplete ? 'true' : 'false',
+        STARTUP_PERMISSION_ONBOARDING_KEY,
+        startupPermissionOnboardingComplete ? 'true' : 'false',
       )
     } catch {
       // 忽略本地存储异常
     }
-  }, [motionOnboardingComplete])
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(MOTION_LAST_PERMISSION_KEY, motionLastPermission)
-    } catch {
-      // 忽略本地存储异常
-    }
-  }, [motionLastPermission])
+  }, [startupPermissionOnboardingComplete])
 
   useEffect(() => {
     let cancelled = false
@@ -817,78 +800,59 @@ function DreamHeroApp() {
   }, [actions, sceneState.scene])
 
   useEffect(() => {
-    if (motionDiagnostics.transport !== 'native') {
-      return undefined
+    let cancelled = false
+
+    const syncStartupPermissionStates = async () => {
+      const snapshots = await checkAppPermissions(['motion', 'location'])
+
+      if (cancelled) {
+        return
+      }
+
+      setStartupPermissionStates({
+        motion: snapshots.motion.state,
+        location: snapshots.location.state,
+      })
     }
 
-    const timer = window.setTimeout(() => {
-      if (motionDiagnostics.nativePermissionState === 'granted') {
-        setMotionOnboardingComplete(true)
-        setMotionLastPermission('granted')
-        setMotionRecoveryDismissed(false)
-        return
-      }
-
-      if (motionDiagnostics.nativePermissionState === 'denied') {
-        setMotionOnboardingComplete(true)
-        setMotionLastPermission('denied')
-        setMotionRecoveryDismissed(false)
-        return
-      }
-
-      if (motionDiagnostics.nativePermissionState === 'unsupported') {
-        setMotionLastPermission('unsupported')
-      }
-    }, 0)
+    void syncStartupPermissionStates()
 
     return () => {
-      window.clearTimeout(timer)
+      cancelled = true
     }
-  }, [motionDiagnostics.nativePermissionState, motionDiagnostics.transport])
+  }, [sceneState.scene])
 
   const handleEnableMotion = useCallback(async () => {
-    const granted = await requestTiltPermission()
+    await requestTiltPermission()
+    const motionSnapshot = await checkAppPermissions(['motion'])
+    const locationSnapshot = await requestAppPermission('location')
 
-    if (granted) {
-      setMotionOnboardingComplete(true)
-      setMotionLastPermission('granted')
-      setMotionRecoveryDismissed(false)
-      return
-    }
-
-    if (motionDiagnostics.transport === 'native') {
-      if (motionDiagnostics.nativePermissionState === 'denied') {
-        setMotionOnboardingComplete(true)
-        setMotionLastPermission('denied')
-        setMotionRecoveryDismissed(false)
-        return
-      }
-
-      if (motionDiagnostics.nativePermissionState === 'notDetermined') {
-        setMotionOnboardingComplete(false)
-      }
-    }
-  }, [
-    motionDiagnostics.nativePermissionState,
-    motionDiagnostics.transport,
-    requestTiltPermission,
-  ])
+    setStartupPermissionStates({
+      motion: motionSnapshot.motion.state,
+      location: locationSnapshot.state,
+    })
+    setStartupPermissionOnboardingComplete(true)
+    setStartupPermissionRecoveryDismissed(false)
+  }, [requestTiltPermission])
 
   const handleSkipMotionOnboarding = useCallback(() => {
-    setMotionOnboardingComplete(true)
-    setMotionLastPermission('skipped')
-    setMotionRecoveryDismissed(true)
+    setStartupPermissionOnboardingComplete(true)
+    setStartupPermissionRecoveryDismissed(true)
   }, [])
 
   const handleDismissMotionRecovery = useCallback(() => {
-    setMotionRecoveryDismissed(true)
+    setStartupPermissionRecoveryDismissed(true)
   }, [])
 
   const handleOpenMotionSettings = useCallback(() => {
-    setMotionOnboardingComplete(true)
-    setMotionRecoveryDismissed(true)
-    void openTiltSettings()
-  }, [openTiltSettings])
+    setStartupPermissionOnboardingComplete(true)
+    setStartupPermissionRecoveryDismissed(true)
+    void openAppPermissionSettings('motion').then((opened) => {
+      if (!opened) {
+        void handleEnableMotion()
+      }
+    })
+  }, [handleEnableMotion])
 
   const startEnterFlow = () => {
     setDraftInput(EMPTY_RAW_DREAM_INPUT)
@@ -1063,22 +1027,23 @@ function DreamHeroApp() {
   const heroLikeScene =
     sceneState.scene === 'hero' || sceneState.scene === 'entering'
   const heroHiddenByConfig = !SHOW_HERO_ON_BOOT && sceneState.scene === 'hero'
+  const startupPermissionsGranted =
+    startupPermissionStates.motion === 'granted' &&
+    startupPermissionStates.location === 'granted'
+  const startupPermissionsDenied =
+    startupPermissionStates.motion === 'denied' ||
+    startupPermissionStates.location === 'denied'
   const showMotionOnboarding =
     sceneState.scene === 'hero' &&
-    motionDiagnostics.transport === 'native' &&
-    !motionOnboardingComplete &&
-    motionDiagnostics.nativePermissionState === 'notDetermined'
+    !startupPermissionOnboardingComplete &&
+    !startupPermissionsGranted
   const showMotionRecovery =
     sceneState.scene === 'hero' &&
-    motionDiagnostics.transport === 'native' &&
     !showMotionOnboarding &&
-    !motionRecoveryDismissed &&
-    (
-      motionDiagnostics.nativePermissionState === 'denied' ||
-      motionLastPermission === 'skipped'
-    )
+    !startupPermissionRecoveryDismissed &&
+    startupPermissionsDenied
   const motionPromptMode =
-    motionDiagnostics.nativePermissionState === 'denied'
+    startupPermissionsDenied
       ? 'denied'
       : 'skipped'
   const baseNebulaProfile = resolveMotionProfile(sceneState.scene, { x: 1, y: 0.86 })
@@ -1274,6 +1239,7 @@ function DreamHeroApp() {
 
       <AiReadingScene
         active={sceneState.scene === 'aiReading'}
+        onGoHome={actions.goDreamEntry}
       />
 
       <PhysicalReadingScene
@@ -1354,11 +1320,12 @@ function DreamHeroApp() {
       />
 
       {showPrimaryBottomNav ? (
-        <PrimaryBottomNav
+        <PrimaryBottomNavWithMascot
           activeTab={activePrimaryTab}
           onGoMy={openMyWithAuthGate}
           onGoHome={actions.goDreamEntry}
           onGoCircle={openCircleWithAuthGate}
+          showMascot={sceneState.scene === 'dreamEntry'}
         />
       ) : null}
 

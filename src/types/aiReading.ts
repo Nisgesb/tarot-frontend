@@ -1,38 +1,47 @@
-export type AiReadingMode = 'three-card'
+export type AiReadingMode = "three-card";
 
-export type AiReadingPosition = 'past' | 'present' | 'future'
-
-export type AiReadingPositionLabel = 'Past' | 'Present' | 'Future'
+export type AiReadingSlot = 1 | 2 | 3;
 
 export interface SpreadCardItem {
-  position: AiReadingPosition
-  positionLabel: AiReadingPositionLabel
-  cardId: string
-  cardSlug: string
-  cardName: string
-  cardTags: string[]
+  slot: AiReadingSlot;
+  slotLabel: string;
+  cardId: string;
+  cardSlug: string;
+  cardName: string;
+  cardTags: string[];
 }
 
 export interface CreateAiReadingSessionRequest {
-  mode: AiReadingMode
-  question: string
-  anonymousSessionId?: string
+  mode: AiReadingMode;
+  question: string;
+  anonymousSessionId?: string;
 }
 
 export interface CreateAiReadingSessionResponse {
-  anonymousSessionId: string
-  readingId: string
-  mode: AiReadingMode
-  question: string
-  spread: SpreadCardItem[]
-  createdAt: string
+  anonymousSessionId: string;
+  readingId: string;
+  mode: AiReadingMode;
+  question: string;
+  spread: SpreadCardItem[];
+  createdAt: string;
 }
 
 export interface GenerateAiReadingRequest {
-  anonymousSessionId: string
+  anonymousSessionId: string;
+}
+
+export interface GenerateAiReadingResponse {
+  rawText: string;
+  usedMock: boolean;
+  debugMeta: {
+    providerMode: "RESPONSES" | "CHAT_COMPLETIONS" | "MOCK";
+    model?: string;
+    fallbackReason?: string;
+    latencyMs?: number;
+  };
 }
 
 export interface GeneratePhysicalReadingRequest {
-  question: string
-  imageDataUrl: string
+  question: string;
+  imageDataUrl: string;
 }

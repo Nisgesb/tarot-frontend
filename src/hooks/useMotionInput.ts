@@ -20,6 +20,10 @@ import {
   stopNativeMotion,
 } from '../platform/nativeMotionBridge'
 import {
+  MOTION_PERMISSION_STORAGE_KEY,
+  requestAppPermission,
+} from '../platform/permissionCenter'
+import {
   deviceMotionNeedsPermission,
   deviceOrientationNeedsPermission,
   getRuntimePlatform,
@@ -28,7 +32,6 @@ import {
   isNativeApp,
 } from '../platform/runtime'
 
-const MOTION_LAST_PERMISSION_KEY = 'motion-last-permission'
 const MOTION_CALIBRATION_KEY = 'motion-calibration'
 
 const DEAD_ZONE = 0.035
@@ -69,14 +72,6 @@ interface UseMotionInputResult {
   requestTiltPermission: () => Promise<boolean>
   openTiltSettings: () => Promise<void>
   recenter: () => Promise<void>
-}
-
-interface DeviceOrientationWithPermission extends DeviceOrientationEvent {
-  requestPermission?: () => Promise<'granted' | 'denied'>
-}
-
-interface DeviceMotionWithPermission extends DeviceMotionEvent {
-  requestPermission?: () => Promise<'granted' | 'denied'>
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -184,7 +179,7 @@ function deriveWebPermissionState(runtimePlatform: MotionRuntimePlatform): Motio
     return 'unsupported'
   }
 
-  const storedPermission = readStorage(MOTION_LAST_PERMISSION_KEY)
+  const storedPermission = readStorage(MOTION_PERMISSION_STORAGE_KEY)
 
   if (storedPermission === 'granted') {
     return 'granted'
@@ -315,13 +310,13 @@ export function useMotionInput({
           setPermissionState('granted')
         }
 
-        writeStorage(MOTION_LAST_PERMISSION_KEY, 'granted')
+        writeStorage(MOTION_PERMISSION_STORAGE_KEY, 'granted')
         updateDiagnostics({ nativePermissionState: 'granted' })
         return
       }
 
       if (!getNeedsWebPermission() && permissionStateRef.current !== 'granted') {
-        writeStorage(MOTION_LAST_PERMISSION_KEY, 'granted')
+        writeStorage(MOTION_PERMISSION_STORAGE_KEY, 'granted')
         setPermissionState('granted')
       }
     },
@@ -354,7 +349,7 @@ export function useMotionInput({
       })
       setPermissionState(mapNativeStatusToPermission(status))
       if (status !== 'notDetermined') {
-        writeStorage(MOTION_LAST_PERMISSION_KEY, status)
+        writeStorage(MOTION_PERMISSION_STORAGE_KEY, status)
       }
       return status
     } catch {
@@ -364,7 +359,7 @@ export function useMotionInput({
         nativeListenerState: 'failed',
       })
       setPermissionState('unsupported')
-      writeStorage(MOTION_LAST_PERMISSION_KEY, 'unsupported')
+      writeStorage(MOTION_PERMISSION_STORAGE_KEY, 'unsupported')
       return 'unsupported' as NativeMotionStatus
     }
   }, [nativeTransport, updateDiagnostics])
@@ -374,72 +369,24 @@ export function useMotionInput({
       return false
     }
 
-    if (nativeTransport) {
-      try {
-        const result = await startNativeMotion()
-        updateDiagnostics({ nativePermissionState: result.status, transport: 'native' })
-        const nextPermission = mapNativeStatusToPermission(result.status)
-        setPermissionState(nextPermission)
-        if (result.status !== 'notDetermined') {
-          writeStorage(MOTION_LAST_PERMISSION_KEY, result.status)
-        }
-        return result.status === 'granted'
-      } catch {
-        setPermissionState('denied')
-        updateDiagnostics({ nativePermissionState: 'denied', transport: 'native' })
-        writeStorage(MOTION_LAST_PERMISSION_KEY, 'denied')
-        return false
-      }
-    }
+    const snapshot = await requestAppPermission('motion')
 
-    if (!getWebTiltSupport(runtimePlatform)) {
-      setPermissionState('unsupported')
-      return false
-    }
-
-    if (!getNeedsWebPermission()) {
-      writeStorage(MOTION_LAST_PERMISSION_KEY, 'granted')
+    if (snapshot.state === 'granted') {
       setPermissionState('granted')
+      updateDiagnostics({ nativePermissionState: nativeTransport ? 'granted' : diagnostics.nativePermissionState })
       return true
     }
 
-    try {
-      const permissionRequests: Array<Promise<'granted' | 'denied' | undefined>> = []
-
-      if (typeof window.DeviceMotionEvent !== 'undefined') {
-        const motionCtor = window
-          .DeviceMotionEvent as typeof DeviceMotionEvent &
-          DeviceMotionWithPermission
-
-        if (typeof motionCtor.requestPermission === 'function') {
-          permissionRequests.push(motionCtor.requestPermission())
-        }
-      }
-
-      if (typeof window.DeviceOrientationEvent !== 'undefined') {
-        const orientationCtor = window
-          .DeviceOrientationEvent as typeof DeviceOrientationEvent &
-          DeviceOrientationWithPermission
-
-        if (typeof orientationCtor.requestPermission === 'function') {
-          permissionRequests.push(orientationCtor.requestPermission())
-        }
-      }
-
-      const results = await Promise.allSettled(permissionRequests)
-      const granted = results.length === 0 || results.every(
-        (result) => result.status === 'fulfilled' && result.value === 'granted',
-      )
-
-      setPermissionState(granted ? 'granted' : 'denied')
-      writeStorage(MOTION_LAST_PERMISSION_KEY, granted ? 'granted' : 'denied')
-      return granted
-    } catch {
-      setPermissionState('denied')
-      writeStorage(MOTION_LAST_PERMISSION_KEY, 'denied')
+    if (snapshot.state === 'unsupported') {
+      setPermissionState('unsupported')
+      updateDiagnostics({ nativePermissionState: nativeTransport ? 'unsupported' : diagnostics.nativePermissionState })
       return false
     }
-  }, [enabled, nativeTransport, reducedMotion, runtimePlatform, updateDiagnostics])
+
+    setPermissionState('denied')
+    updateDiagnostics({ nativePermissionState: nativeTransport ? 'denied' : diagnostics.nativePermissionState })
+    return false
+  }, [diagnostics.nativePermissionState, enabled, nativeTransport, reducedMotion, updateDiagnostics])
 
   const openTiltSettings = useCallback(async () => {
     if (!nativeTransport) {
@@ -483,7 +430,7 @@ export function useMotionInput({
 
     const refreshStatus = async () => {
       const status = await syncNativeStatus()
-      const previouslyGranted = readStorage(MOTION_LAST_PERMISSION_KEY) === 'granted'
+      const previouslyGranted = readStorage(MOTION_PERMISSION_STORAGE_KEY) === 'granted'
 
       if (cancelled) {
         return

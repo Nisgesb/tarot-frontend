@@ -39,12 +39,15 @@ export interface CelestialTarotArcFlowRevealedCard {
   frontImage?: string
 }
 
+export type CelestialTarotArcFlowPresentation = 'default' | 'paper'
+
 export interface CelestialTarotArcFlowProps {
   className?: string
   totalCards?: number
   mobileBreakpoint?: number
   autoSpeedCardsPerSecond?: number
   cardBackImage?: string
+  presentation?: CelestialTarotArcFlowPresentation
   mode?: 'explore' | 'draw-sequence'
   drawnCardIds?: string[]
   revealedCards?: CelestialTarotArcFlowRevealedCard[]
@@ -66,6 +69,7 @@ const DEAL_CARD_STAGGER_S = 0.014
 const DEAL_CARD_DURATION_S = 0.66
 const DEAL_INTRO_BUFFER_MS = 260
 const DRAW_REVEAL_HOLD_MS = 1180
+const PAPER_SHUFFLE_INTRO_DURATION_MS = 2600
 
 interface ShuffleIntroCardPose {
   id: string
@@ -74,6 +78,8 @@ interface ShuffleIntroCardPose {
   x: number[]
   y: number[]
   rotate: number[]
+  rotateX: number[]
+  rotateY: number[]
   scale: number[]
 }
 
@@ -126,66 +132,84 @@ function seededRange(seed: number, min: number, max: number) {
 
 function buildShuffleIntroPile(count: number, isMobile: boolean) {
   const half = (count - 1) / 2
-  const orbitRadiusX = isMobile ? 66 : 118
-  const orbitRadiusY = isMobile ? 42 : 76
-  const cutOffset = isMobile ? 20 : 32
-  const swirlLift = isMobile ? 10 : 16
+  const splitDistance = isMobile ? 46 : 92
+  const crossDistance = isMobile ? 58 : 118
+  const scatterDistanceX = isMobile ? 72 : 148
+  const scatterDistanceY = isMobile ? 34 : 68
+  const bridgeLift = isMobile ? 24 : 42
+  const packetSpread = isMobile ? 1.05 : 1.58
 
   return Array.from({ length: count }, (_, index) => {
     const fromLeft = index % 2 === 0
     const sideDirection = fromLeft ? -1 : 1
     const centered = index - half
-    const ringWeight = 0.78 + (Math.abs(centered) / (half + 1)) * 0.72
-    const phase = (index / Math.max(count, 1)) * Math.PI * 2
+    const pairIndex = Math.floor(index / 2)
+    const pairCount = Math.ceil(count / 2)
+    const pairedCenter = pairIndex - (pairCount - 1) / 2
+    const lane = (index % 6) - 2.5
+    const weaveDepth = 0.72 + seededUnit(index + 17) * 0.42
     const jitterX = seededRange(index + 11, -10, 10)
     const jitterY = seededRange(index + 21, -6, 6)
-    const startX = jitterX
-    const startY = jitterY + centered * 0.2
+    const startX = centered * (isMobile ? 0.18 : 0.24) + jitterX * 0.26
+    const startY = centered * (isMobile ? 0.36 : 0.48) + jitterY * 0.22
     const startRotate = seededRange(index + 31, -8, 8)
 
-    const orbit1X = Math.cos(phase - Math.PI * 0.58) * orbitRadiusX * ringWeight
-    const orbit1Y = Math.sin(phase - Math.PI * 0.58) * orbitRadiusY * ringWeight - swirlLift
-    const orbit2X = Math.cos(phase + Math.PI * 0.76) * orbitRadiusX * ringWeight * 0.92
-    const orbit2Y = Math.sin(phase + Math.PI * 0.76) * orbitRadiusY * ringWeight * 0.9
-    const orbit3X = Math.cos(phase + Math.PI * 1.46) * orbitRadiusX * ringWeight * 0.74
-    const orbit3Y = Math.sin(phase + Math.PI * 1.46) * orbitRadiusY * ringWeight * 0.72 + swirlLift * 0.2
-
-    const crossX = -orbit1X * 0.38 + seededRange(index + 41, -8, 8)
-    const crossY = orbit1Y * 0.24 + seededRange(index + 51, -8, 8)
-
-    const cutX = sideDirection * (cutOffset * (0.42 + Math.abs(centered) / (half + 1))) + seededRange(index + 61, -6, 6)
-    const cutY = seededRange(index + 71, -8, 8)
-
-    const stackX = centered * (isMobile ? 0.58 : 0.74)
-    const stackY = centered * (isMobile ? 0.96 : 1.3)
+    const splitX = sideDirection * (splitDistance + Math.abs(pairedCenter) * 0.34) + seededRange(index + 41, -5, 5)
+    const splitY = pairedCenter * packetSpread + lane * 0.42 + seededRange(index + 51, -4, 4)
+    const thumbX = sideDirection * (splitDistance * 1.14 + seededRange(index + 61, -12, 10))
+    const thumbY = splitY + lane * (isMobile ? 1.7 : 2.4)
+    const bridgeX = sideDirection * seededRange(index + 71, 8, 20)
+    const bridgeY = -bridgeLift - Math.abs(pairedCenter) * (isMobile ? 0.2 : 0.34) + lane * 1.3
+    const crossX = -sideDirection * crossDistance * weaveDepth + seededRange(index + 81, -14, 14)
+    const crossY = bridgeY + seededRange(index + 91, -18, 18)
+    const scatterX = seededRange(index + 101, -scatterDistanceX, scatterDistanceX)
+    const scatterY = seededRange(index + 111, -scatterDistanceY, scatterDistanceY)
+    const rakeX = -sideDirection * seededRange(index + 121, 10, 28) + pairedCenter * 0.18
+    const rakeY = pairedCenter * (isMobile ? 0.58 : 0.82) + seededRange(index + 131, -8, 8)
+    const stackX = centered * (isMobile ? 0.5 : 0.68)
+    const stackY = centered * (isMobile ? 0.82 : 1.12)
     const endX = centered * 0.46
     const endY = centered * 0.68
     const endRotate = centered * 0.16
 
-    const orbit1Rotate = seededRange(index + 81, -28, 28) + centered * 0.22
-    const orbit2Rotate = seededRange(index + 91, -24, 24) - centered * 0.16
-    const orbit3Rotate = seededRange(index + 101, -16, 16)
-    const crossRotate = seededRange(index + 111, -14, 14)
-    const cutRotate = sideDirection * seededRange(index + 121, 8, 16)
-    const stackRotate = centered * 0.32 + seededRange(index + 131, -4, 4)
+    const splitRotate = sideDirection * seededRange(index + 141, 8, 17) + pairedCenter * 0.14
+    const thumbRotate = sideDirection * seededRange(index + 151, 14, 28)
+    const bridgeRotate = -sideDirection * seededRange(index + 161, 18, 34) + lane * 1.2
+    const crossRotate = -sideDirection * seededRange(index + 171, 32, 58) + seededRange(index + 181, -8, 8)
+    const scatterRotate = seededRange(index + 191, -56, 56)
+    const rakeRotate = sideDirection * seededRange(index + 201, -12, 12) + pairedCenter * 0.34
+    const stackRotate = centered * 0.32 + seededRange(index + 211, -4, 4)
 
     return {
       id: `shuffle-intro-${index}`,
-      zIndex: 180 + index,
-      delay: index * 0.0038 + (fromLeft ? 0 : 0.0028),
-      x: [startX, orbit1X, orbit2X, orbit3X, crossX, cutX, stackX, endX],
-      y: [startY, orbit1Y, orbit2Y, orbit3Y, crossY, cutY, stackY, endY],
+      zIndex: 180 + pairIndex * 2 + (fromLeft ? 0 : 1),
+      delay: pairIndex * 0.006 + (fromLeft ? 0 : 0.012),
+      x: [startX, splitX, thumbX, bridgeX, crossX, scatterX, rakeX, stackX, endX],
+      y: [startY, splitY, thumbY, bridgeY, crossY, scatterY, rakeY, stackY, endY],
       rotate: [
         startRotate,
-        orbit1Rotate,
-        orbit2Rotate,
-        orbit3Rotate,
+        splitRotate,
+        thumbRotate,
+        bridgeRotate,
         crossRotate,
-        cutRotate,
+        scatterRotate,
+        rakeRotate,
         stackRotate,
         endRotate,
       ],
-      scale: [0.92, 1.02, 1.06, 1.03, 1, 0.98, 1.01, 0.995],
+      rotateX: [0, 4, -8, 18, -12, 7, -3, 0, 0],
+      rotateY: [
+        0,
+        sideDirection * 6,
+        -sideDirection * 16,
+        sideDirection * 28,
+        -sideDirection * 18,
+        sideDirection * 8,
+        -sideDirection * 4,
+        0,
+        0,
+      ],
+      scale: [0.9, 0.98, 1.03, 1.08, 1.02, 1.05, 0.99, 1.01, 0.995],
     } satisfies ShuffleIntroCardPose
   })
 }
@@ -286,11 +310,111 @@ function createFanMetrics(
   size: { width: number; height: number },
   cardsPerFan: number,
   mobileBreakpoint: number,
+  presentation: CelestialTarotArcFlowPresentation,
 ): FanMetrics {
   const width = size.width || 1280
   const height = size.height || 860
   const isMobile = width <= mobileBreakpoint
   const compact = width < 920
+
+  if (presentation === 'paper') {
+    if (isMobile) {
+      const shortViewport = height < 580
+      const cardWidth = clamp(width * (shortViewport ? 0.128 : 0.136), shortViewport ? 46 : 48, shortViewport ? 60 : 66)
+      const hoverDistance = Math.round(cardWidth * 0.14)
+      const selectedDistance = Math.round(cardWidth * 0.28)
+      const radius = Math.min(width * 0.9, height * 0.42)
+      const focusOffsetY = clamp(height * 0.105, shortViewport ? 42 : 48, shortViewport ? 68 : 84)
+      const topCenterY = -(radius + focusOffsetY)
+      const bottomCenterY = radius + focusOffsetY
+
+      return {
+        isMobile,
+        cardWidth,
+        hoverDistance,
+        selectedDistance,
+        focusScale: 2.34,
+        upper: {
+          id: 'upper',
+          label: 'Upper arc spread',
+          tone: 'luna',
+          radius,
+          arcSide: 'lower',
+          startAngle: 132,
+          endAngle: 48,
+          centerX: 0,
+          centerY: topCenterY,
+          entryDelayBase: 0.04,
+          entryDelayStep: 0.012,
+          windowed: true,
+          windowCount: Math.min(cardsPerFan, shortViewport ? 15 : 17),
+          windowOverscan: 1,
+        },
+        lower: {
+          id: 'lower',
+          label: 'Lower arc spread',
+          tone: 'sol',
+          radius,
+          arcSide: 'upper',
+          startAngle: 228,
+          endAngle: 312,
+          centerX: 0,
+          centerY: bottomCenterY,
+          entryDelayBase: 0.1,
+          entryDelayStep: 0.012,
+          windowed: true,
+          windowCount: Math.min(cardsPerFan, shortViewport ? 15 : 17),
+          windowOverscan: 1,
+        },
+      }
+    }
+
+    const cardWidth = clamp(width * (compact ? 0.078 : 0.064), 48, compact ? 64 : 76)
+    const hoverDistance = Math.round(cardWidth * 0.12)
+    const selectedDistance = Math.round(cardWidth * 0.26)
+    const radius = compact ? Math.min(width * 0.42, height * 0.34) : Math.min(width * 0.31, height * 0.41)
+    const focusOffsetY = clamp(height * (compact ? 0.105 : 0.115), compact ? 52 : 58, compact ? 86 : 96)
+    const topCenterY = -(radius + focusOffsetY)
+    const bottomCenterY = radius + focusOffsetY
+
+    return {
+      isMobile,
+      cardWidth,
+      hoverDistance,
+      selectedDistance,
+      focusScale: compact ? 2.12 : 2.02,
+      upper: {
+        id: 'upper',
+        label: 'Upper arc spread',
+        tone: 'luna',
+        radius,
+        arcSide: 'lower',
+        startAngle: compact ? 144 : 140,
+        endAngle: compact ? 36 : 40,
+        centerX: 0,
+        centerY: topCenterY,
+        entryDelayBase: 0.05,
+        entryDelayStep: 0.018,
+        windowed: false,
+        windowCount: cardsPerFan,
+      },
+      lower: {
+        id: 'lower',
+        label: 'Lower arc spread',
+        tone: 'sol',
+        radius: radius * 0.99,
+        arcSide: 'upper',
+        startAngle: compact ? 216 : 220,
+        endAngle: compact ? 324 : 320,
+        centerX: 0,
+        centerY: bottomCenterY,
+        entryDelayBase: 0.14,
+        entryDelayStep: 0.018,
+        windowed: false,
+        windowCount: cardsPerFan,
+      },
+    }
+  }
 
   if (isMobile) {
     const shortViewport = height < 720
@@ -466,6 +590,7 @@ export function CelestialTarotArcFlow({
   mobileBreakpoint = DEFAULT_MOBILE_BREAKPOINT,
   autoSpeedCardsPerSecond = 0.76,
   cardBackImage = DEFAULT_CARD_BACK_IMAGE,
+  presentation = 'default',
   mode = 'explore',
   drawnCardIds = [],
   revealedCards = [],
@@ -487,8 +612,8 @@ export function CelestialTarotArcFlow({
   const stageRef = useRef<HTMLElement | null>(null)
   const stageSize = useElementSize(stageRef)
   const metrics = useMemo(
-    () => createFanMetrics(stageSize, cardsPerFan, mobileBreakpoint),
-    [cardsPerFan, mobileBreakpoint, stageSize],
+    () => createFanMetrics(stageSize, cardsPerFan, mobileBreakpoint, presentation),
+    [cardsPerFan, mobileBreakpoint, presentation, stageSize],
   )
   const isMobile = metrics.isMobile
   const isDrawSequenceMode = mode === 'draw-sequence'
@@ -503,9 +628,10 @@ export function CelestialTarotArcFlow({
             frontImage: item.frontImage,
           } satisfies TarotCardEntity,
         ]),
-      ),
+    ),
     [revealedCards],
   )
+  const isPaperPresentation = presentation === 'paper'
 
   const [desktopSelectedId, setDesktopSelectedId] = useState<string | null>(null)
   const [focusCard, setFocusCard] = useState<FocusCardState | null>(null)
@@ -522,15 +648,17 @@ export function CelestialTarotArcFlow({
   } | null>(null)
   const revealedCountRef = useRef(revealedCards.length)
   const shuffleIntroPile = useMemo(
-    () => buildShuffleIntroPile(Math.min(normalizedTotalCards, 78), isMobile),
-    [isMobile, normalizedTotalCards],
+    () => buildShuffleIntroPile(Math.min(normalizedTotalCards, isPaperPresentation ? 36 : 78), isMobile),
+    [isMobile, isPaperPresentation, normalizedTotalCards],
   )
   const dealIntroCards = useMemo(
     () => buildDealIntroCards(upperCards, lowerCards, metrics, isMobile),
     [isMobile, lowerCards, metrics, upperCards],
   )
   const shuffleCardWidth = Math.round(
-    clamp(metrics.cardWidth * (isMobile ? 1.1 : 1.06), isMobile ? 54 : 70, isMobile ? 88 : 122),
+    isPaperPresentation
+      ? clamp(metrics.cardWidth * (isMobile ? 0.8 : 0.86), isMobile ? 36 : 44, isMobile ? 52 : 68)
+      : clamp(metrics.cardWidth * (isMobile ? 1.1 : 1.06), isMobile ? 54 : 70, isMobile ? 88 : 122),
   )
   const dealCardWidth = Math.round(
     clamp(metrics.cardWidth * (isMobile ? 1.04 : 1), isMobile ? 52 : 66, isMobile ? 84 : 112),
@@ -544,6 +672,16 @@ export function CelestialTarotArcFlow({
   )
 
   useEffect(() => {
+    if (isPaperPresentation) {
+      const shuffleTimer = window.setTimeout(() => {
+        setShowShuffleIntro(false)
+      }, PAPER_SHUFFLE_INTRO_DURATION_MS)
+
+      return () => {
+        window.clearTimeout(shuffleTimer)
+      }
+    }
+
     const shuffleTimer = window.setTimeout(() => {
       setShowShuffleIntro(false)
       setShowDealIntro(true)
@@ -556,7 +694,7 @@ export function CelestialTarotArcFlow({
       window.clearTimeout(shuffleTimer)
       window.clearTimeout(dealTimer)
     }
-  }, [dealIntroDurationMs])
+  }, [dealIntroDurationMs, isPaperPresentation])
 
   useEffect(() => {
     return () => {
@@ -702,7 +840,9 @@ export function CelestialTarotArcFlow({
     setDesktopSelectedId((previous) => (previous === card.id ? null : card.id))
   }
 
-  const rootClassName = [styles.root, className].filter(Boolean).join(' ')
+  const rootClassName = [styles.root, presentation === 'paper' && styles.rootPaper, className]
+    .filter(Boolean)
+    .join(' ')
   const effectiveStatusLabel = statusLabel ?? (selectedCard ? 'Held sigil' : 'Ritual motion')
   const effectiveSelectionLabel = selectionLabel ?? (selectedCard ? selectedCard.label : 'Select one card')
   const effectiveHint =
@@ -875,14 +1015,15 @@ export function CelestialTarotArcFlow({
                 <motion.div
                   className={styles.shuffleIntroPile}
                   animate={{
-                    y: [0, -8, -3, -10, -2, 0],
-                    rotate: [0, 1.8, -1.4, 1.1, 0],
-                    scale: [0.96, 1.02, 1.03, 1, 1],
+                    x: [0, -6, 7, -4, 3, 0],
+                    y: [0, -5, 3, -9, -2, 0],
+                    rotate: [0, -2.6, 2.1, -1.4, 0.8, 0],
+                    scale: [0.96, 1.01, 1.04, 1.02, 1],
                   }}
                   transition={{
                     duration: 2.62,
-                    ease: [0.22, 0.92, 0.38, 1],
-                    times: [0, 0.24, 0.46, 0.72, 1],
+                    ease: [0.2, 0.86, 0.24, 1],
+                    times: [0, 0.18, 0.38, 0.58, 0.78, 1],
                   }}
                 >
                   <motion.div
@@ -903,14 +1044,16 @@ export function CelestialTarotArcFlow({
                         x: pose.x,
                         y: pose.y,
                         rotate: pose.rotate,
+                        rotateX: pose.rotateX,
+                        rotateY: pose.rotateY,
                         scale: pose.scale,
-                        opacity: [0, 1, 1, 1, 1, 1, 1, 1],
+                        opacity: [0, 1, 1, 1, 1, 1, 1, 1, 1],
                       }}
                       transition={{
                         duration: 2.6,
                         delay: pose.delay,
-                        ease: [0.22, 0.92, 0.38, 1],
-                        times: [0, 0.12, 0.26, 0.4, 0.54, 0.7, 0.84, 1],
+                        ease: [0.18, 0.86, 0.22, 1],
+                        times: [0, 0.12, 0.22, 0.36, 0.5, 0.64, 0.78, 0.9, 1],
                       }}
                       style={
                         {

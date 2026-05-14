@@ -19,6 +19,7 @@ import {
 } from '../services/liveReadingApi'
 import { GlassPanel } from '../components/GlassPanel'
 import { Toast } from '../components/toast'
+import { checkAppPermission, requestAppPermissions } from '../platform/permissionCenter'
 import { getRuntimePlatform, isNativeApp } from '../platform/runtime'
 import type {
   AuthPayload,
@@ -316,13 +317,22 @@ function createInitialMediaDiagnostics(runtimeInfo: LiveReadingRuntimeInfo): Med
 }
 
 async function queryMediaPermission(name: 'camera' | 'microphone'): Promise<MediaPermissionState> {
-  if (typeof navigator === 'undefined' || !navigator.permissions?.query) {
-    return 'unsupported'
-  }
-
   try {
-    const result = await navigator.permissions.query({ name: name as PermissionName })
-    return result.state
+    const snapshot = await checkAppPermission(name)
+
+    if (snapshot.state === 'granted') {
+      return 'granted'
+    }
+
+    if (snapshot.state === 'denied') {
+      return 'denied'
+    }
+
+    if (snapshot.state === 'promptable') {
+      return 'prompt'
+    }
+
+    return 'unsupported'
   } catch {
     return 'unsupported'
   }
@@ -969,6 +979,19 @@ export function LiveReadingScene({
     setBusy(true)
 
     try {
+      const permissionResult = await requestAppPermissions(['camera', 'microphone'])
+      const cameraGranted = permissionResult.camera.state === 'granted'
+      const microphoneGranted = permissionResult.microphone.state === 'granted'
+
+      if (!cameraGranted || !microphoneGranted) {
+        const detail = captureFailure(
+          'local-media-publish',
+          new Error('请先授权摄像头与麦克风后再开始真人连线。'),
+          '请先授权摄像头与麦克风后再开始真人连线。',
+        )
+        throw createStageError(detail)
+      }
+
       const created = await createCallSession(auth.accessToken, selectedReader.id, selectedDeck.id)
       setSession(created)
       await connectRoom(created.id, auth.accessToken)

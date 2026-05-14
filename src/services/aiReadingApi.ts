@@ -1,84 +1,92 @@
-import { storageGetItem, storageSetItem } from '../platform/storageAdapter'
+import { storageGetItem, storageSetItem } from "../platform/storageAdapter";
 import type {
   CreateAiReadingSessionRequest,
   CreateAiReadingSessionResponse,
   GenerateAiReadingRequest,
+  GenerateAiReadingResponse,
   GeneratePhysicalReadingRequest,
-} from '../types/aiReading'
+} from "../types/aiReading";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:3001'
-const AI_READING_ANONYMOUS_SESSION_KEY = 'ai-reading-anonymous-session-v1'
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:3001";
+const AI_READING_ANONYMOUS_SESSION_KEY = "ai-reading-anonymous-session-v1";
 
 export interface AiReadingApiError extends Error {
-  name: 'AiReadingApiError'
-  status: number | null
-  code: 'HTTP_ERROR' | 'NETWORK_ERROR'
+  name: "AiReadingApiError";
+  status: number | null;
+  code: "HTTP_ERROR" | "NETWORK_ERROR";
 }
 
 function createAiReadingApiError(
   message: string,
-  code: AiReadingApiError['code'],
+  code: AiReadingApiError["code"],
   status: number | null,
 ) {
-  const error = new Error(message) as AiReadingApiError
-  error.name = 'AiReadingApiError'
-  error.status = status
-  error.code = code
-  return error
+  const error = new Error(message) as AiReadingApiError;
+  error.name = "AiReadingApiError";
+  error.status = status;
+  error.code = code;
+  return error;
 }
 
 async function requestJson<T>(path: string, init: RequestInit) {
-  let response: Response
+  let response: Response;
 
   try {
-    response = await fetch(`${API_BASE_URL}${path}`, init)
+    response = await fetch(`${API_BASE_URL}${path}`, init);
   } catch (exception) {
     const message =
       exception instanceof Error && exception.message.trim().length > 0
         ? exception.message
-        : 'Network request failed'
+        : "Network request failed";
 
-    throw createAiReadingApiError(message, 'NETWORK_ERROR', null)
+    throw createAiReadingApiError(message, "NETWORK_ERROR", null);
   }
 
   if (!response.ok) {
-    let message = `Request failed: ${response.status}`
+    let message = `Request failed: ${response.status}`;
 
     try {
       const payload = (await response.json()) as {
-        message?: string | string[]
-      }
+        message?: string | string[];
+      };
 
       if (Array.isArray(payload.message)) {
-        message = payload.message.join(', ')
-      } else if (typeof payload.message === 'string' && payload.message.trim().length > 0) {
-        message = payload.message
+        message = payload.message.join(", ");
+      } else if (
+        typeof payload.message === "string" &&
+        payload.message.trim().length > 0
+      ) {
+        message = payload.message;
       }
     } catch {
       // keep fallback message
     }
 
-    throw createAiReadingApiError(message, 'HTTP_ERROR', response.status)
+    throw createAiReadingApiError(message, "HTTP_ERROR", response.status);
   }
 
-  return (await response.json()) as T
+  return (await response.json()) as T;
 }
 
 async function extractErrorMessage(response: Response) {
-  const contentType = response.headers.get('content-type') ?? ''
+  const contentType = response.headers.get("content-type") ?? "";
 
-  if (contentType.includes('application/json')) {
+  if (contentType.includes("application/json")) {
     try {
       const payload = (await response.json()) as {
-        message?: string | string[]
-      }
+        message?: string | string[];
+      };
 
       if (Array.isArray(payload.message)) {
-        return payload.message.join(', ')
+        return payload.message.join(", ");
       }
 
-      if (typeof payload.message === 'string' && payload.message.trim().length > 0) {
-        return payload.message
+      if (
+        typeof payload.message === "string" &&
+        payload.message.trim().length > 0
+      ) {
+        return payload.message;
       }
     } catch {
       // keep fallback message
@@ -86,182 +94,211 @@ async function extractErrorMessage(response: Response) {
   }
 
   try {
-    const text = await response.text()
+    const text = await response.text();
 
     if (text.trim().length > 0) {
-      return text.trim()
+      return text.trim();
     }
   } catch {
     // keep fallback message
   }
 
-  return `Request failed: ${response.status}`
+  return `Request failed: ${response.status}`;
 }
 
 export async function loadStoredAiReadingAnonymousSessionId() {
-  const value = await storageGetItem(AI_READING_ANONYMOUS_SESSION_KEY)
+  const value = await storageGetItem(AI_READING_ANONYMOUS_SESSION_KEY);
 
   if (!value || value.trim().length === 0) {
-    return null
+    return null;
   }
 
-  return value
+  return value;
 }
 
 export async function saveStoredAiReadingAnonymousSessionId(sessionId: string) {
-  await storageSetItem(AI_READING_ANONYMOUS_SESSION_KEY, sessionId)
+  await storageSetItem(AI_READING_ANONYMOUS_SESSION_KEY, sessionId);
 }
 
-export async function createAiReadingSession(payload: CreateAiReadingSessionRequest) {
-  return requestJson<CreateAiReadingSessionResponse>('/ai-readings/sessions', {
-    method: 'POST',
+export async function createAiReadingSession(
+  payload: CreateAiReadingSessionRequest,
+) {
+  return requestJson<CreateAiReadingSessionResponse>("/ai-readings/sessions", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
+      "Content-Type": "application/json",
+      Accept: "application/json",
     },
     body: JSON.stringify(payload),
-  })
+  });
 }
 
 export async function generateAiReading(
   readingId: string,
   payload: GenerateAiReadingRequest,
-  onChunk: (chunk: string) => void,
+  onChunk?: (chunk: string) => void,
 ) {
-  let response: Response
+  let response: Response;
 
   try {
-    response = await fetch(`${API_BASE_URL}/ai-readings/${encodeURIComponent(readingId)}/generate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'text/plain',
+    response = await fetch(
+      `${API_BASE_URL}/ai-readings/${encodeURIComponent(readingId)}/generate`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json, text/plain",
+        },
+        body: JSON.stringify(payload),
       },
-      body: JSON.stringify(payload),
-    })
+    );
   } catch (exception) {
     const message =
       exception instanceof Error && exception.message.trim().length > 0
         ? exception.message
-        : 'Network request failed'
+        : "Network request failed";
 
-    throw createAiReadingApiError(message, 'NETWORK_ERROR', null)
+    throw createAiReadingApiError(message, "NETWORK_ERROR", null);
   }
 
   if (!response.ok) {
-    const message = await extractErrorMessage(response)
+    const message = await extractErrorMessage(response);
 
-    throw createAiReadingApiError(message, 'HTTP_ERROR', response.status)
+    throw createAiReadingApiError(message, "HTTP_ERROR", response.status);
+  }
+
+  const contentType = response.headers.get("content-type") ?? "";
+
+  if (contentType.includes("application/json")) {
+    const payload = (await response.json()) as GenerateAiReadingResponse;
+
+    if (payload.rawText.length > 0) {
+      onChunk?.(payload.rawText);
+    }
+
+    return payload;
   }
 
   if (!response.body) {
-    const text = await response.text()
+    const text = await response.text();
 
     if (text.length > 0) {
-      onChunk(text)
+      onChunk?.(text);
     }
 
-    return text
+    return {
+      rawText: text,
+      usedMock: false,
+      debugMeta: {
+        providerMode: "RESPONSES",
+      },
+    } satisfies GenerateAiReadingResponse;
   }
 
-  const reader = response.body.getReader()
-  const decoder = new TextDecoder()
-  let fullText = ''
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let fullText = "";
 
   while (true) {
-    const { done, value } = await reader.read()
+    const { done, value } = await reader.read();
 
     if (done) {
-      break
+      break;
     }
 
-    const chunk = decoder.decode(value, { stream: true })
+    const chunk = decoder.decode(value, { stream: true });
 
     if (!chunk) {
-      continue
+      continue;
     }
 
-    fullText += chunk
-    onChunk(chunk)
+    fullText += chunk;
+    onChunk?.(chunk);
   }
 
-  const tail = decoder.decode()
+  const tail = decoder.decode();
 
   if (tail) {
-    fullText += tail
-    onChunk(tail)
+    fullText += tail;
+    onChunk?.(tail);
   }
 
-  return fullText
+  return {
+    rawText: fullText,
+    usedMock: false,
+    debugMeta: {
+      providerMode: "RESPONSES",
+    },
+  } satisfies GenerateAiReadingResponse;
 }
 
 export async function generatePhysicalReading(
   payload: GeneratePhysicalReadingRequest,
   onChunk: (chunk: string) => void,
 ) {
-  let response: Response
+  let response: Response;
 
   try {
     response = await fetch(`${API_BASE_URL}/ai-readings/physical/generate`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        Accept: 'text/plain',
+        "Content-Type": "application/json",
+        Accept: "text/plain",
       },
       body: JSON.stringify(payload),
-    })
+    });
   } catch (exception) {
     const message =
       exception instanceof Error && exception.message.trim().length > 0
         ? exception.message
-        : 'Network request failed'
+        : "Network request failed";
 
-    throw createAiReadingApiError(message, 'NETWORK_ERROR', null)
+    throw createAiReadingApiError(message, "NETWORK_ERROR", null);
   }
 
   if (!response.ok) {
-    const message = await extractErrorMessage(response)
+    const message = await extractErrorMessage(response);
 
-    throw createAiReadingApiError(message, 'HTTP_ERROR', response.status)
+    throw createAiReadingApiError(message, "HTTP_ERROR", response.status);
   }
 
   if (!response.body) {
-    const text = await response.text()
+    const text = await response.text();
 
     if (text.length > 0) {
-      onChunk(text)
+      onChunk(text);
     }
 
-    return text
+    return text;
   }
 
-  const reader = response.body.getReader()
-  const decoder = new TextDecoder()
-  let fullText = ''
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let fullText = "";
 
   while (true) {
-    const { done, value } = await reader.read()
+    const { done, value } = await reader.read();
 
     if (done) {
-      break
+      break;
     }
 
-    const chunk = decoder.decode(value, { stream: true })
+    const chunk = decoder.decode(value, { stream: true });
 
     if (!chunk) {
-      continue
+      continue;
     }
 
-    fullText += chunk
-    onChunk(chunk)
+    fullText += chunk;
+    onChunk(chunk);
   }
 
-  const tail = decoder.decode()
+  const tail = decoder.decode();
 
   if (tail) {
-    fullText += tail
-    onChunk(tail)
+    fullText += tail;
+    onChunk(tail);
   }
 
-  return fullText
+  return fullText;
 }

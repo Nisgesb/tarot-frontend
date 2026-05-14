@@ -5,6 +5,17 @@
   -webkit-overflow-scrolling: touch;
   background: #eeeaf5;
   color: #5c62a5;
+  font-family:
+    "PingFang SC",
+    "Hiragino Sans GB",
+    "Noto Sans CJK SC",
+    "Source Han Sans SC",
+    "Microsoft YaHei",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Outfit",
+    "Segoe UI",
+    sans-serif;
   padding-bottom: env(safe-area-inset-bottom);
 }
 
@@ -27,34 +38,6 @@
   padding: calc(var(--safe-top) + 20px) 16px 100px;
   display: grid;
   gap: 16px;
-}
-
-/* ── Header ── */
-.hero {
-  display: grid;
-  justify-items: center;
-  gap: 4px;
-  margin-bottom: 4px;
-}
-
-.heroEyebrow {
-  margin: 0;
-  color: rgba(144, 149, 219, 0.96);
-  letter-spacing: 0.28em;
-  font:
-    600 0.72rem/1.2 "Outfit",
-    "PingFang SC",
-    sans-serif;
-  text-transform: uppercase;
-}
-
-.heroTitle {
-  margin: 0;
-  color: #4b52b5;
-  font:
-    500 1.9rem/1 "STKaiti",
-    serif;
-  letter-spacing: 0.05em;
 }
 
 /* ── Card Entrance Motion ── */
@@ -363,6 +346,7 @@
   font-size: 0.78rem;
   font-weight: 600;
   width: fit-content;
+  margin-bottom: 8px;
   box-shadow: 0 2px 8px rgba(160, 168, 220, 0.12);
 }
 
