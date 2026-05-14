@@ -1,0 +1,550 @@
+.scene {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  background: #ebeaf1;
+}
+
+.scene::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(56, 41, 77, 0.62) 0%,
+      rgba(88, 68, 116, 0.42) 22%,
+      rgba(126, 108, 160, 0.24) 42%,
+      rgba(212, 201, 230, 0.08) 58%,
+      rgba(235, 234, 241, 0) 74%
+    ),
+    radial-gradient(circle at 86% 10%, rgba(255, 246, 255, 0.26), rgba(255, 246, 255, 0) 50%),
+    radial-gradient(circle at 16% 24%, rgba(235, 220, 253, 0.32), rgba(235, 220, 253, 0) 55%),
+    url('../../assets/images/circle-lunar-bg.png');
+  background-repeat: no-repeat;
+  background-size:
+    100% 100%,
+    66% 48%,
+    56% 42%,
+    cover;
+  background-position:
+    center,
+    right -14% top -4%,
+    left -10% top 12%,
+    center top;
+}
+
+.scene::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle at 68% 13%,
+      rgba(255, 255, 255, 0.2) 0%,
+      rgba(255, 255, 255, 0.08) 16%,
+      rgba(255, 255, 255, 0) 44%
+    ),
+    radial-gradient(
+      circle at 68% 13%,
+      rgba(255, 255, 255, 0.12) 62%,
+      rgba(255, 255, 255, 0) 66%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(240, 236, 250, 0) 52%,
+      rgba(235, 234, 241, 0.88) 72%,
+      #ebeaf1 100%
+    );
+}
+
+.shell {
+  position: relative;
+  z-index: 2;
+  width: min(100%, 460px);
+  min-height: var(--app-dvh);
+  margin: 0 auto;
+  padding:
+    calc(var(--safe-top) + 22px)
+    max(16px, var(--safe-right))
+    calc(var(--bottom-nav-reserved, 94px) + 18px)
+    max(16px, var(--safe-left));
+  display: grid;
+  align-content: start;
+  gap: 12px;
+}
+
+.shell > * {
+  opacity: 0;
+  transform: translate3d(0, 10px, 0);
+  animation: gallery-enter 520ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.shell > *:nth-child(1) { animation-delay: 30ms; }
+.shell > *:nth-child(2) { animation-delay: 90ms; }
+.shell > *:nth-child(3) { animation-delay: 150ms; }
+.shell > *:nth-child(4) { animation-delay: 210ms; }
+.shell > *:nth-child(5) { animation-delay: 270ms; }
+.shell > *:nth-child(6) { animation-delay: 320ms; }
+
+.headerBlock {
+  display: grid;
+  gap: 8px;
+  padding: 4px 2px 2px;
+}
+
+.headerEyebrow {
+  margin: 0;
+  color: rgba(255, 248, 255, 0.72);
+  font: 500 0.67rem/1 'Outfit', sans-serif;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.headerTitle {
+  margin: 0;
+  color: rgba(255, 250, 254, 0.98);
+  font: 500 clamp(2.3rem, 11vw, 3.2rem) / 0.9 'Cormorant Garamond', serif;
+  letter-spacing: -0.03em;
+  text-shadow: 0 16px 28px rgba(40, 24, 58, 0.24);
+}
+
+.headerSubtitle {
+  margin: 0;
+  max-width: 30ch;
+  color: rgba(247, 238, 250, 0.9);
+  font: 400 0.88rem/1.5 'Outfit', sans-serif;
+}
+
+.searchWrap {
+  margin-top: 4px;
+  position: relative;
+  display: block;
+}
+
+.searchWrap input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px 0 40px;
+  border-radius: 999px;
+  border: 1px solid var(--tarot-home-glass-border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.68)),
+    rgba(248, 244, 253, 0.88);
+  color: rgba(61, 47, 88, 0.92);
+  font: 400 0.88rem/1 'Outfit', sans-serif;
+  outline: none;
+  box-shadow:
+    0 8px 18px rgba(53, 34, 74, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.66) inset;
+}
+
+.searchWrap input::placeholder {
+  color: rgba(95, 74, 124, 0.62);
+}
+
+.searchWrap input:focus {
+  border-color: rgba(255, 250, 254, 0.74);
+}
+
+.searchIcon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  transform: translateY(-50%);
+  color: rgba(96, 77, 128, 0.72);
+}
+
+.searchIcon svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tabSection {
+  padding-top: 2px;
+}
+
+.tabRail {
+  position: relative;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 245, 251, 0.48);
+  background: rgba(81, 62, 108, 0.22);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  overflow: hidden;
+}
+
+.tabIndicator {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 8px) / 4);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 252, 255, 0.9), rgba(247, 238, 255, 0.68)),
+    linear-gradient(120deg, rgba(236, 214, 255, 0.52), rgba(255, 255, 255, 0.2));
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.52) inset,
+    0 10px 18px rgba(66, 46, 92, 0.2);
+  transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tabButton {
+  position: relative;
+  z-index: 1;
+  border: 0;
+  background: transparent;
+  color: rgba(244, 236, 251, 0.78);
+  font: 500 0.8rem/1 'Outfit', sans-serif;
+  letter-spacing: 0.01em;
+  min-height: 44px;
+}
+
+.tabButtonActive {
+  color: rgba(72, 54, 100, 0.92);
+}
+
+.tabButton span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.todayMoodCard {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  padding: 16px 14px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  background:
+    linear-gradient(150deg, rgba(255, 252, 255, 0.84), rgba(246, 238, 252, 0.72)),
+    rgba(250, 246, 255, 0.84);
+  box-shadow:
+    0 16px 30px rgba(52, 34, 72, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.72) inset;
+}
+
+.todayMoodGlow {
+  position: absolute;
+  inset: -34% -12% auto;
+  height: 120px;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(210, 191, 241, 0.42), rgba(210, 191, 241, 0) 66%);
+}
+
+.todayMoodHeader {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.todayMoodHeader p {
+  margin: 0;
+  color: rgba(90, 71, 121, 0.72);
+  font: 500 0.66rem/1 'Outfit', sans-serif;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.todayMoodMoon {
+  color: rgba(130, 104, 168, 0.68);
+  font-size: 0.9rem;
+}
+
+.todayMoodCard h2 {
+  margin: 10px 0 0;
+  color: rgba(70, 52, 98, 0.94);
+  font: 500 1rem/1.45 'Cormorant Garamond', serif;
+  letter-spacing: 0.01em;
+}
+
+.todayMoodGrid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.todayMoodEntry {
+  min-height: 40px;
+  border-radius: 14px;
+  border: 1px solid rgba(228, 216, 246, 0.88);
+  background: rgba(255, 255, 255, 0.72);
+  color: rgba(84, 66, 114, 0.9);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font: 500 0.77rem/1 'Outfit', sans-serif;
+}
+
+.todayMoodDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(149, 122, 189, 0.76);
+}
+
+.feedTransition {
+  position: relative;
+  min-height: 440px;
+}
+
+.feedTrack {
+  display: grid;
+  gap: 10px;
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition: opacity 260ms ease, transform 260ms ease;
+}
+
+.feedTrackSwitching {
+  opacity: 0;
+  transform: translate3d(0, 8px, 0);
+}
+
+.feedCard {
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  background:
+    linear-gradient(165deg, rgba(255, 255, 255, 0.9), rgba(246, 241, 252, 0.84)),
+    rgba(251, 248, 255, 0.88);
+  box-shadow:
+    0 16px 28px rgba(48, 30, 70, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.66) inset;
+  overflow: hidden;
+  transform: translate3d(0, 10px, 0);
+  opacity: 0.88;
+  animation: card-float-in 500ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(80ms + var(--card-index, 0) * 50ms);
+}
+
+.feedCardPeek {
+  clip-path: inset(0 0 calc(46% - 2px) 0 round 24px);
+  pointer-events: none;
+  min-height: 220px;
+}
+
+.feedCover {
+  height: 112px;
+  position: relative;
+}
+
+.feedCoverLunar {
+  background:
+    radial-gradient(circle at 22% 36%, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0) 34%),
+    linear-gradient(135deg, rgba(104, 74, 142, 0.88), rgba(142, 115, 181, 0.58) 44%, rgba(193, 173, 225, 0.44));
+}
+
+.feedCoverMist {
+  background:
+    radial-gradient(circle at 74% 22%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 30%),
+    linear-gradient(130deg, rgba(74, 94, 154, 0.82), rgba(134, 118, 180, 0.56) 44%, rgba(200, 193, 224, 0.4));
+}
+
+.feedCoverAurora {
+  background:
+    radial-gradient(circle at 36% 26%, rgba(222, 255, 250, 0.52), rgba(222, 255, 250, 0) 33%),
+    linear-gradient(132deg, rgba(76, 118, 148, 0.8), rgba(127, 103, 173, 0.54) 48%, rgba(186, 173, 221, 0.42));
+}
+
+.feedCoverDusk {
+  background:
+    radial-gradient(circle at 72% 22%, rgba(255, 250, 233, 0.5), rgba(255, 250, 233, 0) 33%),
+    linear-gradient(130deg, rgba(123, 92, 144, 0.82), rgba(166, 123, 167, 0.56) 48%, rgba(214, 188, 224, 0.42));
+}
+
+.feedPhaseTag {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.52);
+  background: rgba(255, 255, 255, 0.24);
+  color: rgba(255, 255, 255, 0.9);
+  font: 500 0.68rem/24px 'Outfit', sans-serif;
+}
+
+.feedBody {
+  padding: 13px 14px 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.feedMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.feedMeta h3 {
+  margin: 2px 0 0;
+  color: rgba(69, 50, 96, 0.96);
+  font: 500 1.01rem/1.2 'Cormorant Garamond', serif;
+}
+
+.feedMeta > span {
+  color: rgba(116, 94, 146, 0.6);
+  font: 500 0.69rem/1.4 'Outfit', sans-serif;
+}
+
+.feedStream {
+  margin: 0;
+  color: rgba(124, 103, 155, 0.66);
+  font: 500 0.64rem/1 'Outfit', sans-serif;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.feedRole {
+  margin: 3px 0 0;
+  color: rgba(104, 84, 131, 0.72);
+  font: 400 0.74rem/1.4 'Outfit', sans-serif;
+}
+
+.feedBody h4 {
+  margin: 0;
+  color: rgba(62, 45, 88, 0.95);
+  font: 500 1.06rem/1.32 'Cormorant Garamond', serif;
+}
+
+.feedExcerpt {
+  margin: 0;
+  color: rgba(86, 68, 114, 0.82);
+  font: 400 0.82rem/1.53 'Outfit', sans-serif;
+}
+
+.feedTopic {
+  color: rgba(121, 99, 152, 0.76);
+  font: 500 0.73rem/1.2 'Outfit', sans-serif;
+}
+
+.feedActions {
+  display: flex;
+  gap: 14px;
+  padding-top: 2px;
+  color: rgba(104, 85, 133, 0.78);
+  font: 500 0.75rem/1 'Outfit', sans-serif;
+}
+
+.publishButton {
+  position: fixed;
+  right: calc(var(--safe-right) + 18px);
+  bottom: calc(var(--safe-bottom) + 92px);
+  z-index: 12;
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  background:
+    linear-gradient(150deg, rgba(106, 79, 141, 0.94), rgba(147, 120, 186, 0.9)),
+    rgba(95, 72, 126, 0.92);
+  color: rgba(255, 250, 255, 0.96);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font: 500 0.8rem/1 'Outfit', sans-serif;
+  letter-spacing: 0.02em;
+  box-shadow:
+    0 14px 28px rgba(56, 37, 82, 0.28),
+    0 1px 0 rgba(255, 255, 255, 0.3) inset;
+  animation: publish-breath 2800ms ease-in-out infinite;
+}
+
+.publishButton:active {
+  transform: scale(0.96);
+}
+
+.publishButton span:first-child {
+  font-size: 0.88rem;
+}
+
+@keyframes gallery-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes card-float-in {
+  from {
+    transform: translate3d(0, 10px, 0);
+    opacity: 0.88;
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes publish-breath {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    box-shadow:
+      0 14px 28px rgba(56, 37, 82, 0.28),
+      0 1px 0 rgba(255, 255, 255, 0.3) inset;
+  }
+  50% {
+    transform: translate3d(0, -1px, 0) scale(1.02);
+    box-shadow:
+      0 18px 32px rgba(56, 37, 82, 0.32),
+      0 1px 0 rgba(255, 255, 255, 0.3) inset;
+  }
+}
+
+@media (max-width: 390px) {
+  .shell {
+    padding-left: max(14px, var(--safe-left));
+    padding-right: max(14px, var(--safe-right));
+  }
+
+  .headerTitle {
+    font-size: clamp(2.1rem, 10.5vw, 2.8rem);
+  }
+
+  .todayMoodGrid {
+    gap: 7px;
+  }
+
+  .todayMoodEntry {
+    font-size: 0.74rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell > *,
+  .tabIndicator,
+  .feedTrack,
+  .feedCard,
+  .publishButton {
+    animation: none !important;
+    transition-duration: 1ms !important;
+  }
+}
