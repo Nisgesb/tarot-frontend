@@ -221,7 +221,7 @@ type AiReadingPhase = "question" | "draw" | "reading";
 
 const DRAW_COMPLETION_DELAY_MS = 1600;
 const SUGGESTION_FILL_DELAY_MS = 120;
-const SUGGESTION_FLOAT_CLEAR_MS = 460;
+const SUGGESTION_PULSE_CLEAR_MS = 520;
 const SUGGESTION_FLOW_CLEAR_MS = 170;
 const QUESTION_SUGGESTION_BATCHES: Array<
   Array<{ id: string; icon: SuggestionIcon; text: string }>
@@ -455,7 +455,10 @@ export function AiReadingScene({ active, onGoHome }: AiReadingSceneProps) {
     useState<CreateAiReadingSessionResponse | null>(null);
   const [readingText, setReadingText] = useState("");
   const [drawnCardIds, setDrawnCardIds] = useState<string[]>([]);
-  const [activeSuggestionId, setActiveSuggestionId] = useState<string | null>(
+  const [selectedSuggestionId, setSelectedSuggestionId] = useState<
+    string | null
+  >(null);
+  const [pulseSuggestionId, setPulseSuggestionId] = useState<string | null>(
     null,
   );
   const [questionFlowIn, setQuestionFlowIn] = useState(false);
@@ -464,10 +467,12 @@ export function AiReadingScene({ active, onGoHome }: AiReadingSceneProps) {
   const questionInputRef = useRef<HTMLTextAreaElement | null>(null);
   const generationStartedRef = useRef(false);
   const drawCompletionTimerRef = useRef<number | null>(null);
-  const suggestionFlashTimerRef = useRef<number | null>(null);
+  const suggestionPulseTimerRef = useRef<number | null>(null);
   const suggestionFillTimerRef = useRef<number | null>(null);
   const questionFlowTimerRef = useRef<number | null>(null);
   const ctaActivationTimerRef = useRef<number | null>(null);
+  const suggestionApplyPendingRef = useRef(false);
+  const selectedSuggestionTextRef = useRef<string | null>(null);
   const previousQuestionLengthRef = useRef(0);
 
   useEffect(() => {
@@ -493,8 +498,8 @@ export function AiReadingScene({ active, onGoHome }: AiReadingSceneProps) {
       if (drawCompletionTimerRef.current !== null) {
         window.clearTimeout(drawCompletionTimerRef.current);
       }
-      if (suggestionFlashTimerRef.current !== null) {
-        window.clearTimeout(suggestionFlashTimerRef.current);
+      if (suggestionPulseTimerRef.current !== null) {
+        window.clearTimeout(suggestionPulseTimerRef.current);
       }
       if (suggestionFillTimerRef.current !== null) {
         window.clearTimeout(suggestionFillTimerRef.current);
@@ -535,20 +540,38 @@ export function AiReadingScene({ active, onGoHome }: AiReadingSceneProps) {
       suggestionBatchIndex % QUESTION_SUGGESTION_BATCHES.length
     ] ?? QUESTION_SUGGESTION_BATCHES[0];
 
+  const handleQuestionChange = (nextValue: string) => {
+    setQuestion(nextValue);
+
+    if (
+      suggestionApplyPendingRef.current ||
+      !selectedSuggestionId ||
+      !selectedSuggestionTextRef.current
+    ) {
+      return;
+    }
+
+    if (nextValue.trim() !== selectedSuggestionTextRef.current.trim()) {
+      setSelectedSuggestionId(null);
+      selectedSuggestionTextRef.current = null;
+    }
+  };
+
   const handleFillSuggestion = (nextQuestion: string, suggestionId: string) => {
     const prefersReducedMotion =
       typeof window !== "undefined" &&
       typeof window.matchMedia === "function" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const fillDelay = prefersReducedMotion ? 0 : SUGGESTION_FILL_DELAY_MS;
-    const floatingClearDelay = prefersReducedMotion
-      ? 220
-      : SUGGESTION_FLOAT_CLEAR_MS;
+    const pulseClearDelay = prefersReducedMotion ? 0 : SUGGESTION_PULSE_CLEAR_MS;
 
-    setActiveSuggestionId(suggestionId);
+    suggestionApplyPendingRef.current = true;
+    selectedSuggestionTextRef.current = nextQuestion;
+    setSelectedSuggestionId(suggestionId);
+    setPulseSuggestionId(suggestionId);
 
-    if (suggestionFlashTimerRef.current !== null) {
-      window.clearTimeout(suggestionFlashTimerRef.current);
+    if (suggestionPulseTimerRef.current !== null) {
+      window.clearTimeout(suggestionPulseTimerRef.current);
     }
     if (suggestionFillTimerRef.current !== null) {
       window.clearTimeout(suggestionFillTimerRef.current);
@@ -558,23 +581,32 @@ export function AiReadingScene({ active, onGoHome }: AiReadingSceneProps) {
     }
 
     suggestionFillTimerRef.current = window.setTimeout(() => {
-      setQuestionFlowIn(true);
+      setQuestionFlowIn(!prefersReducedMotion);
       setQuestion(nextQuestion);
       window.requestAnimationFrame(() => {
         questionInputRef.current?.focus();
       });
 
-      questionFlowTimerRef.current = window.setTimeout(() => {
+      if (prefersReducedMotion) {
+        suggestionApplyPendingRef.current = false;
         setQuestionFlowIn(false);
-      }, SUGGESTION_FLOW_CLEAR_MS);
+      } else {
+        questionFlowTimerRef.current = window.setTimeout(() => {
+          setQuestionFlowIn(false);
+          suggestionApplyPendingRef.current = false;
+        }, SUGGESTION_FLOW_CLEAR_MS);
+      }
     }, fillDelay);
 
-    suggestionFlashTimerRef.current = window.setTimeout(() => {
-      setActiveSuggestionId(null);
-    }, floatingClearDelay);
+    suggestionPulseTimerRef.current = window.setTimeout(() => {
+      setPulseSuggestionId(null);
+    }, pulseClearDelay);
   };
 
   const handleShuffleSuggestions = () => {
+    setSelectedSuggestionId(null);
+    setPulseSuggestionId(null);
+    selectedSuggestionTextRef.current = null;
     setSuggestionBatchIndex((current) => current + 1);
   };
 
@@ -698,6 +730,9 @@ export function AiReadingScene({ active, onGoHome }: AiReadingSceneProps) {
     setStreaming(false);
     setSubmitting(false);
     setDrawnCardIds([]);
+    setSelectedSuggestionId(null);
+    setPulseSuggestionId(null);
+    selectedSuggestionTextRef.current = null;
     setPhase("question");
     generationStartedRef.current = false;
     if (drawCompletionTimerRef.current !== null) {
@@ -925,7 +960,7 @@ export function AiReadingScene({ active, onGoHome }: AiReadingSceneProps) {
                       questionFlowIn ? styles.questionInputFlowIn : ""
                     }`}
                     value={question}
-                    onChange={(event) => setQuestion(event.target.value)}
+                    onChange={(event) => handleQuestionChange(event.target.value)}
                     placeholder="例如：我该继续这段关系吗？"
                     rows={6}
                     maxLength={280}
@@ -967,28 +1002,29 @@ export function AiReadingScene({ active, onGoHome }: AiReadingSceneProps) {
 
                 <div className={styles.suggestionGrid}>
                   {suggestionBatch.map((item) => {
-                    const isFloating = activeSuggestionId === item.id;
+                    const isSelected = selectedSuggestionId === item.id;
+                    const isActivated = pulseSuggestionId === item.id;
 
                     return (
-                      <div
+                      <button
                         key={item.id}
-                        className={`${styles.suggestionCardWrap} ${
-                          isFloating ? styles.suggestionCardWrapFloating : ""
-                        }`}
+                        type="button"
+                        className={`${styles.suggestionCardShell} ${
+                          isSelected ? styles.suggestionCardShellSelected : ""
+                        } ${isActivated ? styles.suggestionCardShellActivated : ""}`}
+                        onClick={() => handleFillSuggestion(item.text, item.id)}
                       >
-                        <button
-                          type="button"
-                          className={`${styles.suggestionCard} ${
-                            isFloating ? styles.suggestionCardFloating : ""
-                          }`}
-                          onClick={() => handleFillSuggestion(item.text, item.id)}
-                        >
+                        <span
+                          className={styles.suggestionCardShadow}
+                          aria-hidden="true"
+                        />
+                        <span className={styles.suggestionCardSurface}>
                           <span className={styles.suggestionIcon} aria-hidden>
                             <SuggestionGlyph type={item.icon} />
                           </span>
                           <span className={styles.suggestionText}>{item.text}</span>
-                        </button>
-                      </div>
+                        </span>
+                      </button>
                     );
                   })}
                 </div>
