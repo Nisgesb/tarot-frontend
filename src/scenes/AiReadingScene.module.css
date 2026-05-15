@@ -747,22 +747,22 @@
 
 .suggestionCardShadow {
   position: absolute;
-  left: 16%;
-  right: -12%;
-  bottom: -22px;
-  height: 30px;
+  left: 18%;
+  right: -8%;
+  bottom: -12px;
+  height: 24px;
   border-radius: 999px;
   pointer-events: none;
   z-index: 0;
   background: radial-gradient(
-    ellipse at 72% 50%,
-    rgba(126, 88, 210, 0.36),
-    rgba(168, 130, 238, 0.2) 42%,
+    ellipse at 76% 56%,
+    rgba(106, 78, 178, 0.22),
+    rgba(145, 108, 218, 0.12) 44%,
     transparent 76%
   );
-  filter: blur(16px);
+  filter: blur(10px);
   opacity: 0;
-  transform: translate3d(14px, 8px, 0) skewX(-8deg) scale(1.08);
+  transform: translate3d(10px, 6px, 0) skewX(-8deg) scaleX(1.04) scaleY(0.72);
   transition:
     opacity 220ms cubic-bezier(0.22, 1, 0.36, 1),
     transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -881,12 +881,12 @@
 
 .suggestionCardShellSelected .suggestionCardShadow {
   opacity: 1;
-  transform: translate3d(24px, 14px, 0) skewX(-10deg) scaleX(1.18) scaleY(0.82);
-  filter: blur(18px);
+  transform: translate3d(18px, 10px, 0) skewX(-9deg) scaleX(1.14) scaleY(0.78);
+  filter: blur(12px);
   background: radial-gradient(
     ellipse at 78% 58%,
-    rgba(112, 82, 188, 0.3),
-    rgba(148, 112, 220, 0.16) 42%,
+    rgba(106, 78, 178, 0.28),
+    rgba(145, 108, 218, 0.15) 44%,
     transparent 76%
   );
 }
@@ -900,9 +900,11 @@
     rotateX(1.1deg)
     rotateY(-2.4deg)
     rotateZ(-0.45deg);
-  border-color: rgba(184, 145, 255, 0.24);
+  border-color: rgba(184, 145, 255, 0.22);
   box-shadow:
-    -6px -6px 14px rgba(255, 255, 255, 0.78),
+    10px 14px 24px rgba(108, 78, 170, 0.16),
+    4px 6px 12px rgba(142, 105, 215, 0.12),
+    -6px -6px 14px rgba(255, 255, 255, 0.72),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
   filter: brightness(1.01);
 }
@@ -956,15 +958,15 @@
 }
 
 .suggestionCardShellSelected .suggestionIcon {
-  color: rgba(148, 92, 230, 0.95);
-  background: rgba(255, 255, 255, 0.78);
+  color: rgba(132, 98, 196, 0.9);
+  background: rgba(255, 255, 255, 0.8);
   box-shadow:
-    0 0 20px rgba(178, 119, 255, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    0 0 12px rgba(178, 119, 255, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.84);
 }
 
 .suggestionCardShellSelected .suggestionText {
-  color: rgba(96, 72, 150, 0.96);
+  color: rgba(66, 58, 112, 0.92);
 }
 
 .suggestionIcon {
