@@ -76,8 +76,6 @@
 
 .shared-home-surface::before,
 .shared-home-surface::after,
-.app-root .dream-gallery-scene::before,
-.app-root .dream-gallery-scene::after,
 .app-root .my-dreams-scene::before,
 .app-root .my-dreams-scene::after {
   content: '';

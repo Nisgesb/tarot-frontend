@@ -1,324 +1,924 @@
-.dailyFortuneScene {
-  display: grid;
-  align-content: start;
+.scene {
+  --df-bg: #eee8f5;
+  --df-bg-deep: #e4ddec;
+  --df-card: rgba(255, 252, 255, 0.82);
+  --df-card-solid: #f8f3fb;
+  --df-ink: #302844;
+  --df-ink-soft: rgba(48, 40, 68, 0.72);
+  --df-ink-muted: rgba(48, 40, 68, 0.48);
+  --df-purple: #9a7bdd;
+  --df-purple-soft: #d8c8f8;
+  --df-line: rgba(75, 62, 100, 0.12);
+  --df-shadow: rgba(71, 56, 99, 0.16);
+  position: absolute;
+  inset: 0;
   overflow: auto;
+  overflow-x: hidden;
+  isolation: isolate;
+  animation: pageFadeIn 200ms ease both;
   -webkit-overflow-scrolling: touch;
+}
+
+.scene::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 20% 8%, rgba(255, 255, 255, 0.72), transparent 34%),
+    radial-gradient(circle at 78% 16%, rgba(210, 196, 240, 0.36), transparent 30%),
+    linear-gradient(180deg, #f3eef8 0%, #ebe5f3 54%, #e6deee 100%);
+}
+
+.scene::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(88, 76, 112, 0.2) 0.45px, transparent 0.45px);
+  background-size: 3px 3px;
+  opacity: 0.045;
 }
 
 .shell {
   position: relative;
   z-index: 2;
-  width: min(100%, 1140px);
+  width: min(100%, 900px);
   min-height: var(--app-dvh);
   margin: 0 auto;
   padding:
-    calc(env(safe-area-inset-top, 0px) + 16px)
-    clamp(16px, 3.8vw, 36px)
-    calc(env(safe-area-inset-bottom, 0px) + 24px);
+    calc(env(safe-area-inset-top, 0px) + 14px)
+    max(22px, env(safe-area-inset-right, 0px))
+    calc(env(safe-area-inset-bottom, 0px) + 30px)
+    max(22px, env(safe-area-inset-left, 0px));
   display: grid;
   gap: 16px;
   align-content: start;
+  box-sizing: border-box;
 }
 
-.topBar {
+.header {
+  min-height: 108px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  animation: blockRise 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.backButton {
+  width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid rgba(178, 163, 213, 0.5);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(245, 238, 253, 0.82)),
+    rgba(248, 243, 254, 0.88);
+  color: rgba(66, 56, 91, 0.92);
+  box-shadow:
+    0 10px 22px rgba(79, 64, 109, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  font-size: 1.22rem;
+  line-height: 1;
+  letter-spacing: 0;
+  transition: transform 120ms ease;
+  flex-shrink: 0;
+}
+
+.backButton:active {
+  transform: scale(0.98);
+}
+
+.titleBlock {
+  flex: 1;
+  text-align: center;
+}
+
+.pageKicker {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  font-weight: 700;
+  color: var(--df-ink-soft);
+}
+
+.pageTitle {
+  margin: 4px 0 0;
+  font: 600 clamp(1.78rem, 8.2vw, 2rem) / 1.02 'Cormorant Garamond', serif;
+  color: var(--df-ink);
+  letter-spacing: -0.01em;
+}
+
+.headerSpacer {
+  width: 44px;
+  flex-shrink: 0;
+}
+
+.mirrorCard {
+  position: relative;
+  border-radius: 36px;
+  background: rgba(255, 252, 255, 0.76);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow:
+    0 22px 54px rgba(80, 65, 110, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(70, 55, 100, 0.06);
+  overflow: hidden;
+  isolation: isolate;
+  animation: mirrorEnter 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.mirrorCard::before {
+  content: '';
+  position: absolute;
+  inset: 13% 10% 14% 18%;
+  border-radius: 56% 44% 52% 48% / 58% 42% 58% 42%;
+  background:
+    radial-gradient(ellipse at 42% 54%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.34) 38%, rgba(255, 255, 255, 0) 72%),
+    conic-gradient(from 130deg at 58% 52%, rgba(216, 194, 251, 0.32), rgba(230, 214, 253, 0.18), rgba(210, 184, 245, 0.3), rgba(216, 194, 251, 0.32));
+  opacity: 0.66;
+  filter: blur(0.3px);
+  pointer-events: none;
+  animation: mirrorGlowIn 300ms cubic-bezier(0.22, 1, 0.36, 1) 80ms both;
+}
+
+.mirrorCard::after {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.36);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    inset -8px -12px 24px rgba(186, 164, 222, 0.12),
+    inset 10px 8px 20px rgba(232, 220, 250, 0.28);
+  pointer-events: none;
+}
+
+.mirrorPearlDot {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 28% 30%, rgba(255, 255, 255, 0.96), rgba(233, 219, 252, 0.88));
+  box-shadow: 0 2px 6px rgba(96, 76, 129, 0.2);
+  z-index: 1;
+}
+
+.mirrorContent {
+  position: relative;
+  z-index: 1;
+  padding: 24px;
+  min-height: 268px;
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.mirrorMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 14px;
+  color: var(--df-ink-soft);
+  line-height: 1.4;
+}
+
+.mirrorMetaRight {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.zodiacTrigger {
+  appearance: none;
+  min-height: 30px;
+  padding: 0 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(152, 127, 213, 0.24);
+  background: rgba(249, 244, 255, 0.82);
+  color: rgba(64, 52, 92, 0.8);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 120ms ease;
+}
+
+.zodiacTrigger:active {
+  transform: scale(0.98);
+}
+
+.mirrorBody {
+  display: grid;
+  gap: 10px;
+  animation: contentCrossFade 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.mirrorTitle {
+  margin: 0;
+  max-width: 92%;
+  color: var(--df-ink);
+  font: 600 clamp(2.125rem, 9vw, 2.375rem) / 1.14 'Cormorant Garamond', serif;
+  letter-spacing: -0.01em;
+  white-space: pre-line;
+  text-wrap: balance;
+  animation: titleReveal 220ms cubic-bezier(0.22, 1, 0.36, 1) 80ms both;
+}
+
+.mirrorSummary {
+  margin: 0;
+  max-width: 35ch;
+  color: var(--df-ink-soft);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.scrollHint {
+  margin-top: 2px;
+  color: var(--df-ink-muted);
+  font-size: 13px;
+  line-height: 1.4;
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+}
+
+.scrollHintArrow {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.inlineStatus,
+.inlineError,
+.errorCard {
+  box-sizing: border-box;
+  width: 100%;
+  border-radius: 18px;
+  padding: 11px 20px;
+}
+
+.inlineStatus {
+  border: 1px solid rgba(148, 130, 191, 0.24);
+  background: rgba(247, 241, 255, 0.76);
+  animation: blockRise 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.inlineStatus p {
+  margin: 0;
+  color: rgba(63, 51, 92, 0.78);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.inlineStatusSubtle {
+  margin-top: 2px !important;
+  color: rgba(63, 51, 92, 0.58) !important;
+  font-size: 12px !important;
+}
+
+.inlineError,
+.errorCard {
+  border: 1px solid rgba(187, 132, 160, 0.34);
+  background: rgba(251, 241, 246, 0.86);
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+
+.inlineError p,
+.errorCard p {
+  margin: 0;
+  color: rgba(94, 61, 82, 0.92);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.retryButton {
+  appearance: none;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(165, 133, 193, 0.34);
+  background: rgba(255, 248, 255, 0.88);
+  color: rgba(73, 58, 102, 0.86);
+  font-size: 12px;
+  cursor: pointer;
+  transition: transform 120ms ease;
+}
+
+.retryButton:active {
+  transform: scale(0.98);
+}
+
+.cardSection,
+.guidanceCard,
+.practiceNote,
+.reflectionCard {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  border-radius: 28px;
+  border: 1px solid rgba(165, 149, 196, 0.2);
+  background: var(--df-card);
+  box-shadow:
+    0 10px 24px rgba(79, 64, 108, 0.11),
+    inset 0 1px 0 rgba(255, 255, 255, 0.74);
+  padding: 20px;
+}
+
+.cardSection {
+  cursor: pointer;
+  animation: blockRise 220ms cubic-bezier(0.22, 1, 0.36, 1) 40ms both;
+}
+
+.sectionKicker {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  font-weight: 700;
+  color: var(--df-ink-soft);
+  text-transform: uppercase;
+}
+
+.sectionTitle {
+  margin: 4px 0 0;
+  color: rgba(48, 40, 68, 0.86);
+  font-size: 13px;
+  line-height: 1.45;
+  letter-spacing: 0.08em;
+}
+
+.cardRow {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cardThumb {
+  width: 34px;
+  min-height: 48px;
+  border-radius: 10px;
+  border: 1px solid rgba(176, 159, 210, 0.38);
+  background:
+    linear-gradient(160deg, rgba(253, 248, 255, 0.96), rgba(234, 223, 247, 0.82));
+  color: rgba(118, 98, 153, 0.68);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.cardName {
+  margin: 0;
+  color: var(--df-ink);
+  font: 600 clamp(1.3rem, 5.4vw, 1.56rem) / 1.16 'Cormorant Garamond', serif;
+  letter-spacing: -0.005em;
+}
+
+.cardKeywords {
+  margin: 8px 0 0;
+  color: var(--df-ink-soft);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.cardInsightButton {
+  appearance: none;
+  margin-top: 7px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: rgba(102, 84, 139, 0.88);
+  font-size: 14px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.cardInsightPopover {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: min(260px, calc(100% - 32px));
+  border-radius: 16px;
+  border: 1px solid rgba(177, 157, 211, 0.34);
+  background:
+    linear-gradient(180deg, rgba(255, 251, 255, 0.98), rgba(246, 238, 253, 0.94));
+  box-shadow: 0 18px 32px rgba(74, 59, 103, 0.18);
+  padding: 14px 12px 12px;
+  z-index: 5;
+  animation: popoverIn 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.cardInsightPopover p {
+  margin: 0;
+  color: rgba(56, 45, 81, 0.86);
+  font-size: 14px;
+  line-height: 1.56;
+}
+
+.cardInsightClose {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 20px;
+  min-height: 20px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: rgba(95, 78, 129, 0.76);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.guidanceCard {
+  display: grid;
+  gap: 0;
+  animation: blockRise 220ms cubic-bezier(0.22, 1, 0.36, 1) 80ms both;
+}
+
+.guidanceItem + .guidanceItem {
+  border-top: 1px solid var(--df-line);
+}
+
+.guidanceHeader {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  padding: 14px 0 6px;
+  background: transparent;
+  color: var(--df-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.guidanceHeader:active {
+  transform: scale(0.98);
+}
+
+.guidanceIndex {
+  color: rgba(88, 70, 124, 0.48);
+  font: 540 0.74rem/1 'Outfit', sans-serif;
+  letter-spacing: 0.11em;
+}
+
+.guidanceTitle {
+  color: rgba(48, 40, 68, 0.92);
+  font-size: 16px;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.guidanceArrow {
+  justify-self: end;
+  color: rgba(88, 70, 124, 0.54);
+  font-size: 14px;
+}
+
+.guidanceText {
+  margin: 0 0 8px 46px;
+  color: rgba(48, 40, 68, 0.78);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.guidanceDetails {
+  margin-left: 46px;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 220ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease;
+}
+
+.guidanceItemExpanded .guidanceDetails {
+  max-height: 210px;
+  opacity: 1;
+}
+
+.guidanceDetailsInner {
+  border: 1px solid rgba(174, 157, 209, 0.26);
+  border-radius: 14px;
+  background: rgba(244, 236, 252, 0.74);
+  padding: 10px 11px;
+  margin-bottom: 11px;
+}
+
+.guidanceDetailsInner ul {
+  margin: 0;
+  padding-left: 16px;
+  color: rgba(52, 43, 75, 0.78);
+  font-size: 14px;
+  line-height: 1.56;
+}
+
+.practiceNote {
+  animation: blockRise 220ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+  border-color: rgba(175, 159, 208, 0.24);
+  background:
+    linear-gradient(180deg, rgba(255, 249, 242, 0.86), rgba(251, 243, 249, 0.84));
+}
+
+.practiceNote::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 18px;
+  width: 34px;
+  height: 12px;
+  border-radius: 3px;
+  background: rgba(226, 212, 192, 0.62);
+  transform: rotate(-7deg);
+}
+
+.practiceNote::after {
+  content: '';
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 28% 30%, rgba(255, 255, 255, 0.95), rgba(234, 220, 250, 0.88));
+  box-shadow: 0 1px 4px rgba(92, 74, 123, 0.2);
+}
+
+.practiceTitle {
+  margin: 4px 0 10px;
+  color: var(--df-ink);
+  font: 600 1.1rem/1.2 'Cormorant Garamond', serif;
+}
+
+.practiceItem {
+  width: 100%;
+  min-height: 40px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: rgba(49, 41, 70, 0.84);
+  font-size: 15px;
+  line-height: 1.55;
+  text-align: left;
+  cursor: pointer;
+}
+
+.practiceItem + .practiceItem {
+  margin-top: 4px;
+}
+
+.practiceItem:active {
+  transform: scale(0.98);
+}
+
+.practiceCheckbox {
+  color: rgba(98, 81, 134, 0.82);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.practiceItemChecked {
+  color: rgba(46, 37, 66, 0.96);
+}
+
+.practiceBadge {
+  margin: 10px 0 0;
+  display: inline-flex;
+  min-height: 26px;
+  align-items: center;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(157, 138, 196, 0.34);
+  background: rgba(249, 242, 255, 0.82);
+  color: rgba(77, 62, 108, 0.84);
+  font-size: 12px;
+}
+
+.reflectionCard {
+  animation: blockRise 220ms cubic-bezier(0.22, 1, 0.36, 1) 160ms both;
+  padding-bottom: 22px;
+}
+
+.reflectionPrompt {
+  margin: 10px 0 10px;
+  color: rgba(48, 40, 68, 0.78);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.reflectionInput {
+  width: 100%;
+  min-height: 70px;
+  resize: vertical;
+  border: 1px solid rgba(170, 151, 205, 0.28);
+  border-radius: 16px;
+  padding: 10px 12px;
+  background: rgba(251, 246, 255, 0.82);
+  color: rgba(44, 36, 64, 0.9);
+  font-size: 14px;
+  line-height: 1.58;
+}
+
+.reflectionInput:focus {
+  outline: 0;
+  border-color: rgba(152, 127, 213, 0.46);
+  box-shadow: 0 0 0 2px rgba(196, 176, 235, 0.28);
+}
+
+.reflectionInput::placeholder {
+  color: rgba(75, 62, 101, 0.5);
+}
+
+.reflectionCounter {
+  margin: 6px 0 0;
+  text-align: right;
+  color: var(--df-ink-muted);
+  font-size: 12px;
+}
+
+.isSwitching .mirrorBody,
+.isSwitching .mirrorSummary,
+.isSwitching .mirrorTitle,
+.isSwitching + .inlineStatus,
+.isSwitching ~ .cardSection,
+.isSwitching ~ .guidanceCard,
+.isSwitching ~ .practiceNote,
+.isSwitching ~ .reflectionCard {
+  transition: opacity 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sheetOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(46, 37, 65, 0.24);
+  animation: overlayFadeIn 240ms ease both;
+  display: grid;
+  align-items: end;
+  padding:
+    0
+    max(10px, env(safe-area-inset-right, 0px))
+    max(10px, env(safe-area-inset-bottom, 0px))
+    max(10px, env(safe-area-inset-left, 0px));
+}
+
+.sheetPanel {
+  border-radius: 30px;
+  border: 1px solid rgba(176, 160, 208, 0.28);
+  background:
+    linear-gradient(180deg, rgba(255, 252, 255, 0.96), rgba(244, 236, 252, 0.94));
+  box-shadow: 0 -14px 30px rgba(64, 51, 92, 0.18);
+  padding: 10px 14px 14px;
+  animation: sheetSlideIn 250ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.sheetHandle {
+  display: block;
+  width: 46px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(139, 121, 176, 0.34);
+  margin: 2px auto 10px;
+}
+
+.sheetHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  margin-bottom: 10px;
 }
 
-.backIconButton {
-  width: 40px;
-  min-height: 40px;
-  padding: 0;
+.sheetHeader h2 {
+  margin: 0;
+  color: var(--df-ink);
+  font: 600 1rem/1.2 'Outfit', 'PingFang SC', sans-serif;
+}
+
+.sheetClose {
+  width: 30px;
+  min-height: 30px;
   border: 0;
-  background: transparent;
-  box-shadow: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  color: rgba(253, 244, 251, 0.88);
-  font-size: 1.5rem;
-  letter-spacing: 0;
-  line-height: 1;
-  text-transform: none;
-}
-
-.titleWrap {
-  text-align: center;
-}
-
-.eyebrow {
-  margin: 0;
-  color: var(--tarot-home-text-meta);
-  letter-spacing: 0.2em;
-  font-size: 0.66rem;
-  text-transform: uppercase;
-}
-
-.title {
-  margin: 6px 0 0;
-  color: var(--tarot-home-text-title);
-  font: 500 clamp(2.1rem, 7.8vw, 3.2rem) / 0.9 'Cormorant Garamond', serif;
-  letter-spacing: -0.04em;
-}
-
-.spacer {
-  width: 40px;
-}
-
-.surface {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.01)),
-    radial-gradient(circle at 14% 14%, rgba(182, 227, 255, 0.08), transparent 24%),
-    radial-gradient(circle at 84% 16%, rgba(210, 196, 255, 0.08), transparent 28%),
-    linear-gradient(
-      145deg,
-      rgba(91, 136, 255, 0.08),
-      rgba(210, 196, 255, 0.08) 48%,
-      rgba(17, 26, 52, 0.18)
-    ),
-    rgba(18, 28, 54, 0.1);
-}
-
-.surfaceGlass {
-  border-radius: 28px;
-  overflow: hidden;
-}
-
-.hero {
-  padding: clamp(18px, 2.6vw, 28px);
-  display: grid;
-  gap: 12px;
-}
-
-.heroMeta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.metaPill {
-  display: inline-flex;
-  min-height: 32px;
-  align-items: center;
-  justify-content: center;
-  padding: 0 12px;
-  border: 1px solid var(--tarot-home-glass-border-soft);
+  padding: 0;
   border-radius: 999px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.03)),
-    rgba(16, 25, 49, 0.44);
-  color: var(--tarot-home-text-body);
-  font-size: 0.75rem;
+  background: rgba(242, 234, 252, 0.88);
+  color: rgba(87, 71, 121, 0.8);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
 }
 
-.headline {
-  margin: 0;
-  color: var(--tarot-home-text-title);
-  font: 500 clamp(2rem, 6.4vw, 3rem) / 0.92 'Cormorant Garamond', serif;
-  letter-spacing: -0.04em;
-}
-
-.summary {
-  margin: 0;
-  color: var(--tarot-home-text-body);
-  font-size: 0.96rem;
-  line-height: 1.58;
-  max-width: 64ch;
-}
-
-.selectorWrap {
-  display: grid;
-  gap: 8px;
-}
-
-.selectorTitle {
-  margin: 0;
-  color: var(--tarot-home-text-meta);
-  font-size: 0.72rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.selectorList {
+.signGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 
-.selectorButton {
-  appearance: none;
-  min-height: 38px;
-  border: 1px solid var(--tarot-home-glass-border-soft);
-  border-radius: 999px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02)),
-    rgba(16, 25, 49, 0.38);
-  color: var(--tarot-home-text-body);
-  font-size: 0.8rem;
-  cursor: pointer;
-}
-
-.selectorButtonActive {
-  border-color: var(--tarot-home-glass-border-strong);
-  color: var(--tarot-home-text-title);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.05)),
-    linear-gradient(
-      145deg,
-      rgba(210, 196, 255, 0.22),
-      rgba(109, 184, 255, 0.22) 54%,
-      rgba(72, 90, 160, 0.24)
-    );
-}
-
-.grid {
-  display: grid;
-  gap: 14px;
-}
-
-.card {
-  padding: 16px;
-}
-
-.cardTitle {
-  margin: 0;
-  color: var(--tarot-home-text-meta);
-  letter-spacing: 0.12em;
-  font-size: 0.68rem;
-  text-transform: uppercase;
-}
-
-.cardCopy {
-  margin: 10px 0 0;
-  color: var(--tarot-home-text-body);
-  line-height: 1.58;
-  font-size: 0.9rem;
-}
-
-.cardName {
-  margin: 8px 0 0;
-  color: var(--tarot-home-text-title);
-  font: 500 1.5rem/1 'Cormorant Garamond', serif;
-}
-
-.keywords {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.keyword {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  padding: 0 10px;
-  border-radius: 999px;
-  border: 1px solid var(--tarot-home-glass-border-soft);
-  color: var(--tarot-home-text-body);
-  font-size: 0.74rem;
-  background: rgba(16, 25, 49, 0.34);
-}
-
-.reflection {
-  margin: 0;
-  color: var(--tarot-home-text-title);
-  font-size: 0.98rem;
-  line-height: 1.52;
-}
-
-.hintRow {
-  display: grid;
-  gap: 10px;
-}
-
-.hintPill {
-  margin: 0;
-  padding: 11px 12px;
+.signOption {
+  min-height: 48px;
   border-radius: 14px;
-  border: 1px solid var(--tarot-home-glass-border-soft);
-  color: var(--tarot-home-text-body);
-  background: rgba(15, 23, 44, 0.38);
-  line-height: 1.5;
+  border: 1px solid rgba(170, 152, 205, 0.24);
+  background: rgba(250, 245, 255, 0.84);
+  color: rgba(62, 50, 88, 0.82);
+  display: grid;
+  gap: 2px;
+  place-content: center;
+  font-size: 13px;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: transform 120ms ease;
 }
 
-.hintPill strong {
-  color: var(--tarot-home-text-title);
-  font-weight: 500;
+.signOption:active {
+  transform: scale(0.98);
 }
 
-.status {
-  margin: 0;
-  color: var(--tarot-home-text-meta);
-  font-size: 0.8rem;
+.signOptionActive {
+  border-color: rgba(146, 122, 206, 0.46);
+  background: rgba(236, 225, 251, 0.9);
+  color: rgba(49, 40, 73, 0.94);
 }
 
-.error {
-  margin: 0;
-  color: rgba(255, 224, 236, 0.94);
-  background: rgba(132, 46, 84, 0.36);
-  border: 1px solid rgba(255, 195, 221, 0.28);
-  padding: 10px 12px;
-  border-radius: 12px;
+.signSymbol {
+  font-size: 12px;
+  color: rgba(107, 88, 146, 0.76);
 }
 
-.retry {
-  justify-self: start;
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes mirrorEnter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes mirrorGlowIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 0.66;
+  }
+}
+
+@keyframes titleReveal {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes blockRise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes contentCrossFade {
+  from {
+    opacity: 0.2;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes popoverIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes overlayFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sheetSlideIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
 }
 
 @media (max-width: 560px) {
-  .spacer {
-    width: 74px;
+  .shell {
+    padding:
+      calc(env(safe-area-inset-top, 0px) + 12px)
+      max(22px, env(safe-area-inset-right, 0px))
+      calc(env(safe-area-inset-bottom, 0px) + 28px)
+      max(22px, env(safe-area-inset-left, 0px));
   }
 
-  .selectorList {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .mirrorContent {
+    min-height: 252px;
+  }
+
+  .mirrorTitle {
+    max-width: 94%;
+    font-size: clamp(2.125rem, 9.4vw, 2.375rem);
+  }
+
+  .cardSection,
+  .guidanceCard,
+  .practiceNote,
+  .reflectionCard {
+    padding: 20px;
   }
 }
 
-@media (min-width: 768px) {
-  .shell {
-    gap: 18px;
-    padding-top: calc(env(safe-area-inset-top, 0px) + 22px);
+@media (prefers-reduced-motion: reduce) {
+  .scene,
+  .header,
+  .mirrorCard,
+  .mirrorCard::before,
+  .mirrorTitle,
+  .mirrorBody,
+  .cardSection,
+  .guidanceCard,
+  .practiceNote,
+  .reflectionCard,
+  .sheetOverlay,
+  .sheetPanel,
+  .cardInsightPopover {
+    animation: none !important;
   }
 
-  .hero {
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
-    gap: 16px 20px;
-  }
-
-  .heroMeta {
-    grid-column: 1 / -1;
-  }
-
-  .summary {
-    max-width: 44ch;
-  }
-
-  .grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
-  }
-
-  .wide {
-    grid-column: 1 / -1;
-  }
-}
-
-@media (min-width: 1024px) {
-  .shell {
-    width: min(100%, 1240px);
-    gap: 20px;
-  }
-
-  .grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .wide {
-    grid-column: span 2;
+  .backButton,
+  .zodiacTrigger,
+  .retryButton,
+  .guidanceHeader,
+  .practiceItem,
+  .signOption,
+  .isSwitching .mirrorBody,
+  .isSwitching .mirrorSummary,
+  .isSwitching .mirrorTitle,
+  .isSwitching + .inlineStatus,
+  .isSwitching ~ .cardSection,
+  .isSwitching ~ .guidanceCard,
+  .isSwitching ~ .practiceNote,
+  .isSwitching ~ .reflectionCard,
+  .guidanceDetails {
+    transition: none !important;
   }
 }

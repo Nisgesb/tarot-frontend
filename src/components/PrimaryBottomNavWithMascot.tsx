@@ -69,9 +69,9 @@ const DEFAULT_HOME_MASCOT_DEBUG_STATE: HomeMascotDebugState = {
   overrideLatitude: 31.2304,
   overrideLongitude: 121.4737,
   forceRefresh: false,
-  sizePercent: 100,
-  offsetX: 0,
-  offsetY: 0,
+  sizePercent: 107,
+  offsetX: -11,
+  offsetY: 6,
 }
 
 function loadInitialHomeMascotDebugState() {
