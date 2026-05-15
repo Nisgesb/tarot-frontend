@@ -1018,6 +1018,10 @@ export function AiReadingScene({ active, onGoHome }: AiReadingSceneProps) {
                           className={styles.suggestionCardShadow}
                           aria-hidden="true"
                         />
+                        <span
+                          className={styles.suggestionCardContactShadow}
+                          aria-hidden="true"
+                        />
                         <span className={styles.suggestionCardSurface}>
                           <span className={styles.suggestionIcon} aria-hidden>
                             <SuggestionGlyph type={item.icon} />
