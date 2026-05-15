@@ -220,6 +220,9 @@ function LoadingSpinner({ size = 14 }: { size?: number }) {
 type AiReadingPhase = "question" | "draw" | "reading";
 
 const DRAW_COMPLETION_DELAY_MS = 1600;
+const SUGGESTION_FILL_DELAY_MS = 120;
+const SUGGESTION_FLOAT_CLEAR_MS = 460;
+const SUGGESTION_FLOW_CLEAR_MS = 170;
 const QUESTION_SUGGESTION_BATCHES: Array<
   Array<{ id: string; icon: SuggestionIcon; text: string }>
 > = [
@@ -533,6 +536,15 @@ export function AiReadingScene({ active, onGoHome }: AiReadingSceneProps) {
     ] ?? QUESTION_SUGGESTION_BATCHES[0];
 
   const handleFillSuggestion = (nextQuestion: string, suggestionId: string) => {
+    const prefersReducedMotion =
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const fillDelay = prefersReducedMotion ? 0 : SUGGESTION_FILL_DELAY_MS;
+    const floatingClearDelay = prefersReducedMotion
+      ? 220
+      : SUGGESTION_FLOAT_CLEAR_MS;
+
     setActiveSuggestionId(suggestionId);
 
     if (suggestionFlashTimerRef.current !== null) {
@@ -554,12 +566,12 @@ export function AiReadingScene({ active, onGoHome }: AiReadingSceneProps) {
 
       questionFlowTimerRef.current = window.setTimeout(() => {
         setQuestionFlowIn(false);
-      }, 170);
-    }, 120);
+      }, SUGGESTION_FLOW_CLEAR_MS);
+    }, fillDelay);
 
     suggestionFlashTimerRef.current = window.setTimeout(() => {
       setActiveSuggestionId(null);
-    }, 240);
+    }, floatingClearDelay);
   };
 
   const handleShuffleSuggestions = () => {
@@ -954,23 +966,31 @@ export function AiReadingScene({ active, onGoHome }: AiReadingSceneProps) {
                 </div>
 
                 <div className={styles.suggestionGrid}>
-                  {suggestionBatch.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      className={`${styles.suggestionCard} ${
-                        activeSuggestionId === item.id
-                          ? styles.suggestionCardFilled
-                          : ""
-                      }`}
-                      onClick={() => handleFillSuggestion(item.text, item.id)}
-                    >
-                      <span className={styles.suggestionIcon} aria-hidden>
-                        <SuggestionGlyph type={item.icon} />
-                      </span>
-                      <span className={styles.suggestionText}>{item.text}</span>
-                    </button>
-                  ))}
+                  {suggestionBatch.map((item) => {
+                    const isFloating = activeSuggestionId === item.id;
+
+                    return (
+                      <div
+                        key={item.id}
+                        className={`${styles.suggestionCardWrap} ${
+                          isFloating ? styles.suggestionCardWrapFloating : ""
+                        }`}
+                      >
+                        <button
+                          type="button"
+                          className={`${styles.suggestionCard} ${
+                            isFloating ? styles.suggestionCardFloating : ""
+                          }`}
+                          onClick={() => handleFillSuggestion(item.text, item.id)}
+                        >
+                          <span className={styles.suggestionIcon} aria-hidden>
+                            <SuggestionGlyph type={item.icon} />
+                          </span>
+                          <span className={styles.suggestionText}>{item.text}</span>
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               </section>
 

@@ -721,6 +721,41 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 9px;
+  overflow: visible;
+}
+
+.suggestionCardWrap {
+  position: relative;
+  overflow: visible;
+}
+
+.suggestionCardWrap::before {
+  content: "";
+  position: absolute;
+  left: 12%;
+  width: 72%;
+  bottom: -13px;
+  height: 30px;
+  border-radius: 999px;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(
+    ellipse at 65% 50%,
+    rgba(124, 92, 190, 0.28),
+    rgba(148, 112, 220, 0.15) 44%,
+    transparent 74%
+  );
+  filter: blur(13px);
+  transform: translate3d(11px, 3px, 0) skewX(-8deg);
+  opacity: 0;
+  transition:
+    opacity 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.suggestionCardWrapFloating::before {
+  opacity: 1;
+  transform: translate3d(14px, 5px, 0) skewX(-8deg);
 }
 
 .suggestionCard {
@@ -749,25 +784,37 @@
   appearance: none;
   -webkit-appearance: none;
   font: inherit;
+  transform-style: preserve-3d;
+  will-change: transform, box-shadow;
+  isolation: isolate;
   transition:
-    transform 180ms ease,
-    border-color 180ms ease,
-    box-shadow 180ms ease,
-    filter 180ms ease;
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 220ms ease,
+    background 220ms ease,
+    filter 220ms ease;
   overflow: hidden;
+  transform-origin: 24% 50%;
+  z-index: 1;
+}
+
+.suggestionCard > * {
+  position: relative;
+  z-index: 2;
 }
 
 .suggestionCard::before {
   content: "";
   position: absolute;
-  left: 10px;
-  right: 10px;
-  top: 1px;
+  left: 12px;
+  right: 12px;
+  top: 2px;
   height: 1px;
   border-radius: 999px;
   pointer-events: none;
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.76), rgba(255, 255, 255, 0.1));
   opacity: 0.74;
+  z-index: 1;
 }
 
 .suggestionCard::after {
@@ -779,47 +826,54 @@
     radial-gradient(circle at 88% 16%, rgba(189, 170, 248, 0.24) 0 1.2px, transparent 1.9px),
     radial-gradient(circle at 14% 82%, rgba(189, 170, 248, 0.18) 0 1px, transparent 1.7px);
   opacity: 0.7;
+  z-index: 1;
 }
 
-.suggestionCard:nth-child(2n) {
+.suggestionCardWrap:nth-child(2n) .suggestionCard {
   --suggestion-glow-x: 84%;
   --suggestion-glow-y: 12%;
 }
 
-.suggestionCard:nth-child(3) {
+.suggestionCardWrap:nth-child(3) .suggestionCard {
   --suggestion-glow-x: 18%;
   --suggestion-glow-y: 86%;
 }
 
-.suggestionCard:nth-child(4) {
+.suggestionCardWrap:nth-child(4) .suggestionCard {
   --suggestion-glow-x: 82%;
   --suggestion-glow-y: 84%;
 }
 
 .suggestionCard:hover {
-  transform: translateY(-2px);
+  transform:
+    perspective(900px)
+    translate3d(1px, -3px, 0)
+    rotateX(0.8deg)
+    rotateY(-1.2deg)
+    rotateZ(-0.18deg);
   border-color: rgba(148, 104, 226, 0.42);
   box-shadow:
-    0 12px 24px rgba(122, 90, 168, 0.12),
-    0 0 0 2px rgba(168, 124, 255, 0.11),
+    0 14px 28px rgba(122, 90, 168, 0.13),
+    0 0 0 1px rgba(168, 124, 255, 0.08),
     0 1px 0 rgba(255, 255, 255, 0.92) inset;
   filter: brightness(1.02);
 }
 
-.suggestionCard:active {
-  transform: translateY(-1px) scale(0.985);
-  border-color: rgba(154, 112, 230, 0.54);
+.suggestionCard:active:not(.suggestionCardFloating) {
+  transform: none;
+  border-color: rgba(154, 112, 230, 0.42);
   box-shadow:
-    0 8px 16px rgba(122, 90, 168, 0.1),
-    0 0 0 1px rgba(168, 124, 255, 0.18),
+    0 10px 20px rgba(122, 90, 168, 0.1),
+    0 0 0 1px rgba(168, 124, 255, 0.08),
     0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  filter: brightness(1.01);
 }
 
 .suggestionCardFilled {
-  border-color: rgba(156, 114, 232, 0.6);
+  border-color: rgba(156, 114, 232, 0.54);
   box-shadow:
-    0 10px 18px rgba(122, 90, 168, 0.12),
-    0 0 0 2px rgba(168, 124, 255, 0.16),
+    0 12px 22px rgba(122, 90, 168, 0.1),
+    0 0 0 2px rgba(168, 124, 255, 0.12),
     0 1px 0 rgba(255, 255, 255, 0.9) inset;
   transition-duration: 160ms;
 }
@@ -830,6 +884,103 @@
     0 1px 0 rgba(255, 255, 255, 0.74) inset,
     0 0 0 1px rgba(168, 124, 255, 0.2),
     0 7px 16px rgba(122, 90, 168, 0.12);
+}
+
+.suggestionCardFloating {
+  border-color: rgba(184, 145, 255, 0.31);
+  transform:
+    perspective(900px)
+    translate3d(2px, -5px, 0)
+    rotateX(1deg)
+    rotateY(-2deg)
+    rotateZ(-0.35deg);
+  background:
+    radial-gradient(circle at var(--suggestion-glow-x) var(--suggestion-glow-y), rgba(255, 255, 255, 0.66), rgba(255, 255, 255, 0) 42%),
+    radial-gradient(circle at 82% 90%, rgba(191, 163, 255, 0.12), rgba(191, 163, 255, 0) 56%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(247, 243, 255, 0.76)),
+    rgba(255, 255, 255, 0.46);
+  box-shadow:
+    13px 22px 40px rgba(118, 88, 190, 0.17),
+    6px 12px 22px rgba(145, 108, 220, 0.11),
+    -2px -2px 8px rgba(255, 255, 255, 0.62),
+    inset 0 1px 0 rgba(255, 255, 255, 0.86);
+  transition:
+    transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 180ms ease,
+    background 180ms ease,
+    filter 180ms ease;
+}
+
+.suggestionCardFloating:active {
+  transform:
+    perspective(900px)
+    translate3d(2px, -5px, 0)
+    rotateX(1deg)
+    rotateY(-2deg)
+    rotateZ(-0.35deg);
+  border-color: rgba(184, 145, 255, 0.31);
+  box-shadow:
+    13px 22px 40px rgba(118, 88, 190, 0.17),
+    6px 12px 22px rgba(145, 108, 220, 0.11),
+    -2px -2px 8px rgba(255, 255, 255, 0.62),
+    inset 0 1px 0 rgba(255, 255, 255, 0.86);
+  filter: brightness(1.02);
+}
+
+.suggestionCardFloating::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: auto;
+  height: auto;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 18% 34%, rgba(178, 119, 255, 0.24), rgba(205, 168, 255, 0.14) 28%, transparent 62%);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  background-origin: border-box;
+  background-clip: padding-box;
+  filter: blur(8px);
+  opacity: 0;
+  animation: suggestionFloatGlow 430ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  z-index: 1;
+}
+
+.suggestionCardFloating::after {
+  content: "";
+  position: absolute;
+  inset: auto;
+  left: 18px;
+  top: 10px;
+  right: auto;
+  bottom: auto;
+  width: 2px;
+  height: 54px;
+  pointer-events: none;
+  border-radius: 999px;
+  background: linear-gradient(180deg, transparent, rgba(178, 119, 255, 0.36), rgba(255, 255, 255, 0.54), rgba(178, 119, 255, 0.2), transparent);
+  filter: blur(1.2px);
+  opacity: 0;
+  animation: suggestionLightTrace 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  z-index: 1;
+}
+
+.suggestionCardFloating .suggestionIcon {
+  color: rgba(148, 92, 230, 0.95);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow:
+    0 0 20px rgba(178, 119, 255, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.suggestionCardFloating .suggestionText {
+  color: rgba(96, 72, 150, 0.96);
 }
 
 .suggestionIcon {
@@ -1785,6 +1936,42 @@
   }
 }
 
+@keyframes suggestionFloatGlow {
+  0% {
+    opacity: 0;
+    transform: translate3d(-8px, 4px, 0) scale(0.98);
+  }
+
+  42% {
+    opacity: 0.92;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(14px, -3px, 0) scale(1.02);
+  }
+}
+
+@keyframes suggestionLightTrace {
+  0% {
+    opacity: 0;
+    transform: translate3d(-4px, -8px, 0);
+  }
+
+  38% {
+    opacity: 0.58;
+  }
+
+  58% {
+    opacity: 0.72;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(14px, 9px, 0);
+  }
+}
+
 @keyframes questionPaperIn {
   0% {
     opacity: 0;
@@ -1830,6 +2017,32 @@
 
   .questionInputFlowIn {
     animation: none;
+  }
+
+  .suggestionCard:active,
+  .swapButton:active,
+  .scene :global(.primary-pill:not([disabled])):active {
+    transform: none;
+  }
+
+  .suggestionCardFloating,
+  .suggestionCardWrap::before,
+  .suggestionCardFloating::before,
+  .suggestionCardFloating::after {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+
+  .suggestionCardWrap::before {
+    opacity: 0 !important;
+  }
+
+  .suggestionCardFloating {
+    border-color: rgba(184, 145, 255, 0.34);
+    box-shadow:
+      0 10px 20px rgba(141, 104, 220, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.82);
   }
 }
 
